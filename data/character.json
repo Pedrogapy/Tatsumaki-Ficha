@@ -1,0 +1,691 @@
+{
+  "meta": {
+    "name": "Tatsumaki ShadowHeart Gojo",
+    "race": {
+      "name": "Humano",
+      "level": 69,
+      "raw": "Humano69"
+    },
+    "class": {
+      "name": "Espadachim",
+      "level": 7,
+      "raw": "Espadachim7"
+    },
+    "professions": [
+      {
+        "name": "Artesão",
+        "level": 5
+      },
+      {
+        "name": "Ferreiro",
+        "level": 3
+      }
+    ],
+    "experience_raw": "1975 + 335"
+  },
+  "attributes": [
+    {
+      "name": "Força",
+      "value": 24,
+      "quarter": 6,
+      "eighth": 3
+    },
+    {
+      "name": "Arcano",
+      "value": 20,
+      "quarter": 5,
+      "eighth": 2
+    },
+    {
+      "name": "Destreza",
+      "value": 27,
+      "quarter": 6,
+      "eighth": 3
+    },
+    {
+      "name": "Sabedoria",
+      "value": 16,
+      "quarter": 4,
+      "eighth": 2
+    },
+    {
+      "name": "Fortitude",
+      "value": 20,
+      "quarter": 5,
+      "eighth": 2
+    },
+    {
+      "name": "Inteligência",
+      "value": 18,
+      "quarter": 4,
+      "eighth": 2
+    }
+  ],
+  "skills": {
+    "physical": [
+      {
+        "name": "Lutar",
+        "attribute": "FOR",
+        "points": null,
+        "level": 3,
+        "proficient": false,
+        "total": 6
+      },
+      {
+        "name": "Agarrar",
+        "attribute": "FOR",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Quebrar",
+        "attribute": "FOR",
+        "points": null,
+        "level": 2,
+        "proficient": false,
+        "total": 5
+      },
+      {
+        "name": "Arrancar",
+        "attribute": "FOR",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Arremeso",
+        "attribute": "FOR",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Destravar",
+        "attribute": "FOR",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Desprender",
+        "attribute": "FOR",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Levantamento",
+        "attribute": "FOR",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Armas Pesadas",
+        "attribute": "FOR",
+        "points": null,
+        "level": 5,
+        "proficient": true,
+        "total": 11
+      },
+      {
+        "name": "Nome",
+        "attribute": "Atributo",
+        "points": "Pontos",
+        "level": "Nível",
+        "proficient": true,
+        "total": "Total"
+      },
+      {
+        "name": "Reflexo",
+        "attribute": "DES",
+        "points": null,
+        "level": 6,
+        "proficient": true,
+        "total": 12
+      },
+      {
+        "name": "Defletir",
+        "attribute": "DES",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Pontaria",
+        "attribute": "DES",
+        "points": " ",
+        "level": 5,
+        "proficient": false,
+        "total": 8
+      },
+      {
+        "name": "Manuseio",
+        "attribute": "DES",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Acrobacia",
+        "attribute": "DES",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Espionagem",
+        "attribute": "DES",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Furtividade",
+        "attribute": "DES",
+        "points": null,
+        "level": 2,
+        "proficient": false,
+        "total": 5
+      },
+      {
+        "name": "Prestidigitação",
+        "attribute": "DES",
+        "points": null,
+        "level": 2,
+        "proficient": false,
+        "total": 5
+      },
+      {
+        "name": "Armas Avançadas",
+        "attribute": "DES",
+        "points": null,
+        "level": 5,
+        "proficient": true,
+        "total": 11
+      },
+      {
+        "name": "Nome",
+        "attribute": "Atributo",
+        "points": "Pontos",
+        "level": "Nível",
+        "proficient": true,
+        "total": "Total"
+      },
+      {
+        "name": "Saúde",
+        "attribute": "FORT",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Firmeza",
+        "attribute": "FORT",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Manobra",
+        "attribute": "FORT",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Atletismo",
+        "attribute": "FORT",
+        "points": null,
+        "level": 2,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Defender",
+        "attribute": "FORT",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Resistência",
+        "attribute": "FORT",
+        "points": null,
+        "level": 2,
+        "proficient": false,
+        "total": 4
+      },
+      {
+        "name": "Tolerar a Dor",
+        "attribute": "FORT",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Determinação",
+        "attribute": "FORT",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Contra-Ataque",
+        "attribute": "FORT",
+        "points": null,
+        "level": 6,
+        "proficient": true,
+        "total": 10
+      },
+      {
+        "name": "Itens Importantes",
+        "attribute": NaN,
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": null
+      },
+      {
+        "name": "Imagem",
+        "attribute": NaN,
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": null
+      },
+      {
+        "name": "Nome",
+        "attribute": NaN,
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": null
+      }
+    ],
+    "intellectual": [
+      {
+        "name": "Tática",
+        "attribute": "INT",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Pilotagem",
+        "attribute": "INT",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Persuasão",
+        "attribute": "INT",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Tecnologia",
+        "attribute": "INT",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Negociação",
+        "attribute": "INT",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Cartografia",
+        "attribute": "INT",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Falsificação",
+        "attribute": "INT",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Criptografia",
+        "attribute": "INT",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Investigação",
+        "attribute": "INT",
+        "points": null,
+        "level": 3,
+        "proficient": false,
+        "total": 5
+      },
+      {
+        "name": "Nome",
+        "attribute": "Atributo",
+        "points": "Pontos",
+        "level": "Nível",
+        "proficient": true,
+        "total": "Total"
+      },
+      {
+        "name": "Ofício",
+        "attribute": "SAB",
+        "points": null,
+        "level": 5,
+        "proficient": false,
+        "total": 7
+      },
+      {
+        "name": "Domar",
+        "attribute": "SAB",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Religião",
+        "attribute": "SAB",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "História",
+        "attribute": "SAB",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Medicina",
+        "attribute": "SAB",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Natureza",
+        "attribute": "SAB",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Liderança",
+        "attribute": "SAB",
+        "points": null,
+        "level": null,
+        "proficient": false,
+        "total": 2
+      },
+      {
+        "name": "Percepção",
+        "attribute": "SAB",
+        "points": null,
+        "level": 3,
+        "proficient": false,
+        "total": 5
+      },
+      {
+        "name": "Sobrevivência",
+        "attribute": "SAB",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Nome",
+        "attribute": "Atributo",
+        "points": "Pontos",
+        "level": "Nível",
+        "proficient": true,
+        "total": "Total"
+      },
+      {
+        "name": "Empatia",
+        "attribute": "ARC",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Intuição",
+        "attribute": "ARC",
+        "points": null,
+        "level": 3,
+        "proficient": false,
+        "total": 5
+      },
+      {
+        "name": "Presença",
+        "attribute": "ARC",
+        "points": null,
+        "level": 3,
+        "proficient": false,
+        "total": 5
+      },
+      {
+        "name": "Ocultismo",
+        "attribute": "ARC",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Arcanismo",
+        "attribute": "ARC",
+        "points": null,
+        "level": 5,
+        "proficient": false,
+        "total": 7
+      },
+      {
+        "name": "Invocação",
+        "attribute": "ARC",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Conjuração",
+        "attribute": "ARC",
+        "points": null,
+        "level": 1,
+        "proficient": false,
+        "total": 3
+      },
+      {
+        "name": "Canalização",
+        "attribute": "ARC",
+        "points": null,
+        "level": 5,
+        "proficient": true,
+        "total": 9
+      },
+      {
+        "name": "Intimidação",
+        "attribute": "ARC",
+        "points": null,
+        "level": 2,
+        "proficient": true,
+        "total": 6
+      }
+    ]
+  },
+  "stats": {
+    "armor_class": {
+      "total": 16,
+      "components": {
+        "extras": 2.0,
+        "padrão": 8.0,
+        "escudo": 0.0,
+        "destreza": 6.0,
+        "armadura": 0.0
+      }
+    },
+    "perception": 21,
+    "luck": 6,
+    "tracks": {
+      "P.S": {
+        "current": 0,
+        "max": 108,
+        "temp": 0
+      },
+      "P.V": {
+        "current": 0,
+        "max": 5,
+        "temp": 0
+      },
+      "P.F": {
+        "current": 0,
+        "max": 66,
+        "temp": 0
+      }
+    }
+  },
+  "abilities": {
+    "combat_tree": [
+      {
+        "level": 1,
+        "name": "Punhos de Ferro",
+        "type": "Passiva",
+        "icon_prefix": "🥊",
+        "text": "Seus golpes desarmados causam tanto dano quanto armas normais, podendo quebrar madeira e ossos.\n(1d10 + 1/2 de Força ou Destreza em ataques desarmados)"
+      },
+      {
+        "level": 2,
+        "name": "Golpe Relâmpago",
+        "type": "Ativa",
+        "icon_prefix": "⚡",
+        "text": "Um ataque extremamente veloz que atinge o oponente antes que ele possa reagir.\n(Ignora qualquer reação)"
+      },
+      {
+        "level": 3,
+        "name": "Determinação Inquebrantável",
+        "type": "Passiva",
+        "icon_prefix": "💀",
+        "text": "Você pode resistir a efeitos de medo, paralisia ou dor intensa apenas pela força de vontade.\n(Aumenta o teste de dificuldade para os inimigos)"
+      },
+      {
+        "level": 4,
+        "name": "Chute Meteoro",
+        "type": "Ativa",
+        "icon_prefix": "🔥",
+        "text": "Com um salto preciso, desfere um chute destruidor que pode empurrar ou até atordoar um inimigo.\nRequer teste e ação. (Além de empurrar e atordoar, aumenta em +1 dado de dano seu ataque)"
+      },
+      {
+        "level": 5,
+        "name": "Olhos do Predador",
+        "type": "Especial",
+        "icon_prefix": "🐺",
+        "text": "Seus reflexos se tornam aguçados o suficiente para antecipar golpes e esquivar de ataques com mais\nfacilidade. (Recebe especialização em testes de Reflexo)"
+      },
+      {
+        "level": 6,
+        "name": "Golpe de Pressão",
+        "type": "Ativa",
+        "icon_prefix": "🥊",
+        "text": "Acerta um ponto crítico do inimigo, reduzindo sua força ou impedindo-o de usar certas habilidades.\n(Causa desvantagem em testes de força no alvo e impede seu uso de energia no próximo turno)"
+      },
+      {
+        "level": 7,
+        "name": "Dança da Luta",
+        "type": "Passiva",
+        "icon_prefix": "⚡",
+        "text": "Seu corpo aprende a esquivar melhor, aumentando sua capacidade de evitar golpes."
+      }
+    ],
+    "craft_tree_raw": "Ferreiro - O Mestre da Forja Eterna\n\nHabilidades de Nível 1 a 20 \n\n🔥 Nível 1 - Domínio do Martelo (Passiva) Você trabalha com mais eficiência, reduzindo o tempo necessário\npara forjar itens simples. Armas e armaduras criadas por você ganham um pequeno bônus de durabilidade.\n(Aumenta a durabilidade em +1)\n\n\n🛠️ Nível 2 - Forja Rápida (Ativa) Capaz de realizar reparos rápidos em equipamentos danificados mesmo em\nmeio a uma jornada, restaurando parte da durabilidade de armas e armaduras.(Recupera 1 de durabilidade)\n\n\n🔩 Nível 3 - Olhar Avaliador (Passiva) Com um simples olhar, você identifica a qualidade de metais e armas,\nreconhecendo fraquezas ou potencial oculto. (Funcionando apenas em armas comuns)\n\n\n🔨 Nível 4 - Martelada de Precisão (Ativa) Ao criar um item, você pode realizar uma martelada final perfeita,\naumentando o bônus de qualidade ou adicionando um efeito simples. (Adiciona duas melhorias comuns)\n\n\n⭐ Nível 5 - Mestre da Liga Metálica (Especial) Você domina a arte de misturar metais raros, permitindo a\ncriação de ligas especiais que conferem propriedades únicas às armas e armaduras. Itens criados por você\nagora têm um bônus permanente de qualidade superior. (Adiciona duas melhorias raras em suas criações)",
+    "exclusive_raw": "\nPersonificação... \n\nNível: ?\n\n---\n\n Descrição\n\nUma espada lendária do arsenal dos ShadowHeart, forjada com propósitos sombrios e destinada apenas aos herdeiros dignos de seu nome.\n\nSeu formato é o de uma espada longa de proporções elegantes, mas seu verdadeiro segredo repousa em sua origem: uma criatura ancestral foi usada em seu processo de forja, e apenas os anciões dos ShadowHeart conhecem a verdadeira natureza desse ser.\n\nPouco se sabe sobre a criatura que deu origem à arma, apenas que seu poder era imensurável — e que parte de sua consciência ainda pode ecoar dentro do metal, sussurrando àqueles que a empunham.\n\n---\n\nAtributos,\nDano: 3d8 + (1/4 da Destreza do usuário)\nTipo: Espada Longa / Arma Pesada\nCategoria de Perícia: Armas Avançadas ou Armas Pesadas (de acordo com o estilo de combate do usuário)\n\n---\n\n Efeitos e Observações\n\nA lâmina reage à presença de energia, vibrando suavemente em ambientes corrompidos.,\nSeu verdadeiro potencial ainda é desconhecido, podendo se revelar apenas quando empunhada por alguém de sangue ShadowHeart.,\nA arma parece crescer junto ao portador, adaptando-se à sua força e estilo.\n\nOlhos do Caçador de Demônios (Passiva)\n\nOlhos forjados na luta contra o abismo. Esses olhos permitem ao portador perceber, caçar e combater criaturas infernais com extrema eficiência — embora também funcionem contra outros seres vivos conscientes, como humanos ou entidades mágicas, desde que não estejam ocultando completamente sua presença.\nAlém de aprimorar a percepção, os Olhos do Caçador concedem vantagens em combate, tornando o usuário um verdadeiro predador em campo.\n\n---\n\n Adaptabilidade Versátil\n\nDurante o combate, quanto mais o portador enfrenta um inimigo, mais adaptado ele se torna aos movimentos, padrões e fraquezas do adversário.\nO tempo necessário para alcançar essa adaptabilidade é determinado pelo Mestre, de acordo com o nível de dificuldade do inimigo.\n\n---\n\n Rastro\n\nComo um verdadeiro caçador de criaturas infernais, o portador pode rastrear inimigos com facilidade, seguindo rastros deixados no ambiente ou percebendo silhuetas e resquícios de energia.\nConcede vantagem em testes de Investigação relacionados a rastreamento, além da capacidade de enxergar o rastro energético de alvos recentes.\n\n---\n\n Identificar Fraqueza\n\nOs olhos permitem analisar e expor pontos fracos de criaturas infernais e, em alguns casos, até de seres conscientes.\nAo identificar uma fraqueza, o usuário recebe dano extra contra o alvo e pode ignorar uma resistência aleatória da criatura, conforme a interpretação do Mestre e o poder do inimigo.\n\n---\n\n Chifre da Salvação\n\nO Chifre da Salvação é o resultado da fusão entre uma criatura infernal poderosa e uma arma do tipo Shadowheart — relíquias que só podem ser empunhadas por portadores da Essência Verdadeira.\nCada chifre manifesta-se de forma única, refletindo o estilo de combate e a essência do usuário.\n\nNo caso de Tatsumaki, o Chifre da Salvação amplifica de forma colossal suas aptidões físicas, aprimorando ataques com armas brancas e aumentando sua presença no campo de batalha.\nA mera visão desse chifre é suficiente para intimidar criaturas infernais de categorias inferiores, forçando-as a recuar diante da aura opressiva de seu portador.\n\nHá lendas que dizem que o portador do Chifre da Salvação possui o poder de liderar criaturas infernais, assim como a lendária Grande Centopeia.\nContudo, tais rumores permanecem envoltos em mistério… por enquanto.\n\n\n Conjunto de Habilidades — Manipulação Sanguínea,\n---\n\nAbsorver Sangue,\n“O sangue é vida, e a vida retorna a quem o domina.”\n\nO usuário absorve o sangue presente no ambiente, convertendo-o em energia vital.\n\nEfeito: Recupera 25% da Vida Máxima.,\nUso: Apenas 1 vez por combate.,\nCusto: 1 P.V.,\nCondição: Deve haver sangue inimigo no chão.,\nPerícia: —,\n\n---\n\nChão de Espinhos,\n“Do sangue nasce a dor, e da dor florescem os espinhos.”\n\nInvoca estacas de sangue solidificado sob os inimigos, perfurando-os e aplicando veneno.\n\nEfeito: Cria um campo de espinhos com 6 metros de diâmetro, atingindo até 3 alvos.,\nTeste: Os alvos devem realizar um Teste de Resistência para evitar o envenenamento.,\nDano:,\n\n  \nAlvo único: 2d12 + ¼ do Arcano\nMúltiplos alvos: 4d6 + ¼ do Arcano,\nVeneno: 1d4 + ¼ do Arcano por turno (se falhar no teste),\n,\nCusto: 5 P.S. e 1 P.V.,\nPerícia: Conjuração (Arcanismo),\n\n---\n\nMar de Hemoglobina,\n“O campo de batalha se torna um oceano vermelho, e todos afundam sob minha vontade.”\n\nTransmuta o solo coberto de sangue em uma área densa e viscosa, capaz de prender e sufocar inimigos.\n\nEfeito: O sangue se torna uma área controlável. Inimigos afundam, perdendo turnos ou metade da movimentação, e podem sofrer 1 P.V de dano por turno.,\nTeste: Firmeza ou Resistência para evitar o efeito.,\nÁrea: 1 metro de diâmetro por 1 P.S gasto.,\nCondição: Só funciona se houver sangue cobrindo o solo.,\nCusto: 1 P.V + 1 P.S por metro desejado.,\nPerícia: Canalização (Arcano),\nLimite: Não afeta inimigos que voam.,\n\n---\n\nRessonância Sanguínea,\n“Nenhuma distância separa quem compartilha o mesmo sangue.”\n\nPermite rastrear qualquer inimigo a partir de uma gota de seu sangue.\n\nEfeito: Localiza e acompanha a posição do inimigo.,\nContramedida: O inimigo pode realizar um Teste de Presença para tentar ocultar sua energia vital, desde que perceba o rastreamento.,\nCusto: 1 P.V em combate | 3 P.F fora de combate.,\nPerícia: —,\n\n---\n\nRefluxo Carmesim,\n“Devolvo o sangue que me negaste… em forma de ruína.”\n\nFaz o sangue derramado do inimigo retornar violentamente ao seu corpo, gerando uma explosão interna que o arremessa para longe.\n\nEfeito: O sangue retorna ao corpo do inimigo, causando dano físico e empurrão.,\nTeste: Firmeza para resistir e permanecer de pé.,\nDano:\n \nBase: 3d8 + ¼ do Arcano\nBônus (se cair): +2d8,\n,\nEstado: Se falhar, o inimigo fica Derrubado.,\nCusto: 1 P.V e uma quantidade considerável de sangue inimigo no chão.,\nPerícia: Presença (Arcanismo),\n\n---\n\nArma Sanguenta,\n“Meu sangue é minha lâmina, e minha lâmina é sede.”\n\nImbuí a arma com sangue, intensificando seu corte e energia. Pode ser usado em aliados.\n\nEfeito: Concede +1d8 de dano adicional à arma encantada.,\nDuração: 1d4 + 1 rodadas.,\nCusto: 4 P.S e 1 P.V.,\nPerícia: —,\n\n---\n\nChamas de Ferro,\n“O ferro do sangue queima como o próprio inferno.”\n\nInflama o ferro presente no sangue, criando faíscas carmesins que queimam tudo ao redor.\n\nCondição: O inimigo deve possuir ferimentos abertos, e o usuário deve misturar seu próprio sangue ao do alvo.,\nEfeito: O sangue ferve internamente, ignorando resistências e causando dano contínuo de fogo.,\nDano: 2d8 + ¼ do Arcano por 1d4 + 1 rodadas.,\nCusto: 8 P.S e 1 P.V.,\nPerícia: Canalização (Arcano),\n\n---\n\nSangue Perfurante,\n“A pressão do sangue supera o aço.”\n\nCondensa e dispara sangue sob extrema pressão, atravessando defesas e perfurando o alvo.\n\nEfeito: Projétil de sangue concentrado e letal.,\nDano: 3d8 + ¼ do Arcano.,\nCusto: 4 P.S e 1 P.V.,\nPerícia: Pontaria,\n\n\n⚡ Conjunto de Habilidades — Energia & Essência\n\n---\n\nGranada de Energia\n\n“Uma centelha contida, pronta para despedaçar tudo em sua explosão.”\n\nO usuário condensa energia pura em uma pequena esfera instável e a arremessa, provocando uma explosão devastadora.\n\nEfeito: Cria uma explosão de energia em área com 9 metros de diâmetro, causando destruição massiva.\nDano: 3d8 + 1/4 do Arcano\nBônus: Causa o dobro de dano em estruturas.\nCusto: 1 P.V e 5 P.F\nPerícia: Pontaria ou Arremesso (Destreza ou Força)\n\n---\n\nArma de Plasma\n\n“Quando a lâmina queima mais que o sol, até o aço teme o corte.”\n\nImbui a arma — ou as mãos do usuário — com energia plasmática intensa, gerando calor extremo que atravessa resistências.\n\nEfeito: Reforça o ataque físico com energia concentrada, capaz de ignorar resistências à escolha do usuário.\nDano Extra: 1d12 (dano de energia/plasma)\nCusto: 1 P.V e 8 P.F\n\n---\n\nLaser Concentrado\n\n“Toda destruição de um campo... comprimida em um único ponto.”\n\nO usuário canaliza energia em um ponto específico (geralmente na ponta do dedo ou lâmina), disparando um feixe devastador que perfura qualquer defesa.\n\nEfeito: Dispara um feixe de energia altamente penetrante em um único alvo.\nPropriedade: Ignora Bloqueio e Reações (dependendo do nível do inimigo).\nDano: 3d12 +1/4 do Arcano\nCusto: 2 P.V e 10 P.F ou 1 P.V e 2 PTE\nPerícia: Pontaria (Destreza)\n\n---\n\nGrito Infernal\n\n“Do abismo, meu brado ecoa — e os mortais tremem ao ouvi-lo.”\n\nLibera um grito ensurdecedor e demoníaco que abala a mente e o corpo dos inimigos.\n\nEfeito: Causa dano sônico e desestabiliza o equilíbrio dos afetados.\nCondição: Os alvos devem realizar um Teste de Resistência ou Firmeza.\nEfeitos Possíveis:\n\n  \nFalha parcial: Atordoamento ou perda de equilíbrio.\nFalha crítica: Surdez temporária ou permanente.\nCusto: 1 P.V e 6 P.F\nPerícia: Presença (Arcano)\n\n---\n\nMandíbula Voraz\n\n“Minha fome não é por carne, mas pela energia que vocês ousam invocar.”\n\nCria uma mandíbula monstruosa — física ou espiritual — que devora a energia dos ataques inimigos, revertendo-a em vigor para o usuário.\n\nEfeito: Anula um ataque inimigo baseado em energia ou essência, absorvendo seu poder.\nBônus: Recupera P.F proporcionalmente ao dano e ao custo do ataque anulado.\nCusto: 1 P.V e 10 P.S\nPerícia: Defender (Fortitude)\n\n---\n\nLinguagem\n\n“O sangue fala, e agora eu entendo todas as suas vozes.”\n\nPermite compreender e se comunicar na língua de qualquer criatura cuja essência tenha sido absorvida.\n\nEfeito: Aprende permanentemente a linguagem da criatura de quem extraiu a essência.\nCusto: 4 P.F e 1 P.V *\n\n--- \nGetsuga Tenshō\n\n“Minha lâmina carrega o peso de um mundo — e o corta em dois.”\n\nTatsumaki sobrecarrega sua espada com energia destrutiva, desferindo um corte colossal que varre tudo à frente.\n\nEfeito: Dispara uma rajada de energia em área, devastando tudo em linha reta.\nPropriedades:\n\n  \nIgnora diversas resistências.\nAfeta múltiplos inimigos em área de impacto frontal.\nDano: 5d12 + 1/2 Arcano\nCusto: 16 P.F e todos os P.V possuídos\nPerícia: Armas Avançadas (Destreza)\n\n---\n\nOnda Sonora\n\n“O som é minha lâmina invisível, e o silêncio... sua consequência.”\n\nEmite uma poderosa onda sonora de alta frequência que danifica e desorienta o inimigo.\n\nEfeito: Causa sangramento pelos olhos e ouvidos, além de risco de paralisia momentânea.\nTeste: Resistência ou Firmeza para evitar ficar inconsciente ou perder o equilíbrio.\nDano: 2d12 +1/4 do Arcano\nCusto: 8 P.F e 1 P.V\nPerícia: Canalização (Arcano)\n\nEstilo Ofensivo - Estágio I\n\nLiberação de Energia: Ao escolher este caminho, sua essência começa a se fundir de forma natural e passiva com seus ataques. Cada golpe, seja físico ou mágico, carrega um fragmento de sua vontade e poder interior, deixando rastros da sua energia por onde passa.\n\nEfeito:\nVocê adiciona +1 dado de dano a qualquer ataque realizado (mágico ou físico).\nEsse bônus representa a manifestação sutil, mas constante, de sua essência ofensiva.\n\nLiberação Instintiva - Estágio 2 (Ofensiva)\nCom uma conexão mais profunda com sua essência, seus ataques mágicos\ndeixam de ser técnicas elaboradas para se tornarem instintos naturais. Eles fluem\ncom precisão, ferocidade e uma força quase automática. Nesse estágio, é como se\nsua própria essência lutasse ao seu lado — um reflexo direto de sua vontade,\nampliando cada investida.\nEfeitos:\n- O usuário recebe +1 P.V.\n- Todos os seus ataques passam a causar +1 dado extra de dano, como se a\nessência executasse um golpe adicional junto ao seu.\nPré-Requisitos:\n2 Ponto de Essência\n10 Pontos de Karma Positivos\n2º treinamento de essência\n\nAura Defensiva: Estágio 1 – Defesa\nNeste estágio inicial, a essência do usuário começa a se manifestar fisicamente, condensando-se em uma aura visível e densa ao redor do corpo. Essa aura atua como um escudo, capaz de bloquear tanto ataques físicos quanto mágicos, oferecendo uma camada robusta de proteção durante o combate.\n\nEfeito: Garante uma defesa equivalente a 2d6 + ¼ do atributo Arcano.\nDuração: 1d4 rodadas (uso de uma vez por dia).\nCusto: Determinado pelo mestre com base na intensidade e uso contínuo.\n\nEssa forma de defesa é ideal para usuários focados em resistência e controle de campo, mantendo-se firmes mesmo diante de ataques devastadores. \n\nEntendimento: 3º Estágio – Essência Verdadeira\n- Todos os seus ataques causam **+1 dado de dano adicional (ex: de 1d8 para2d8), representando o ápice da conexão entre você e sua essência.\n\nControle Inicial – Estágio 1 (Aptidão Mágica)\nEste é o primeiro passo na harmonia entre sua essência e sua magia. Um elo\ndesperto, ainda em crescimento, mas que já permite uma compreensão mais\nrefinada do fluxo mágico que percorre seu ser. Ao seguir esse caminho, o usuário\ncomeça a canalizar sua energia de forma mais eficiente, aprimorando o domínio\nsobre sua própria magia.\nEfeito:\nO usuário recebe vantagem em testes de perícia relacionados ao uso de magia."
+  },
+  "notes": {
+    "essence_stages": [
+      "Estágio 1: Conhecendo a si mesmo",
+      "Estágio 2: Conexão",
+      "Estágio 3: Entendimento ",
+      "Estágio 4: Liberação Parcial",
+      "Estágio 5: Liberação da Essência",
+      "Estágio 6: Você",
+      "Estágio 7: O Ser",
+      "Estágio 8: Conexão Definitiva",
+      "Estágio 9: Essência Definitiva",
+      "Estágio 10: Essência Verdadeira",
+      "Estágio 1: Eu já te Conheço",
+      "Estágio 2: É só o Começo",
+      "Estágio 3: Do que Adianta Resistir?",
+      "Estágio 4: O Tempo",
+      "Estágio 5: Está",
+      "Estágio 6: Esgotado.",
+      "Estágio 7: Mente Quebrada",
+      "Estágio 8: Já é Tarde",
+      "Estágio 9: Apenas um Agora",
+      "Estágio 10: Eu quem Decido."
+    ],
+    "karma_positive": 14
+  },
+  "actions": [
+    {
+      "name": "Teste: Lutar",
+      "category": "Perícia",
+      "roll": "1d20 + @skills.physical.Lutar.total"
+    },
+    {
+      "name": "Ataque (genérico)",
+      "category": "Combate",
+      "roll": "1d20 + @skills.physical.Lutar.total"
+    },
+    {
+      "name": "Punhos de Ferro (FOR)",
+      "category": "Habilidade",
+      "roll": "1d10 + @attributes.Força.eighth"
+    },
+    {
+      "name": "Punhos de Ferro (DES)",
+      "category": "Habilidade",
+      "roll": "1d10 + @attributes.Destreza.eighth"
+    }
+  ]
+}

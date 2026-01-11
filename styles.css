@@ -1,0 +1,229 @@
+:root{
+  --bg:#0b0c10;
+  --panel:#11131a;
+  --card:#151826;
+  --text:#e9ecf1;
+  --muted:#9aa3b2;
+  --border:rgba(255,255,255,.10);
+  --accent:#7aa2ff;
+  --danger:#ff6b6b;
+  --ok:#7dffb2;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --radius:16px;
+  --radius2:22px;
+  --font: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:var(--font);
+  background: radial-gradient(1200px 700px at 20% -10%, rgba(122,162,255,.20), transparent 60%),
+              radial-gradient(900px 600px at 80% -10%, rgba(255,107,107,.12), transparent 55%),
+              var(--bg);
+  color:var(--text);
+}
+
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:5;
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+  background: rgba(11,12,16,.78);
+  backdrop-filter: blur(10px);
+}
+
+.title{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:12px;
+}
+
+h1{margin:0; font-size:22px; letter-spacing:.2px}
+h2{margin:0 0 10px; font-size:16px}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+code{color:var(--accent)}
+pre, .pre{
+  white-space:pre-wrap;
+  word-break:break-word;
+  margin:10px 0 0;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background: rgba(0,0,0,.18);
+}
+
+.container{
+  max-width:1100px;
+  margin:0 auto;
+  padding:18px;
+}
+
+.tabs{display:flex; gap:8px; flex-wrap:wrap}
+.tab{
+  border:1px solid var(--border);
+  background: rgba(255,255,255,.04);
+  color:var(--text);
+  padding:9px 12px;
+  border-radius:999px;
+  cursor:pointer;
+  transition: transform .05s ease, background .2s ease, border-color .2s ease;
+}
+.tab:hover{background: rgba(255,255,255,.06)}
+.tab:active{transform: translateY(1px)}
+.tab.active{
+  border-color: rgba(122,162,255,.45);
+  background: rgba(122,162,255,.12);
+}
+
+.panel{display:none}
+.panel.active{display:block}
+
+.card{
+  background: rgba(21,24,38,.72);
+  border:1px solid var(--border);
+  border-radius: var(--radius2);
+  padding:14px;
+  box-shadow: var(--shadow);
+}
+
+.grid2{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:14px;
+}
+@media (min-width: 900px){
+  .grid2{grid-template-columns: 1fr 1fr;}
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+input[type="search"], input[type="text"], select{
+  border:1px solid var(--border);
+  background: rgba(0,0,0,.20);
+  color:var(--text);
+  padding:10px 12px;
+  border-radius:12px;
+  min-width:280px;
+  outline:none;
+}
+select{min-width:180px}
+
+button{
+  border:1px solid rgba(122,162,255,.35);
+  background: rgba(122,162,255,.12);
+  color:var(--text);
+  padding:10px 12px;
+  border-radius:12px;
+  cursor:pointer;
+  transition: transform .05s ease, background .2s ease, border-color .2s ease;
+}
+button:hover{background: rgba(122,162,255,.18)}
+button:active{transform: translateY(1px)}
+button.secondary{
+  border-color: var(--border);
+  background: rgba(255,255,255,.04);
+}
+button.danger{
+  border-color: rgba(255,107,107,.50);
+  background: rgba(255,107,107,.15);
+}
+
+.table{
+  width:100%;
+  border-collapse: collapse;
+  overflow:hidden;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+.table th, .table td{
+  text-align:left;
+  padding:10px 12px;
+  border-bottom:1px solid var(--border);
+}
+.table th{font-size:12px; color:var(--muted); font-weight:600}
+.table tr:last-child td{border-bottom:none}
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  font-size:12px;
+  color:var(--muted);
+  background: rgba(255,255,255,.03);
+}
+
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.log{
+  min-height:140px;
+  max-height:320px;
+  overflow:auto;
+  padding:10px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background: rgba(0,0,0,.18);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:12px;
+  line-height:1.35;
+}
+
+.logActions{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+
+.kv{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px dashed rgba(255,255,255,.12);
+}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--muted)}
+.kv .v{font-weight:600}
+
+.track{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px dashed rgba(255,255,255,.12);
+}
+.track:last-child{border-bottom:none}
+.trackControls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.trackControls input{
+  width:92px;
+  min-width:92px;
+  text-align:center;
+}
+
+.footer{
+  padding:18px;
+  text-align:center;
+  border-top:1px solid var(--border);
+  background: rgba(11,12,16,.55);
+}

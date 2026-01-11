@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tatsumaki — Ficha Interativa</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">
+      <h1 id="charName">Ficha</h1>
+      <div id="charMeta" class="muted"></div>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="Seções">
+      <button class="tab active" data-tab="visao" role="tab" aria-selected="true">Visão</button>
+      <button class="tab" data-tab="atributos" role="tab">Atributos</button>
+      <button class="tab" data-tab="pericias" role="tab">Perícias</button>
+      <button class="tab" data-tab="habilidades" role="tab">Habilidades</button>
+      <button class="tab" data-tab="rolador" role="tab">Rolador</button>
+      <button class="tab" data-tab="notas" role="tab">Notas</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="tab-visao" class="panel active" aria-label="Visão geral">
+      <div class="grid2">
+        <div class="card">
+          <h2>Status</h2>
+          <div id="tracks"></div>
+          <div class="small muted">Os valores editados aqui ficam salvos no seu navegador (localStorage).</div>
+        </div>
+
+        <div class="card">
+          <h2>Defesas e afins</h2>
+          <div id="defenses"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Ações rápidas</h2>
+        <div id="quickActions" class="actions"></div>
+      </div>
+
+      <div class="card">
+        <h2>Log</h2>
+        <div id="log" class="log"></div>
+        <div class="logActions">
+          <button id="clearLogBtn" class="secondary">Limpar log</button>
+          <button id="copyLogBtn" class="secondary">Copiar log</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-atributos" class="panel" aria-label="Atributos">
+      <div class="card">
+        <h2>Atributos</h2>
+        <div id="attributes"></div>
+      </div>
+    </section>
+
+    <section id="tab-pericias" class="panel" aria-label="Perícias">
+      <div class="card">
+        <h2>Perícias</h2>
+        <div class="row">
+          <input id="skillSearch" type="search" placeholder="Filtrar por nome (ex: furtividade)" />
+          <select id="skillGroup">
+            <option value="all">Todas</option>
+            <option value="physical">Físicas</option>
+            <option value="intellectual">Intelectuais</option>
+          </select>
+        </div>
+        <div id="skills"></div>
+        <div class="small muted">Dica: clique em “Rolar” para fazer 1d20 + total da perícia.</div>
+      </div>
+    </section>
+
+    <section id="tab-habilidades" class="panel" aria-label="Habilidades">
+      <div class="grid2">
+        <div class="card">
+          <h2>Árvore de combate</h2>
+          <div id="combatAbilities"></div>
+        </div>
+        <div class="card">
+          <h2>Outras habilidades (texto)</h2>
+          <details open>
+            <summary>Ferreiro — O Mestre da Forja Eterna</summary>
+            <pre id="craftTree" class="pre"></pre>
+          </details>
+          <details>
+            <summary>Habilidades exclusivas (texto)</summary>
+            <pre id="exclusive" class="pre"></pre>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-rolador" class="panel" aria-label="Rolador de dados">
+      <div class="card">
+        <h2>Rolador</h2>
+        <div class="row">
+          <input id="exprInput" type="text" placeholder="Ex: 2d6+3, 1d20 + @skills.physical.Lutar.total" />
+          <button id="rollBtn">Rolar</button>
+        </div>
+        <div class="small muted">
+          Suporta NdM, + - * / parênteses e macros do tipo <code>@skills.physical.Lutar.total</code>.
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-notas" class="panel" aria-label="Notas">
+      <div class="grid2">
+        <div class="card">
+          <h2>Essência</h2>
+          <div id="essence"></div>
+        </div>
+        <div class="card">
+          <h2>Karma</h2>
+          <div id="karma"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="muted">Feito para GitHub Pages (site estático). Você edita <code>data/character.json</code> para atualizar a ficha.</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
