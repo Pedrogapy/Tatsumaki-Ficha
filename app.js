@@ -1,5 +1,5 @@
 /* =========================
-   Tatsumaki — Ficha Web (v2)
+   Tatsumaki — Ficha Web (v3)
    - Static (GitHub Pages)
    - Sem dependências externas
    - Sons via WebAudio
@@ -27,6 +27,73 @@
     .trim()
     .replace(/\s+/g, "_")
     .replace(/[^A-Za-zÀ-ÿ0-9_\-]/g, "");
+
+  // --------------------------
+  // Perícias: descrições (para exibir na tela)
+  // --------------------------
+  const SKILL_DESC = {
+    "Lutar": "Lutar sem armas, técnicas de luta.",
+    "Agarrar": "Segurar algo ou imobilizar alvos com firmeza física.",
+    "Quebrar": "Romper objetos ou estruturas pela força bruta.",
+    "Arrancar": "Puxar com violência algo preso ou incrustado.",
+    "Arremesso": "Lançar objetos ou inimigos com potência.",
+    "Arremeso": "Lançar objetos ou inimigos com potência.",
+    "Destravar": "Forçar trancas, correntes ou mecanismos travados.",
+    "Desprender": "Soltar-se de amarras, garras ou contenções físicas.",
+    "Levantamento": "Erguer grandes pesos ou levantar obstáculos.",
+    "Armas_Pesadas": "Manusear com eficácia armamentos de grande pesadas.",
+    "Arcanismo": "Entendimento sobre magia, runas e planos místicos.",
+    "Ocultismo": "Saber sobre maldições, entidades e segredos proibidos.",
+    "Intimidação": "Ameaça ou força alguém ao medo.",
+    "Empatia": "Ler emoções e intenções das pessoas.",
+    "Intuição": "Saber algo sem explicação lógica — pura sensação.",
+    "Invocação": "Chamar criaturas, armas ou espíritos para auxiliá-lo.",
+    "Canalização": "Focar energias mágicas em feitiços ou habilidades.",
+    "Conjuração": "Utilizar runas como forma de feitiçaria.",
+    "Presença": "Imposição mágica ou espiritual que afeta seres e ambientes.",
+    "Furtividade": "Mover-se em silêncio e escondido.",
+    "Espionagem": "Observar e colher informações sem levantar suspeitas.",
+    "Acrobacia": "Manobras ágeis, cambalhotas, equilíbrio.",
+    "Reflexos": "Esquivas rápidas, ação surpresa ou emergências.",
+    "Reflexo": "Esquivas rápidas, ação surpresa ou emergências.",
+    "Defletir": "Desviar projéteis ou ataques com reflexos rápidos.",
+    "Pontaria": "Acertar alvos com precisão usando armas à distância.",
+    "Manuseio": "Controlar objetos delicados ou perigosos com agilidade.",
+    "Prestidigitação": "Executar truques rápidos com as mãos, como roubo ou mágica.",
+    "Armas_Avançadas": "Operar armamentos complexos com destreza técnica.",
+    "Atletismo": "Corridas, saltos, escaladas, natação.",
+    "Resistência": "Suportar fadiga, frio, veneno ou dor.",
+    "Manobra": "Golpes especiais como agarrar, derrubar, desarmar.",
+    "Saúde": "Resistência física a doenças, venenos e exaustão.",
+    "Firmeza": "Manter-se estável diante de impactos ou tentações.",
+    "Defender": "Proteger-se ou a outros de ataques diretos.",
+    "Tolerar_a_Dor": "Suportar ferimentos sem perder desempenho.",
+    "Determinação": "Persistir mesmo sob pressão ou desvantagem.",
+    "Contra-Ataque": "Responder a um ataque com reação imediata e precisa.",
+    "Investigação": "Raciocínio lógico e dedutivo para encontrar pistas e segredos.",
+    "Cartografia": "Leitura e criação de mapas.",
+    "Tática": "Planejamento estratégico de combate e movimentação.",
+    "Persuasão": "Convencer, inspirar ou acalmar.",
+    "Negociação": "Trocar bens ou ideias com vantagem.",
+    "Pilotagem": "Conduzir veículos mágicos, criaturas voadoras ou máquinas.",
+    "Falsificação": "Criar documentos, selos ou objetos falsos.",
+    "Tecnologia": "Compreensão e uso de máquinas, circuitos e dispositivos modernos.",
+    "Criptografia": "Decifrar, codificar ou reconhecer padrões secretos em mensagens.",
+    "Religião": "Conhecimento sobre deuses, cultos e rituais.",
+    "História": "Saber sobre eventos antigos, reinos caídos e linhagens.",
+    "Medicina": "Diagnóstico, primeiros socorros e tratamento de doenças.",
+    "Natureza": "Saber sobre plantas, criaturas e fenômenos naturais.",
+    "Sobrevivência": "Navegar em ambientes hostis, caçar e encontrar abrigo.",
+    "Liderança": "Inspirar e comandar aliados em combate ou fora dele.",
+    "Domar": "Treinar e manter controle sobre animais ou monstros.",
+    "Ofício": "Criar, consertar ou aprimorar itens por meio de técnicas manuais.",
+    "Percepção": "Notar detalhes sutis no ambiente ou mudanças ao redor."
+  };
+
+  const getSkillDesc = (name) => {
+    const k = keyOf(name);
+    return SKILL_DESC[k] || SKILL_DESC[String(name || "").trim()] || "";
+  };
 
   // --------------------------
   // Storage
@@ -102,14 +169,26 @@
     for (const a of character.attributes) attributes[a.name] = a;
 
     // Skills (dict por nome e por keyOf(nome))
-    const skills = { physical: {}, intellectual: {} };
+    // Compatibilidade:
+    // - skills.physical / skills.intellectual (como antes)
+    // - grupos por atributo: skills.FOR / DES / FORT / ARC / INT / SAB
+    const skills = { physical: {}, intellectual: {}, FOR: {}, DES: {}, FORT: {}, ARC: {}, INT: {}, SAB: {} };
+
+    const putSkill = (group, skill) => {
+      if (!group || !skill) return;
+      group[skill.name] = skill;
+      group[keyOf(skill.name)] = skill;
+    };
+
     for (const s of character.skills.physical) {
-      skills.physical[s.name] = s;
-      skills.physical[keyOf(s.name)] = s;
+      putSkill(skills.physical, s);
+      const code = String(s.attribute || "").toUpperCase();
+      if (Object.prototype.hasOwnProperty.call(skills, code)) putSkill(skills[code], s);
     }
     for (const s of character.skills.intellectual) {
-      skills.intellectual[s.name] = s;
-      skills.intellectual[keyOf(s.name)] = s;
+      putSkill(skills.intellectual, s);
+      const code = String(s.attribute || "").toUpperCase();
+      if (Object.prototype.hasOwnProperty.call(skills, code)) putSkill(skills[code], s);
     }
 
     return {
@@ -117,7 +196,6 @@
       attributes,
       skills,
       stats: character.stats,
-      // runtime.tracks é o estado atual (número)
       tracks: runtime.tracks,
     };
   }
@@ -144,11 +222,9 @@
   }
 
   function rollDice(exprRaw, ctx, mode = "normal") {
-    // mode: normal | adv | dis (apenas para 1d20 no começo: rola 2d20 e pega maior/menor)
     let expr = (exprRaw || "").trim();
     if (!expr) throw new Error("Expressão vazia.");
 
-    // Adv/Dis: se a expressão começar com 1d20 (ignora espaços)
     if (mode !== "normal") {
       const normalized = expr.replace(/\s+/g, "");
       if (normalized.startsWith("1d20")) {
@@ -158,7 +234,6 @@
 
     const withMacros = replaceMacros(expr, ctx);
 
-    // tokeniza dados NdM
     const diceRegex = /(\d*)d(\d+)/gi;
     const diceRolls = [];
     const replaced = withMacros.replace(diceRegex, (m, nStr, sidesStr) => {
@@ -169,7 +244,6 @@
       for (let i = 0; i < n; i++) rolls.push(1 + Math.floor(Math.random() * sides));
       diceRolls.push({ n, sides, rolls });
 
-      // adv/dis só para 2d20
       if (mode !== "normal" && sides === 20 && n === 2) {
         const a = rolls[0], b = rolls[1];
         const chosen = mode === "adv" ? Math.max(a, b) : Math.min(a, b);
@@ -178,7 +252,6 @@
       return String(rolls.reduce((a, b) => a + b, 0));
     });
 
-    // eval seguro: apenas números e operadores
     if (!/^[0-9+\-*/().\s]+$/.test(replaced)) {
       throw new Error("Expressão inválida (use apenas dados, números e + - * / ( ) ).");
     }
@@ -297,7 +370,6 @@
   }
 
   function spend(costObj, reason = "") {
-    // costObj: {PS: n, PV: n, PF: n}
     const keys = ["PS", "PV", "PF"];
     for (const k of keys) {
       const cost = Number(costObj?.[k] ?? 0);
@@ -385,10 +457,6 @@
     const metaLines = [];
     if (c.meta.race?.name) metaLines.push(`Raça: ${c.meta.race.name}${c.meta.race.level ? ` ${c.meta.race.level}` : ""}`);
     if (c.meta.class?.name) metaLines.push(`Classe: ${c.meta.class.name}${c.meta.class.level ? ` ${c.meta.class.level}` : ""}`);
-    if (Array.isArray(c.meta.professions) && c.meta.professions.length) {
-      const p = c.meta.professions.map(x => x.level ? `${x.name} ${x.level}` : x.name).join(" / ");
-      metaLines.push(`Profissões: ${p}`);
-    }
     if (c.meta.experience_raw) metaLines.push(`Experiência: ${c.meta.experience_raw}`);
 
     el.innerHTML = `
@@ -407,12 +475,12 @@
           </div>
           <div class="card__text">
 Use o menu acima para navegar pelas seções.
-- Ativas normalmente consomem 1 PV (ação) se não tiver custo definido.
+- Ativas normalmente consomem 1 PV (ação), se não houver custo definido.
 - Exclusivas com custo definido já descontam PV/PF/PS automaticamente.
           </div>
           <div class="small" style="margin-top:10px;">
 Macros úteis:
-<code>@attributes.Força.half</code> • <code>@skills.physical.Armas_Avançadas.total</code> • <code>@tracks.PF</code>
+<code>@attributes.Força.half</code> • <code>@skills.FOR.Armas_Pesadas.total</code> • <code>@tracks.PF</code>
           </div>
         </div>
 
@@ -420,11 +488,11 @@ Macros úteis:
           <div class="card__title">Atalhos rápidos</div>
           <div class="card__text">Clique para rolar automaticamente:</div>
           <div class="card__actions">
-            <button class="btn" data-roll="1d20 + @skills.physical.Lutar.total">Ataque (Lutar)</button>
-            <button class="btn" data-roll="1d20 + @skills.physical.Armas_Avançadas.total">Armas Avançadas</button>
-            <button class="btn" data-roll="1d20 + @skills.physical.Reflexo.total">Reflexo</button>
-            <button class="btn" data-roll="1d20 + @skills.intellectual.Percepção.total">Percepção</button>
-            <button class="btn" data-roll="1d20 + @skills.intellectual.Ocultismo.total">Ocultismo</button>
+            <button class="btn" data-roll="1d20 + @skills.FOR.Lutar.total">Ataque (Lutar)</button>
+            <button class="btn" data-roll="1d20 + @skills.DES.Armas_Avançadas.total">Armas Avançadas</button>
+            <button class="btn" data-roll="1d20 + @skills.DES.Reflexo.total">Reflexo</button>
+            <button class="btn" data-roll="1d20 + @skills.SAB.Percepção.total">Percepção</button>
+            <button class="btn" data-roll="1d20 + @skills.ARC.Ocultismo.total">Ocultismo</button>
           </div>
         </div>
       </div>
@@ -462,9 +530,9 @@ Macros úteis:
           </div>
         </div>
         <div class="card__actions">
-          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${escapeAttr(a.name)}.half">Teste (1/2)</button>
-          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${escapeAttr(a.name)}.quarter">Teste (1/4)</button>
-          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${escapeAttr(a.name)}.eighth">Teste (1/8)</button>
+          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${a.name}.half">Teste (1/2)</button>
+          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${a.name}.quarter">Teste (1/4)</button>
+          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${a.name}.eighth">Teste (1/8)</button>
         </div>
       `;
       grid.appendChild(card);
@@ -479,49 +547,84 @@ Macros úteis:
   }
 
   // --------------------------
-  // Render: Skills
+  // Render: Skills (agrupadas por atributo + descrição)
   // --------------------------
   function renderSkills() {
     const c = runtime.character;
     const el = $("#tab-skills");
 
-    const makeList = (title, list, groupKey) => {
+    const ATTR_LABEL = {
+      FOR: "Força",
+      DES: "Destreza",
+      FORT: "Fortitude",
+      ARC: "Arcano",
+      INT: "Inteligência",
+      SAB: "Sabedoria",
+    };
+
+    const ATTR_ORDER = ["FOR", "DES", "FORT", "ARC", "INT", "SAB"];
+
+    const all = [...(c.skills?.physical || []), ...(c.skills?.intellectual || [])];
+    const groups = {};
+    for (const s of all) {
+      const code = String(s.attribute || "").toUpperCase();
+      if (!groups[code]) groups[code] = [];
+      groups[code].push(s);
+    }
+
+    el.innerHTML = `<div class="grid"></div>`;
+    const grid = $(".grid", el);
+
+    const makeGroup = (code, list) => {
+      const title = ATTR_LABEL[code] ? `${ATTR_LABEL[code]} (${code})` : code;
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
         <div class="card__head">
           <div>
             <div class="card__title">${escapeHtml(title)}</div>
-            <div class="card__meta">Clique em “Rolar” para fazer 1d20 + Total.</div>
+            <div class="card__meta">Clique em “Rolar” para fazer 1d20 + Total. As descrições são a referência rápida do que cada perícia faz.</div>
           </div>
           <div class="badges"><span class="badge">${list.length} perícias</span></div>
         </div>
         <div class="hr"></div>
         <div class="kv"></div>
       `;
-      const kv = $(".kv", card);
 
-      for (const s of list) {
+      const kv = $(".kv", card);
+      const sorted = [...list].sort((a, b) => String(a.name).localeCompare(String(b.name), "pt-BR"));
+
+      for (const s of sorted) {
         const row = document.createElement("div");
         row.style.display = "contents";
         const key = keyOf(s.name);
+        const desc = getSkillDesc(s.name);
         row.innerHTML = `
-          <div class="kv__k">${escapeHtml(s.name)}</div>
+          <div class="kv__k">
+            <div class="skillName">${escapeHtml(s.name)}</div>
+            ${desc ? `<div class="skillDesc">${escapeHtml(desc)}</div>` : ``}
+          </div>
           <div class="kv__v">
-            <span class="badge">${escapeHtml(s.attribute ?? "—")}</span>
             <span class="badge">${Number.isFinite(s.total) ? s.total : 0}</span>
-            <button class="btn btn--ghost" data-roll="1d20 + @skills.${groupKey}.${key}.total">Rolar</button>
+            <button class="btn btn--ghost" data-roll="1d20 + @skills.${code}.${key}.total">Rolar</button>
           </div>
         `;
         kv.appendChild(row);
       }
+
       return card;
     };
 
-    el.innerHTML = `<div class="grid"></div>`;
-    const grid = $(".grid", el);
-    grid.appendChild(makeList("Perícias Físicas", c.skills.physical, "physical"));
-    grid.appendChild(makeList("Perícias Intelectuais", c.skills.intellectual, "intellectual"));
+    for (const code of ATTR_ORDER) {
+      const list = groups[code] || [];
+      if (!list.length) continue;
+      grid.appendChild(makeGroup(code, list));
+    }
+
+    const extraCodes = Object.keys(groups).filter(c0 => !ATTR_ORDER.includes(c0) && groups[c0]?.length);
+    for (const code of extraCodes) {
+      grid.appendChild(makeGroup(code, groups[code]));
+    }
 
     $$("[data-roll]", el).forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -599,7 +702,6 @@ Macros úteis:
       `;
       grid.appendChild(card);
 
-      // Use
       const use = $("[data-use]", card);
       if (use) {
         use.addEventListener("click", () => {
@@ -612,7 +714,6 @@ Macros úteis:
         });
       }
 
-      // Rolls
       $$("[data-roll]", card).forEach((btn) => {
         btn.addEventListener("click", () => {
           AudioFX.click();
@@ -624,9 +725,6 @@ Macros úteis:
     container.appendChild(wrap);
   }
 
-  // --------------------------
-  // Render: Combat / Craft / Exclusive
-  // --------------------------
   function renderCombat() {
     const el = $("#tab-combat");
     el.innerHTML = "";
@@ -634,16 +732,6 @@ Macros úteis:
     renderAbilityList(el, list, {
       sectionTitle: "Habilidades de Combate",
       hint: "Ativas descontam 1 PV por padrão (ação), se não houver custo definido."
-    });
-  }
-
-  function renderCraft() {
-    const el = $("#tab-craft");
-    el.innerHTML = "";
-    const list = runtime.character.abilities.craft_tree || [];
-    renderAbilityList(el, list, {
-      sectionTitle: "Ferreiro — O Mestre da Forja Eterna",
-      hint: "Se você quiser, dá para ajustar custos/rolagens editando data/character.json."
     });
   }
 
@@ -712,9 +800,6 @@ Macros úteis:
     return lines.join("\n");
   }
 
-  // --------------------------
-  // Roller UI
-  // --------------------------
   function doRoll(expr, title, mode = "normal") {
     try {
       AudioFX.roll();
@@ -762,9 +847,6 @@ Macros úteis:
     });
   }
 
-  // --------------------------
-  // Settings buttons
-  // --------------------------
   function wireTopbar() {
     $("#btnNewRound").addEventListener("click", () => {
       AudioFX.click();
@@ -805,9 +887,6 @@ Macros úteis:
     });
   }
 
-  // --------------------------
-  // Tabs wiring
-  // --------------------------
   function wireTabs() {
     $("#tabs").addEventListener("click", (e) => {
       const btn = e.target.closest(".tab");
@@ -818,9 +897,6 @@ Macros úteis:
     });
   }
 
-  // --------------------------
-  // Log buttons
-  // --------------------------
   function wireLogButtons() {
     $("#btnClearLog").addEventListener("click", () => {
       AudioFX.click();
@@ -843,9 +919,6 @@ Macros úteis:
     });
   }
 
-  // --------------------------
-  // Escape HTML / Attr
-  // --------------------------
   function escapeHtml(s) {
     return String(s ?? "")
       .replace(/&/g, "&amp;")
@@ -855,36 +928,28 @@ Macros úteis:
       .replace(/'/g, "&#039;");
   }
   function escapeAttr(s) {
-    // atributo HTML: evita quebrar aspas
     return escapeHtml(s).replace(/\n/g, " ");
   }
 
-  // --------------------------
-  // Boot
-  // --------------------------
   async function boot() {
     const res = await fetch("./data/character.json", { cache: "no-store" });
     if (!res.ok) throw new Error("Não consegui carregar data/character.json");
     const character = await res.json();
     runtime.character = character;
 
-    // Load state
     const saved = loadState();
     runtime.state = saved || buildDefaultState(character);
 
-    // apply settings
     $("#soundToggle").checked = !!runtime.state.settings.sound;
     $("#motionToggle").checked = !!runtime.state.settings.reducedMotion;
     AudioFX.setEnabled(!!runtime.state.settings.sound);
 
-    // Header
     $("#charName").textContent = character.meta?.name || "Ficha";
     const metaPieces = [];
     if (character.meta?.race?.name) metaPieces.push(`${character.meta.race.name}${character.meta.race.level ? " " + character.meta.race.level : ""}`);
     if (character.meta?.class?.name) metaPieces.push(`${character.meta.class.name}${character.meta.class.level ? " " + character.meta.class.level : ""}`);
     $("#charMeta").textContent = metaPieces.join(" • ") || "—";
 
-    // UI
     renderTracks();
     renderLog();
 
@@ -893,21 +958,11 @@ Macros úteis:
     wireTopbar();
     wireLogButtons();
 
-    // Chips com macros usando keyOf (sem espaços)
-    $$(".chip").forEach((c) => {
-      c.dataset.macro = c.dataset.macro
-        .replace("Armas Avançadas", "Armas_Avançadas")
-        .replace("Primeiros Socorros", "Primeiros_Socorros")
-        .replace("Armas Pesadas", "Armas_Pesadas")
-        .replace("Seguir Trilhas", "Seguir_Trilhas");
-    });
-
     renderOverview();
     renderAttributes();
     renderSkills();
     renderCombat();
     renderExclusive();
-    renderCraft();
 
     logLine("Ficha carregada. Bom jogo.");
   }
