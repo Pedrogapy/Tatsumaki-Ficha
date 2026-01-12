@@ -700,6 +700,13 @@ Macros úteis:
         <button class="btn btn--ghost" data-roll="${escapeAttr(r.expr)}" data-title="${escapeAttr(r.label)}">${escapeHtml(r.label)}</button>
       `).join("");
 
+// UI opcional: dano base configurável (ex.: armas pesadas)
+const weaponUi = (a.ui && a.ui.weapon_damage_input) ? `
+  <input class="input" data-weapon-dmg value="${escapeAttr(a.ui.weapon_damage_default || "2d6")}" style="max-width:180px;" />
+  <button class="btn btn--ghost" data-weapon-dmg-roll="1" data-weapon-add="${escapeAttr(a.ui.weapon_damage_add || "@attributes.Força.quarter")}" data-title="Dano">Dano</button>
+` : "";
+
+
       const limitOnceCombat = a.effect?.limit === "once_per_combat" || a.limits?.once_per_combat;
       const usedKey = (a.name || "").trim();
       const alreadyUsed = !!runtime.state.combat?.used?.[usedKey];
@@ -725,6 +732,7 @@ Macros úteis:
         <div class="card__actions">
           ${useBtn}
           ${rollBtns}
+          ${weaponUi}
         </div>
       `;
       grid.appendChild(card);
@@ -771,7 +779,21 @@ Macros úteis:
         });
       }
 
-      $$("[data-roll]", card).forEach((btn) => {
+      
+
+// Rolar dano configurável (arma pesada)
+const weaponBtn = $("[data-weapon-dmg-roll]", card);
+if (weaponBtn) {
+  const dmgInput = $("[data-weapon-dmg]", card);
+  weaponBtn.addEventListener("click", () => {
+    AudioFX.click();
+    const base = (dmgInput?.value || "").trim() || "0";
+    const add = (weaponBtn.dataset.weaponAdd || "@attributes.Força.quarter").trim();
+    const expr = `${base} + ${add}`;
+    doRoll(expr, `${a.name || "Dano"}`);
+  });
+}
+$$("[data-roll]", card).forEach((btn) => {
         btn.addEventListener("click", () => {
           AudioFX.click();
           doRoll(btn.dataset.roll, btn.dataset.title || a.name || "Rolar");
@@ -1160,10 +1182,20 @@ Macros úteis:
   // --------------------------
   // Boot
   // --------------------------
-  async async function boot() {
-    const raw = document.getElementById("characterData")?.textContent?.trim();
-    if (!raw) throw new Error("Não encontrei o JSON da ficha (characterData).");
-    const character = JSON.parse(raw);
+  async function boot() {
+    // 1) Preferir JSON embutido no HTML (funciona até abrindo o arquivo localmente)
+// 2) Se não existir, cair para fetch de ./data/character.json (GitHub Pages)
+let raw = document.getElementById("characterData")?.textContent?.trim();
+let character = null;
+
+if (raw) {
+  character = JSON.parse(raw);
+} else {
+  const res = await fetch("./data/character.json", { cache: "no-store" });
+  if (!res.ok) throw new Error("Não encontrei o JSON da ficha (characterData) e falhou ao carregar ./data/character.json");
+  character = await res.json();
+}
+
     runtime.character = character;
 
     const saved = loadState();
