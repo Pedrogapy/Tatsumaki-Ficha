@@ -456,27 +456,100 @@
     "luck": 6,
     "tracks": {
       "PS": {
-        "current": 0,
+        "current": 108,
         "max": 108,
         "temp": 0,
         "label": "Pontos de Sangue (vida)"
       },
-      "PV": {
-        "current": 0,
-        "max": 5,
+      "PVO": {
+        "current": 2,
+        "max": 2,
         "temp": 0,
-        "label": "Pontos de Vigor (ações)"
+        "label": "PV Ofensivo (ações ofensivas)"
+      },
+      "PVD": {
+        "current": 3,
+        "max": 3,
+        "temp": 0,
+        "label": "PV Defensivo (reações/defesa)"
       },
       "PF": {
-        "current": 0,
+        "current": 66,
         "max": 66,
         "temp": 0,
         "label": "Pontos de Foco (mana)"
       }
-    }
+    },
+    "tracks_order": [
+      "PS",
+      "PVO",
+      "PVD",
+      "PF"
+    ]
   },
   "abilities": {
-    "combat_tree": [],
+    "combat_tree": [
+      {
+        "name": "Corpo a corpo (Lutar)",
+        "type": "Ativa",
+        "level": 1,
+        "icon": "🥊",
+        "text": "Teste: Lutar (d20+6)\nDano: 2d8 + 1/4 de Força",
+        "rolls": [
+          {
+            "label": "Teste",
+            "expr": "1d20 + @skills.FOR.Lutar.total"
+          },
+          {
+            "label": "Dano",
+            "expr": "2d8 + @attributes.Força.quarter"
+          }
+        ],
+        "auto_cost": {
+          "PVO": 1
+        }
+      },
+      {
+        "name": "Arma Pesada (ex: martelo 2 mãos)",
+        "type": "Ativa",
+        "level": 1,
+        "icon": "🔨",
+        "text": "Teste: Armas Pesadas (d20+11)\nDano: (dano da arma) + 1/4 de Força\n(O dano base da arma é configurável no card)",
+        "rolls": [
+          {
+            "label": "Teste",
+            "expr": "1d20 + @skills.FOR.Armas_Pesadas.total"
+          }
+        ],
+        "auto_cost": {
+          "PVO": 1
+        },
+        "ui": {
+          "weapon_damage_input": true,
+          "weapon_damage_default": "2d6"
+        }
+      },
+      {
+        "name": "Espada Especial (Armas Avançadas)",
+        "type": "Ativa",
+        "level": 1,
+        "icon": "🗡️",
+        "text": "Teste: Armas Avançadas\nDano: 3d8 + 1/4 de Destreza",
+        "rolls": [
+          {
+            "label": "Teste",
+            "expr": "1d20 + @skills.DES.Armas_Avançadas.total"
+          },
+          {
+            "label": "Dano",
+            "expr": "3d8 + @attributes.Destreza.quarter"
+          }
+        ],
+        "auto_cost": {
+          "PVO": 1
+        }
+      }
+    ],
     "exclusive": {
       "equipment": {
         "name": "Personificação...",
@@ -543,8 +616,8 @@
         {
           "name": "Absorver Sangue",
           "type": "Ativa",
-          "flavor": "O sangue é vida, e a vida retorna a quem o domina.",
-          "text": "“O sangue é vida, e a vida retorna a quem o domina.”\nO usuário absorve o sangue presente no ambiente, convertendo-o em energia vital.\nEfeito: Recupera 25% da Vida Máxima.,\nUso: Apenas 1 vez por combate.,\nCusto: 1 P.V.,\nCondição: Deve haver sangue inimigo no chão.,\nPerícia: —,",
+          "flavor": "“O sangue é vida, e a vida retorna a quem o domina.”",
+          "text": "O usuário regenera a própria vida criando mais sangue e o absorvendo.\n\nEfeito: Recupera 25% da Vida Máxima.\nUso: Apenas 1 vez por combate.\nCusto: 1 P.V.\nCondição: Deve haver sangue inimigo no chão.\nPerícia: —",
           "kv": {
             "Efeito": "Recupera 25% da Vida Máxima.",
             "Uso": "Apenas 1 vez por combate.",
@@ -561,7 +634,13 @@
           ],
           "rolls": [],
           "auto_cost": {
-            "PV": 1
+            "PVD": 1
+          },
+          "effect": {
+            "type": "heal_percent",
+            "track": "PS",
+            "percent": 0.25,
+            "limit": "once_per_combat"
           }
         },
         {
@@ -619,7 +698,7 @@
           ],
           "rolls": [],
           "auto_cost": {
-            "PV": 1
+            "PVO": 1
           }
         },
         {
@@ -647,8 +726,8 @@
           ],
           "rolls": [],
           "auto_cost": {
-            "PV": 1,
-            "PF": 3
+            "PF": 3,
+            "PVO": 1
           }
         },
         {
@@ -680,7 +759,7 @@
             }
           ],
           "auto_cost": {
-            "PV": 1
+            "PVO": 1
           }
         },
         {
@@ -733,7 +812,7 @@
           "rolls": [
             {
               "label": "Dano",
-              "expr": "2d8 + ¼ do Arcano por 1d4 + 1 rodadas."
+              "expr": "2d8 + @attributes.Arcano.quarter"
             }
           ],
           "auto_cost": {
@@ -761,7 +840,7 @@
           "rolls": [
             {
               "label": "Dano",
-              "expr": "3d8 + ¼ do Arcano."
+              "expr": "3d8 + @attributes.Arcano.quarter"
             }
           ],
           "auto_cost": {
@@ -790,11 +869,11 @@
           "rolls": [
             {
               "label": "Dano",
-              "expr": "3d8 + 1/4 do Arcano"
+              "expr": "3d8 + @attributes.Arcano.quarter"
             }
           ],
           "auto_cost": {
-            "PV": 1
+            "PVO": 1
           }
         },
         {
@@ -821,7 +900,7 @@
             }
           ],
           "auto_cost": {
-            "PV": 1
+            "PVO": 1
           }
         },
         {
@@ -846,11 +925,11 @@
           "rolls": [
             {
               "label": "Dano",
-              "expr": "3d12 +1/4 do Arcano"
+              "expr": "3d12 +@attributes.Arcano.quarter"
             }
           ],
           "auto_cost": {
-            "PV": 2
+            "PVO": 2
           }
         },
         {
@@ -876,7 +955,7 @@
           ],
           "rolls": [],
           "auto_cost": {
-            "PV": 1
+            "PVO": 1
           }
         },
         {
@@ -899,7 +978,7 @@
           ],
           "rolls": [],
           "auto_cost": {
-            "PV": 1
+            "PVO": 1
           }
         },
         {
@@ -945,7 +1024,7 @@
           "rolls": [
             {
               "label": "Dano",
-              "expr": "5d12 + 1/2 Arcano"
+              "expr": "5d12 + @attributes.Arcano.half"
             }
           ],
           "auto_cost": {
@@ -975,11 +1054,11 @@
           "rolls": [
             {
               "label": "Dano",
-              "expr": "2d12 +1/4 do Arcano"
+              "expr": "2d12 +@attributes.Arcano.quarter"
             }
           ],
           "auto_cost": {
-            "PV": 1
+            "PVO": 1
           }
         }
       ]
