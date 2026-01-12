@@ -1,130 +1,47 @@
 /* =========================
-   Tatsumaki — Ficha Web (v2)
-   - Static (GitHub Pages)
+   Tatsumaki — Ficha Web (v8)
+   - Funciona no GitHub Pages e abrindo index.html local (sem servidor)
    - Sem dependências externas
-   - Sons via WebAudio
+   - Rolagens com macros @attributes / @skills / @tracks
    ========================= */
 
 (() => {
   // --------------------------
-  // Helpers
+  // DOM helpers
   // --------------------------
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const now = () => new Date();
   const pad2 = (n) => String(n).padStart(2, "0");
   const stamp = () => {
-    const d = now();
+    const d = new Date();
     return `[${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}]`;
   };
 
-  // Chave “segura” para usar em macros (@skills...):
-  // - troca espaços por _
-  // - mantém acentos (ok)
-  // - remove caracteres estranhos
+  // Chave “segura” (pra usar em @skills.<GROUP>.<KEY>.total)
   const keyOf = (s) => String(s ?? "")
     .trim()
     .replace(/\s+/g, "_")
     .replace(/[^A-Za-zÀ-ÿ0-9_\-]/g, "");
-  // --------------------------
-  // Perícias: descrições (para exibir na tela)
-  // --------------------------
-  const SKILL_DESC = {
-    "Lutar": "Lutar sem armas, técnicas de luta.",
-    "Agarrar": "Segurar algo ou imobilizar alvos com firmeza física.",
-    "Quebrar": "Romper objetos ou estruturas pela força bruta.",
-    "Arrancar": "Puxar com violência algo preso ou incrustado.",
-    "Arremesso": "Lançar objetos ou inimigos com potência.",
-    "Arremeso": "Lançar objetos ou inimigos com potência.",
-    "Destravar": "Forçar trancas, correntes ou mecanismos travados.",
-    "Desprender": "Soltar-se de amarras, garras ou contenções físicas.",
-    "Levantamento": "Erguer grandes pesos ou levantar obstáculos.",
-    "Armas_Pesadas": "Manusear com eficácia armamentos de grande pesadas.",
-    "Arcanismo": "Entendimento sobre magia, runas e planos místicos.",
-    "Ocultismo": "Saber sobre maldições, entidades e segredos proibidos.",
-    "Intimidação": "Ameaça ou força alguém ao medo.",
-    "Empatia": "Ler emoções e intenções das pessoas.",
-    "Intuição": "Saber algo sem explicação lógica — pura sensação.",
-    "Invocação": "Chamar criaturas, armas ou espíritos para auxiliá-lo.",
-    "Canalização": "Focar energias mágicas em feitiços ou habilidades.",
-    "Conjuração": "Utilizar runas como forma de feitiçaria.",
-    "Presença": "Imposição mágica ou espiritual que afeta seres e ambientes.",
-    "Furtividade": "Mover-se em silêncio e escondido.",
-    "Espionagem": "Observar e colher informações sem levantar suspeitas.",
-    "Acrobacia": "Manobras ágeis, cambalhotas, equilíbrio.",
-    "Reflexos": "Esquivas rápidas, ação surpresa ou emergências.",
-    "Reflexo": "Esquivas rápidas, ação surpresa ou emergências.",
-    "Defletir": "Desviar projéteis ou ataques com reflexos rápidos.",
-    "Pontaria": "Acertar alvos com precisão usando armas à distância.",
-    "Manuseio": "Controlar objetos delicados ou perigosos com agilidade.",
-    "Prestidigitação": "Executar truques rápidos com as mãos, como roubo ou mágica.",
-    "Armas_Avançadas": "Operar armamentos complexos com destreza técnica.",
-    "Atletismo": "Corridas, saltos, escaladas, natação.",
-    "Resistência": "Suportar fadiga, frio, veneno ou dor.",
-    "Manobra": "Golpes especiais como agarrar, derrubar, desarmar.",
-    "Saúde": "Resistência física a doenças, venenos e exaustão.",
-    "Firmeza": "Manter-se estável diante de impactos ou tentações.",
-    "Defender": "Proteger-se ou a outros de ataques diretos.",
-    "Tolerar_a_Dor": "Suportar ferimentos sem perder desempenho.",
-    "Determinação": "Persistir mesmo sob pressão ou desvantagem.",
-    "Contra-Ataque": "Responder a um ataque com reação imediata e precisa.",
-    "Investigação": "Raciocínio lógico e dedutivo para encontrar pistas e segredos.",
-    "Cartografia": "Leitura e criação de mapas.",
-    "Tática": "Planejamento estratégico de combate e movimentação.",
-    "Persuasão": "Convencer, inspirar ou acalmar.",
-    "Negociação": "Trocar bens ou ideias com vantagem.",
-    "Pilotagem": "Conduzir veículos mágicos, criaturas voadoras ou máquinas.",
-    "Falsificação": "Criar documentos, selos ou objetos falsos.",
-    "Tecnologia": "Compreensão e uso de máquinas, circuitos e dispositivos modernos.",
-    "Criptografia": "Decifrar, codificar ou reconhecer padrões secretos em mensagens.",
-    "Religião": "Conhecimento sobre deuses, cultos e rituais.",
-    "História": "Saber sobre eventos antigos, reinos caídos e linhagens.",
-    "Medicina": "Diagnóstico, primeiros socorros e tratamento de doenças.",
-    "Natureza": "Saber sobre plantas, criaturas e fenômenos naturais.",
-    "Sobrevivência": "Navegar em ambientes hostis, caçar e encontrar abrigo.",
-    "Liderança": "Inspirar e comandar aliados em combate ou fora dele.",
-    "Domar": "Treinar e manter controle sobre animais ou monstros.",
-    "Ofício": "Criar, consertar ou aprimorar itens por meio de técnicas manuais.",
-    "Percepção": "Notar detalhes sutis no ambiente ou mudanças ao redor.",
-  };
-
-  const getSkillDesc = (name) => {
-    const k = keyOf(name);
-    return SKILL_DESC[k] || SKILL_DESC[String(name || "").trim()] || "";
-  };
-
-
 
   // --------------------------
-  // Storage
-  // --------------------------
-  const STORAGE_KEY = "tatsumaki_sheet_v2";
-  const loadState = () => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  };
-  const saveState = (state) => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-
-  // --------------------------
-  // Audio (no assets needed)
+  // Audio (WebAudio, sem assets)
   // --------------------------
   const AudioFX = (() => {
     let ctx = null;
     let enabled = true;
 
     function ensure() {
+      if (!enabled) return null;
       if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // Em alguns browsers, o contexto pode iniciar suspenso
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
       return ctx;
     }
 
     function tone(freq, dur = 0.06, type = "sine", gain = 0.06) {
-      if (!enabled) return;
       const c = ensure();
+      if (!c) return;
       const o = c.createOscillator();
       const g = c.createGain();
       o.type = type;
@@ -136,9 +53,9 @@
       o.stop(c.currentTime + dur);
     }
 
-    function noise(dur = 0.10, gain = 0.02) {
-      if (!enabled) return;
+    function noise(dur = 0.12, gain = 0.02) {
       const c = ensure();
+      if (!c) return;
       const bufferSize = Math.floor(c.sampleRate * dur);
       const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
       const data = buffer.getChannelData(0);
@@ -157,48 +74,151 @@
       click() { tone(420, 0.04, "triangle", 0.03); },
       roll() { noise(0.14, 0.03); tone(240, 0.06, "sine", 0.02); },
       success() { tone(660, 0.05, "sine", 0.05); setTimeout(() => tone(880, 0.06, "sine", 0.04), 65); },
-      error() { tone(160, 0.08, "sawtooth", 0.03); }
+      error() { tone(160, 0.08, "sawtooth", 0.03); },
     };
   })();
 
   // --------------------------
-  // Dice Engine + Macros
+  // Toast UI
   // --------------------------
-  function buildContext(character, runtime) {
-    // Attributes
-    const attributes = {};
-    for (const a of character.attributes) attributes[a.name] = a;
+  const toastHost = $("#toastHost");
+  function toast(title, total, detail, diceFaces = [], opts = {}) {
+    const { lifeMs = 4200, reducedMotion = false } = opts;
+    const el = document.createElement("div");
+    el.className = "toast is-in";
 
-    // Skills (dict por nome e por keyOf(nome))
-    // Compatibilidade:
-    // - skills.physical / skills.intellectual (como antes)
-    // - grupos por atributo: skills.FOR / DES / FORT / ARC / INT / SAB
-    const skills = { physical: {}, intellectual: {}, FOR: {}, DES: {}, FORT: {}, ARC: {}, INT: {}, SAB: {} };
+    el.innerHTML = `
+      <div class="toast__row">
+        <div class="toast__title"></div>
+        <div class="toast__total"></div>
+      </div>
+      <div class="toast__detail"></div>
+      <div class="toast__dice"></div>
+    `;
 
-    const putSkill = (group, skill) => {
-      if (!group || !skill) return;
-      group[skill.name] = skill;
-      group[keyOf(skill.name)] = skill;
+    $(".toast__title", el).textContent = title;
+    $(".toast__total", el).textContent = Number.isFinite(total) ? String(total) : "—";
+    $(".toast__detail", el).textContent = detail || "";
+
+    const diceBox = $(".toast__dice", el);
+    (diceFaces || []).slice(0, 10).forEach((n) => {
+      const die = document.createElement("div");
+      die.className = "die";
+      die.textContent = String(n);
+      if (!reducedMotion) die.classList.add("is-rolling");
+      diceBox.appendChild(die);
+    });
+
+    toastHost.appendChild(el);
+
+    const kill = () => {
+      el.classList.add("is-out");
+      setTimeout(() => el.remove(), reducedMotion ? 0 : 220);
     };
 
-    for (const s of character.skills.physical) {
-      putSkill(skills.physical, s);
-      const code = String(s.attribute || "").toUpperCase();
-      if (Object.prototype.hasOwnProperty.call(skills, code)) putSkill(skills[code], s);
+    setTimeout(kill, lifeMs);
+    el.addEventListener("click", kill);
+  }
+
+  // --------------------------
+  // Storage
+  // --------------------------
+  const STORAGE_KEY = "tatsumaki_sheet_state_v8";
+  const loadState = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
     }
-    for (const s of character.skills.intellectual) {
-      putSkill(skills.intellectual, s);
+  };
+  const saveState = () => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(runtime.state)); } catch {}
+  };
+
+  // --------------------------
+  // Runtime
+  // --------------------------
+  const runtime = {
+    character: null,
+    state: null,
+  };
+
+  function buildDefaultState(character) {
+    // Tracks sempre em máximo na inicialização (pedido do Pedro)
+    const tracks = {};
+    for (const [k, t] of Object.entries(character.stats.tracks || {})) {
+      tracks[k] = t.max ?? t.current ?? 0;
+    }
+
+    return {
+      tracks,
+      settings: {
+        sound: true,
+        reducedMotion: false,
+      },
+      combat: { used: {} }, // limites 1/combate
+      log: [],
+      ui: {
+        weaponDamage: {}, // inputs por nome de habilidade
+      }
+    };
+  }
+
+  // Ao abrir o site: SEMPRE iniciar recursos no máximo e resetar limites por combate
+  function forceStartAtMax(character) {
+    for (const [k, t] of Object.entries(character.stats.tracks || {})) {
+      runtime.state.tracks[k] = t.max ?? runtime.state.tracks[k] ?? 0;
+    }
+    runtime.state.combat = { used: {} };
+  }
+
+  function logLine(text) {
+    runtime.state.log.push(`${stamp()} ${text}`);
+    if (runtime.state.log.length > 2000) runtime.state.log.shift();
+    renderLog();
+    saveState();
+  }
+
+  function renderLog() {
+    $("#log").textContent = runtime.state.log.join("\n");
+  }
+
+  // --------------------------
+  // Context for macros
+  // --------------------------
+  function buildContext(character, state) {
+    const attributes = {};
+    for (const a of character.attributes || []) {
+      attributes[a.name] = a;
+      // alias por nome sem acento / keyOf
+      attributes[keyOf(a.name)] = a;
+    }
+
+    // Skills: por grupo e por keyOf
+    const groups = { physical: {}, intellectual: {}, FOR: {}, DES: {}, FORT: {}, ARC: {}, INT: {}, SAB: {} };
+
+    const put = (g, s) => {
+      g[s.name] = s;
+      g[keyOf(s.name)] = s;
+    };
+
+    for (const s of character.skills?.physical || []) {
+      put(groups.physical, s);
       const code = String(s.attribute || "").toUpperCase();
-      if (Object.prototype.hasOwnProperty.call(skills, code)) putSkill(skills[code], s);
+      if (Object.prototype.hasOwnProperty.call(groups, code)) put(groups[code], s);
+    }
+    for (const s of character.skills?.intellectual || []) {
+      put(groups.intellectual, s);
+      const code = String(s.attribute || "").toUpperCase();
+      if (Object.prototype.hasOwnProperty.call(groups, code)) put(groups[code], s);
     }
 
     return {
       meta: character.meta,
       attributes,
-      skills,
-      stats: character.stats,
-      // runtime.tracks é o estado atual (número)
-      tracks: runtime.tracks,
+      skills: groups,
+      tracks: state.tracks,
     };
   }
 
@@ -219,46 +239,45 @@
       if (typeof v === "number") return String(v);
       if (v && typeof v.total === "number") return String(v.total);
       if (v && typeof v.value === "number") return String(v.value);
+      if (v && typeof v.current === "number") return String(v.current);
       return "0";
     });
   }
 
   function rollDice(exprRaw, ctx, mode = "normal") {
-    // mode: normal | adv | dis (apenas para 1d20 no começo: rola 2d20 e pega maior/menor)
-    let expr = (exprRaw || "").trim();
+    let expr = String(exprRaw || "").trim();
     if (!expr) throw new Error("Expressão vazia.");
 
-    // Adv/Dis: se a expressão começar com 1d20 (ignora espaços)
+    // Vantagem/Desvantagem: só modifica 1d20 inicial
     if (mode !== "normal") {
       const normalized = expr.replace(/\s+/g, "");
-      if (normalized.startsWith("1d20")) {
-        expr = expr.replace(/1\s*d\s*20/, "2d20");
-      }
+      if (normalized.startsWith("1d20")) expr = expr.replace(/1\s*d\s*20/, "2d20");
     }
 
     const withMacros = replaceMacros(expr, ctx);
 
-    // tokeniza dados NdM
     const diceRegex = /(\d*)d(\d+)/gi;
     const diceRolls = [];
     const replaced = withMacros.replace(diceRegex, (m, nStr, sidesStr) => {
       const n = nStr ? parseInt(nStr, 10) : 1;
       const sides = parseInt(sidesStr, 10);
       if (!Number.isFinite(n) || !Number.isFinite(sides) || n <= 0 || sides <= 0) return "0";
+
       const rolls = [];
       for (let i = 0; i < n; i++) rolls.push(1 + Math.floor(Math.random() * sides));
       diceRolls.push({ n, sides, rolls });
 
-      // adv/dis só para 2d20
+      // se for 2d20 e modo adv/dis: escolhe um valor só
       if (mode !== "normal" && sides === 20 && n === 2) {
-        const a = rolls[0], b = rolls[1];
+        const [a, b] = rolls;
         const chosen = mode === "adv" ? Math.max(a, b) : Math.min(a, b);
         return String(chosen);
       }
+
       return String(rolls.reduce((a, b) => a + b, 0));
     });
 
-    // eval seguro: apenas números e operadores
+    // Validação leve: só garantir que é “matemática”
     if (!/^[0-9+\-*/().\s]+$/.test(replaced)) {
       throw new Error("Expressão inválida (use apenas dados, números e + - * / ( ) ).");
     }
@@ -266,160 +285,88 @@
     // eslint-disable-next-line no-new-func
     const total = Function(`"use strict"; return (${replaced});`)();
 
-    const detailParts = [];
-    detailParts.push(`Expr: ${expr}`);
-    if (withMacros !== expr) detailParts.push(`Macros → ${withMacros}`);
-    if (replaced !== withMacros) detailParts.push(`Dados → ${replaced}`);
-
-    if (diceRolls.length) {
-      const lines = diceRolls.map(d => {
-        const list = d.rolls.join(", ");
-        return `${d.n}d${d.sides}: [${list}]`;
-      });
-      detailParts.push(lines.join("\n"));
-    }
+    const detail = [
+      `Expr: ${expr}`,
+      withMacros !== expr ? `Macros → ${withMacros}` : null,
+      replaced !== withMacros ? `Dados → ${replaced}` : null,
+      diceRolls.length ? diceRolls.map(d => `${d.n}d${d.sides}: [${d.rolls.join(", ")}]`).join("\n") : null,
+    ].filter(Boolean).join("\n");
 
     return {
       total: Number(total),
-      detail: detailParts.join("\n"),
-      diceFaces: diceRolls.flatMap(d => d.rolls.slice(0, 8)),
+      detail,
+      diceFaces: diceRolls.flatMap(d => d.rolls.slice(0, 12)),
     };
   }
 
-  // --------------------------
-  // UI: Toast
-  // --------------------------
-  const toastHost = $("#toastHost");
-
-  function toast(title, total, detail, diceFaces, opts = {}) {
-    const { lifeMs = 4200, reducedMotion = false } = opts;
-    const el = document.createElement("div");
-    el.className = "toast is-in";
-
-    const diceNodes = (diceFaces || []).slice(0, 8).map((n) => {
-      const die = document.createElement("div");
-      die.className = "die";
-      die.textContent = String(n);
-      if (!reducedMotion) die.classList.add("is-rolling");
-      return die;
-    });
-
-    el.innerHTML = `
-      <div class="toast__row">
-        <div class="toast__title"></div>
-        <div class="toast__total"></div>
-      </div>
-      <div class="toast__detail"></div>
-      <div class="toast__dice"></div>
-    `;
-    $(".toast__title", el).textContent = title;
-    $(".toast__total", el).textContent = Number.isFinite(total) ? String(total) : "—";
-    $(".toast__detail", el).textContent = detail || "";
-
-    const diceBox = $(".toast__dice", el);
-    diceNodes.forEach(d => diceBox.appendChild(d));
-
-    toastHost.appendChild(el);
-
-    const kill = () => {
-      el.classList.add("is-out");
-      setTimeout(() => el.remove(), reducedMotion ? 0 : 220);
-    };
-
-    setTimeout(kill, lifeMs);
-    el.addEventListener("click", kill);
-  }
-
-  // --------------------------
-  // App State
-  // --------------------------
-  const runtime = {
-    character: null,
-    state: null,
-  };
-
-  function buildDefaultState(character) {
-    const tracks = character.stats.tracks || {};
-    const initialTracks = {};
-    for (const [k, t] of Object.entries(tracks)) {
-      initialTracks[k] = t.max ?? t.current ?? 0;
+  function doRoll(expr, title, mode = "normal") {
+    try {
+      AudioFX.roll();
+      const ctx = buildContext(runtime.character, runtime.state);
+      const r = rollDice(expr, ctx, mode);
+      logLine(`${title}: ${expr} = ${r.total}`);
+      toast(title, r.total, r.detail, r.diceFaces, { reducedMotion: runtime.state.settings.reducedMotion });
+      AudioFX.success();
+    } catch (e) {
+      AudioFX.error();
+      toast("Erro", "—", String(e?.message || e), [], { reducedMotion: runtime.state.settings.reducedMotion });
+      logLine(`ERRO: ${String(e?.message || e)}`);
     }
-
-    return {
-      tracks: initialTracks,
-      settings: {
-        sound: character.ui?.defaults?.sound ?? true,
-        reducedMotion: character.ui?.defaults?.reduced_motion ?? false,
-      },
-      log: [],
-      combat: {
-        used: {} // por combate
-      }
-    };
-  }
-
-  function logLine(text) {
-    runtime.state.log.push(`${stamp()} ${text}`);
-    if (runtime.state.log.length > 2000) runtime.state.log.shift();
-    renderLog();
-    saveState(runtime.state);
-  }
-
-  function renderLog() {
-    $("#log").textContent = runtime.state.log.join("\n");
   }
 
   // --------------------------
-  // Tracks UI
+  // Tracks (Recursos)
   // --------------------------
-  function adjustTrack(key, delta) {
-    const max = runtime.character.stats.tracks[key].max ?? 999999;
-    const cur = runtime.state.tracks[key] ?? 0;
-    const next = clamp(cur + delta, 0, max);
-    runtime.state.tracks[key] = next;
-    saveState(runtime.state);
-    renderTracks();
-  }
-
-  function spend(costObj, reason = "") {
-    if (!costObj || typeof costObj !== "object") return;
-
-    for (const [k, raw] of Object.entries(costObj)) {
-      const cost = Number(raw ?? 0);
-      if (!Number.isFinite(cost) || cost <= 0) continue;
-
-      const max = runtime.character.stats.tracks[k]?.max ?? 999999;
-      const cur = runtime.state.tracks[k] ?? 0;
-      runtime.state.tracks[k] = clamp(cur - cost, 0, max);
-    }
-
-    saveState(runtime.state);
-    renderTracks();
-    if (reason) logLine(`- Custo aplicado: ${formatCost(costObj)} (${reason})`);
+  function trackOrder(character) {
+    const keys = Object.keys(character.stats.tracks || {});
+    const preferred = ["PS", "PVO", "PVD", "PV", "PF"];
+    const ordered = preferred.filter(k => keys.includes(k)).concat(keys.filter(k => !preferred.includes(k)));
+    // remove duplicados
+    return [...new Set(ordered)];
   }
 
   function formatCost(costObj) {
     const parts = [];
-    if (!costObj || typeof costObj !== "object") return "0";
-    for (const [k, raw] of Object.entries(costObj)) {
-      const v = Number(raw ?? 0);
+    for (const k of trackOrder(runtime.character)) {
+      const v = Number(costObj?.[k] ?? 0);
       if (v > 0) parts.push(`${v} ${k}`);
     }
     return parts.length ? parts.join(" + ") : "0";
   }
 
+  function adjustTrack(key, delta) {
+    const t = runtime.character.stats.tracks?.[key];
+    if (!t) return;
+    const max = t.max ?? 999999;
+    const cur = runtime.state.tracks?.[key] ?? 0;
+    runtime.state.tracks[key] = clamp(cur + delta, 0, max);
+    saveState();
+    renderTracks();
+  }
+
+  function spend(costObj, reason = "") {
+    for (const [k, v] of Object.entries(costObj || {})) {
+      const t = runtime.character.stats.tracks?.[k];
+      if (!t) continue;
+      const max = t.max ?? 999999;
+      const cur = runtime.state.tracks?.[k] ?? 0;
+      const cost = Number(v ?? 0);
+      if (!Number.isFinite(cost) || cost <= 0) continue;
+      runtime.state.tracks[k] = clamp(cur - cost, 0, max);
+    }
+    saveState();
+    renderTracks();
+    if (reason) logLine(`- Custo aplicado: ${formatCost(costObj)} (${reason})`);
+  }
+
   function renderTracks() {
     const box = $("#tracks");
     box.innerHTML = "";
-
     const tracks = runtime.character.stats.tracks || {};
-    const order = runtime.character.stats.tracks_order || Object.keys(tracks);
 
-    for (const key of order) {
+    for (const key of trackOrder(runtime.character)) {
       const t = tracks[key];
-      if (!t) continue;
-
-      const cur = runtime.state.tracks[key] ?? 0;
+      const cur = runtime.state.tracks?.[key] ?? 0;
       const max = t.max ?? 0;
       const pct = max > 0 ? clamp((cur / max) * 100, 0, 100) : 0;
 
@@ -428,17 +375,17 @@
       el.innerHTML = `
         <div class="track__top">
           <div class="track__label">
-            <div class="track__name">${key}</div>
-            <div class="track__desc">${t.label || ""}</div>
+            <div class="track__name">${escapeHtml(key)}</div>
+            <div class="track__desc">${escapeHtml(t.label || "")}</div>
           </div>
-          <div class="track__value">${cur} / ${max}</div>
+          <div class="track__value">${escapeHtml(cur)} / ${escapeHtml(max)}</div>
         </div>
         <div class="track__bar"><div style="width:${pct}%"></div></div>
         <div class="track__controls">
-          <button class="btn btn--ghost" data-track="${key}" data-delta="-10">-10</button>
-          <button class="btn btn--ghost" data-track="${key}" data-delta="-1">-1</button>
-          <button class="btn btn--ghost" data-track="${key}" data-delta="1">+1</button>
-          <button class="btn btn--ghost" data-track="${key}" data-delta="10">+10</button>
+          <button class="btn btn--ghost" data-track="${escapeAttr(key)}" data-delta="-10">-10</button>
+          <button class="btn btn--ghost" data-track="${escapeAttr(key)}" data-delta="-1">-1</button>
+          <button class="btn btn--ghost" data-track="${escapeAttr(key)}" data-delta="1">+1</button>
+          <button class="btn btn--ghost" data-track="${escapeAttr(key)}" data-delta="10">+10</button>
         </div>
       `;
       box.appendChild(el);
@@ -447,9 +394,7 @@
     $$(".track .btn", box).forEach((b) => {
       b.addEventListener("click", () => {
         AudioFX.click();
-        const k = b.dataset.track;
-        const d = parseInt(b.dataset.delta, 10);
-        adjustTrack(k, d);
+        adjustTrack(b.dataset.track, parseInt(b.dataset.delta, 10));
       });
     });
   }
@@ -468,14 +413,20 @@
   function renderOverview() {
     const c = runtime.character;
     const el = $("#tab-overview");
-    const ac = c.stats.armor_class?.total ?? "—";
-    const per = c.stats.perception ?? "—";
-    const luck = c.stats.luck ?? "—";
 
     const metaLines = [];
-    if (c.meta.race?.name) metaLines.push(`Raça: ${c.meta.race.name}${c.meta.race.level ? ` ${c.meta.race.level}` : ""}`);
-    if (c.meta.class?.name) metaLines.push(`Classe: ${c.meta.class.name}${c.meta.class.level ? ` ${c.meta.class.level}` : ""}`);
-    if (c.meta.experience_raw) metaLines.push(`Experiência: ${c.meta.experience_raw}`);
+    if (c.meta?.race?.name) metaLines.push(`Raça: ${c.meta.race.name}${c.meta.race.level ? ` ${c.meta.race.level}` : ""}`);
+    if (c.meta?.class?.name) metaLines.push(`Classe: ${c.meta.class.name}${c.meta.class.level ? ` ${c.meta.class.level}` : ""}`);
+    if (c.meta?.experience_raw) metaLines.push(`Experiência: ${c.meta.experience_raw}`);
+
+    // Atalhos principais (com as regras novas)
+    const quick = [
+      { label: "Teste (Lutar)", expr: "1d20 + @skills.FOR.Lutar.total" },
+      { label: "Dano (Corpo a corpo)", expr: "2d8 + @attributes.Força.quarter" },
+      { label: "Teste (Armas Pesadas)", expr: "1d20 + @skills.FOR.Armas_Pesadas.total" },
+      { label: "Teste (Armas Avançadas)", expr: "1d20 + @skills.DES.Armas_Avançadas.total" },
+      { label: "Dano (Espada Especial)", expr: "3d8 + @attributes.Destreza.quarter" },
+    ];
 
     el.innerHTML = `
       <div class="grid">
@@ -483,45 +434,61 @@
           <div class="card__head">
             <div>
               <div class="card__title">Resumo</div>
-              <div class="card__meta">${metaLines.join(" • ") || "—"}</div>
+              <div class="card__meta">${escapeHtml(metaLines.join(" • ") || "—")}</div>
             </div>
             <div class="badges">
-              <span class="badge badge--warn">CA ${ac}</span>
-              <span class="badge">Percepção ${per}</span>
-              <span class="badge">Sorte ${luck}</span>
+              <span class="badge badge--warn">PS/PVO/PVD/PF</span>
             </div>
           </div>
           <div class="card__text">
-Use o menu acima para navegar pelas seções.
-- Ativas normalmente consomem 1 PV (ação) se não tiver custo definido.
-- Exclusivas com custo definido já descontam PV/PF/PS automaticamente.
+Regras rápidas:
+- PVO: 2 ações ofensivas por rodada.
+- PVD: 3 ações defensivas/reações por rodada.
+- Absorver Sangue cura 25% da vida máxima (1x por combate) e custa 1 PVD.
           </div>
-          <div class="small" style="margin-top:10px;">
-Macros úteis:
-<code>@attributes.Força.half</code> • <code>@skills.physical.Armas_Avançadas.total</code> • <code>@tracks.PF</code>
-          </div>
+
+          <div class="hr"></div>
+          <div class="card__title">Atalhos</div>
+          <div class="card__actions" id="overviewQuick"></div>
         </div>
 
         <div class="card">
-          <div class="card__title">Atalhos rápidos</div>
-          <div class="card__text">Clique para rolar automaticamente:</div>
+          <div class="card__head">
+            <div>
+              <div class="card__title">Combate base</div>
+              <div class="card__meta">Os cards completos ficam na aba “Combate”.</div>
+            </div>
+            <div class="badges">
+              <span class="badge">${(c.abilities?.combat_tree || []).length} ações</span>
+            </div>
+          </div>
+          <div class="card__text">
+Corpo a corpo: teste Lutar e dano 2d8 + 1/4 Força.
+Arma pesada: teste Armas Pesadas e dano configurável + 1/4 Força.
+Espada especial: teste Armas Avançadas e dano 3d8 + 1/4 Destreza.
+          </div>
           <div class="card__actions">
-            <button class="btn" data-roll="1d20 + @skills.physical.Lutar.total">Ataque (Lutar)</button>
-            <button class="btn" data-roll="1d20 + @skills.physical.Armas_Avançadas.total">Armas Avançadas</button>
-            <button class="btn" data-roll="1d20 + @skills.physical.Reflexo.total">Reflexo</button>
-            <button class="btn" data-roll="1d20 + @skills.intellectual.Percepção.total">Percepção</button>
-            <button class="btn" data-roll="1d20 + @skills.intellectual.Ocultismo.total">Ocultismo</button>
+            <button class="btn" data-goto="combat">Ir para Combate</button>
           </div>
         </div>
       </div>
     `;
 
-    $$("[data-roll]", el).forEach((btn) => {
-      btn.addEventListener("click", () => {
+    const quickBox = $("#overviewQuick");
+    quick.forEach((q) => {
+      const b = document.createElement("button");
+      b.className = "btn btn--ghost";
+      b.textContent = q.label;
+      b.addEventListener("click", () => {
         AudioFX.click();
-        const expr = btn.dataset.roll;
-        doRoll(expr, "Atalho");
+        doRoll(q.expr, q.label);
       });
+      quickBox.appendChild(b);
+    });
+
+    $("[data-goto='combat']", el).addEventListener("click", () => {
+      AudioFX.click();
+      activateTab("combat");
     });
   }
 
@@ -531,10 +498,11 @@ Macros úteis:
   function renderAttributes() {
     const c = runtime.character;
     const el = $("#tab-attributes");
-    el.innerHTML = `<div class="grid"></div>`;
-    const grid = $(".grid", el);
 
-    for (const a of c.attributes) {
+    el.innerHTML = `<div class="grid" id="attrGrid"></div>`;
+    const grid = $("#attrGrid", el);
+
+    for (const a of c.attributes || []) {
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
@@ -543,9 +511,7 @@ Macros úteis:
             <div class="card__title">${escapeHtml(a.name)}</div>
             <div class="card__meta">Valor ${a.value} • 1/2 ${a.half} • 1/4 ${a.quarter} • 1/8 ${a.eighth}</div>
           </div>
-          <div class="badges">
-            <span class="badge badge--good">${a.value}</span>
-          </div>
+          <div class="badges"><span class="badge badge--good">${a.value}</span></div>
         </div>
         <div class="card__actions">
           <button class="btn btn--ghost" data-roll="1d20 + @attributes.${escapeAttr(a.name)}.half">Teste (1/2)</button>
@@ -571,15 +537,7 @@ Macros úteis:
     const c = runtime.character;
     const el = $("#tab-skills");
 
-    const ATTR_LABEL = {
-      FOR: "Força",
-      DES: "Destreza",
-      FORT: "Fortitude",
-      ARC: "Arcano",
-      INT: "Inteligência",
-      SAB: "Sabedoria",
-    };
-
+    const ATTR_LABEL = { FOR: "Força", DES: "Destreza", FORT: "Fortitude", ARC: "Arcano", INT: "Inteligência", SAB: "Sabedoria" };
     const ATTR_ORDER = ["FOR", "DES", "FORT", "ARC", "INT", "SAB"];
 
     const all = [...(c.skills?.physical || []), ...(c.skills?.intellectual || [])];
@@ -590,8 +548,8 @@ Macros úteis:
       groups[code].push(s);
     }
 
-    el.innerHTML = `<div class="grid"></div>`;
-    const grid = $(".grid", el);
+    el.innerHTML = `<div class="grid" id="skillGrid"></div>`;
+    const grid = $("#skillGrid", el);
 
     const makeGroup = (code, list) => {
       const title = ATTR_LABEL[code] ? `${ATTR_LABEL[code]} (${code})` : code;
@@ -601,7 +559,7 @@ Macros úteis:
         <div class="card__head">
           <div>
             <div class="card__title">${escapeHtml(title)}</div>
-            <div class="card__meta">Clique em “Rolar” para fazer 1d20 + Total. As descrições são a referência rápida do que cada perícia faz.</div>
+            <div class="card__meta">Rolar: 1d20 + Total</div>
           </div>
           <div class="badges"><span class="badge">${list.length} perícias</span></div>
         </div>
@@ -611,20 +569,17 @@ Macros úteis:
 
       const kv = $(".kv", card);
       const sorted = [...list].sort((a, b) => String(a.name).localeCompare(String(b.name), "pt-BR"));
-
       for (const s of sorted) {
+        const key = keyOf(s.name);
         const row = document.createElement("div");
         row.style.display = "contents";
-        const key = keyOf(s.name);
-        const desc = getSkillDesc(s.name);
         row.innerHTML = `
           <div class="kv__k">
             <div class="skillName">${escapeHtml(s.name)}</div>
-            ${desc ? `<div class="skillDesc">${escapeHtml(desc)}</div>` : ``}
           </div>
           <div class="kv__v">
             <span class="badge">${Number.isFinite(s.total) ? s.total : 0}</span>
-            <button class="btn btn--ghost" data-roll="1d20 + @skills.${code}.${key}.total">Rolar</button>
+            <button class="btn btn--ghost" data-roll="1d20 + @skills.${escapeAttr(code)}.${escapeAttr(key)}.total">Rolar</button>
           </div>
         `;
         kv.appendChild(row);
@@ -634,16 +589,11 @@ Macros úteis:
     };
 
     for (const code of ATTR_ORDER) {
-      const list = groups[code] || [];
-      if (!list.length) continue;
-      grid.appendChild(makeGroup(code, list));
+      if (groups[code]?.length) grid.appendChild(makeGroup(code, groups[code]));
     }
-
-    // fallback: se aparecer algum atributo fora do padrão, mostra no final
-    const extraCodes = Object.keys(groups).filter(c0 => !ATTR_ORDER.includes(c0) && groups[c0]?.length);
-    for (const code of extraCodes) {
-      grid.appendChild(makeGroup(code, groups[code]));
-    }
+    // extras
+    Object.keys(groups).filter(code => !ATTR_ORDER.includes(code) && groups[code]?.length)
+      .forEach(code => grid.appendChild(makeGroup(code, groups[code])));
 
     $$("[data-roll]", el).forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -674,9 +624,7 @@ Macros úteis:
           <div class="card__title">${escapeHtml(sectionTitle)}</div>
           <div class="card__meta">${escapeHtml(hint)}</div>
         </div>
-        <div class="badges">
-          <span class="badge">${abilities.length} itens</span>
-        </div>
+        <div class="badges"><span class="badge">${abilities.length} itens</span></div>
       </div>
       <div class="hr"></div>
       <div class="grid"></div>
@@ -685,6 +633,15 @@ Macros úteis:
     const grid = $(".grid", wrap);
     grid.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
 
+    if (!abilities.length) {
+      const empty = document.createElement("div");
+      empty.className = "card";
+      empty.innerHTML = `<div class="card__title">Nada aqui (por enquanto)</div><div class="card__text">Sem itens cadastrados nesta seção.</div>`;
+      grid.appendChild(empty);
+      container.appendChild(wrap);
+      return;
+    }
+
     for (const a of abilities) {
       const card = document.createElement("div");
       card.className = "card";
@@ -692,29 +649,38 @@ Macros úteis:
       const type = a.type || "";
       const level = a.level != null ? `Nível ${a.level}` : "";
       const icon = a.icon ? `${a.icon} ` : "";
-      const cost = a.auto_cost && Object.keys(a.auto_cost).length ? formatCost(a.auto_cost) : "";
-
-      const rollsFiltered = (a.rolls || []).filter(r => String(r?.expr || "").trim().length > 0);
-
-      const rollBtns = rollsFiltered.map((r) => `
-        <button class="btn btn--ghost" data-roll="${escapeAttr(r.expr)}" data-title="${escapeAttr(r.label)}">${escapeHtml(r.label)}</button>
-      `).join("");
-
-// UI opcional: dano base configurável (ex.: armas pesadas)
-const weaponUi = (a.ui && a.ui.weapon_damage_input) ? `
-  <input class="input" data-weapon-dmg value="${escapeAttr(a.ui.weapon_damage_default || "2d6")}" style="max-width:180px;" />
-  <button class="btn btn--ghost" data-weapon-dmg-roll="1" data-weapon-add="${escapeAttr(a.ui.weapon_damage_add || "@attributes.Força.quarter")}" data-title="Dano">Dano</button>
-` : "";
-
+      const costText = a.auto_cost && Object.keys(a.auto_cost).length ? formatCost(a.auto_cost) : "";
 
       const limitOnceCombat = a.effect?.limit === "once_per_combat" || a.limits?.once_per_combat;
       const usedKey = (a.name || "").trim();
       const alreadyUsed = !!runtime.state.combat?.used?.[usedKey];
 
-      const useBtn = (type.toLowerCase().includes("ativa") || cost || a.effect) ? `
-        <button class="btn" data-use="1" data-cost='${escapeAttr(JSON.stringify(a.auto_cost || {}))}' ${limitOnceCombat && alreadyUsed ? "disabled" : ""}>
-          Usar${cost ? ` (-${cost})` : ""}${limitOnceCombat ? (alreadyUsed ? " (usado)" : " (1/combate)") : ""}
+      const useBtnHtml = (type.toLowerCase().includes("ativa") || costText || a.effect) ? `
+        <button class="btn" data-use="1" data-name="${escapeAttr(usedKey)}" data-cost='${escapeAttr(JSON.stringify(a.auto_cost || {}))}' ${limitOnceCombat && alreadyUsed ? "disabled" : ""}>
+          Usar${costText ? ` (-${escapeHtml(costText)})` : ""}${limitOnceCombat ? (alreadyUsed ? " (usado)" : " (1/combate)") : ""}
         </button>
+      ` : "";
+
+      const rollsFiltered = (a.rolls || []).filter(r => String(r?.expr || "").trim().length > 0);
+
+      const rollBtnsHtml = rollsFiltered.map((r) => `
+        <button class="btn btn--ghost" data-roll="${escapeAttr(r.expr)}" data-title="${escapeAttr(r.label)}">${escapeHtml(r.label)}</button>
+      `).join("");
+
+      // UI especial: arma com dano configurável
+      const hasWeaponInput = !!a.ui?.weapon_damage_input;
+      const weaponKey = usedKey || `${a.name || ""}`.trim();
+      const defaultWeapon = String(a.ui?.weapon_damage_default || "2d6");
+      const savedWeapon = runtime.state.ui.weaponDamage?.[weaponKey] || defaultWeapon;
+
+      const weaponInputHtml = hasWeaponInput ? `
+        <div class="hr"></div>
+        <div class="card__text"><b>Dano base da arma</b> (ex.: 2d6, 1d12, 3d4)</div>
+        <div class="row" style="margin-top:8px;">
+          <input class="input" style="flex:1" data-weapon-input="1" data-weapon-key="${escapeAttr(weaponKey)}" value="${escapeAttr(savedWeapon)}" />
+          <button class="btn btn--ghost" data-weapon-roll="1" data-weapon-key="${escapeAttr(weaponKey)}">Dano</button>
+        </div>
+        <div class="small" style="margin-top:6px;">Dano final: (dano base) + 1/4 de Força.</div>
       ` : "";
 
       card.innerHTML = `
@@ -730,48 +696,48 @@ const weaponUi = (a.ui && a.ui.weapon_damage_input) ? `
         </div>
         <div class="card__text">${escapeHtml(a.text || "")}</div>
         <div class="card__actions">
-          ${useBtn}
-          ${rollBtns}
-          ${weaponUi}
+          ${useBtnHtml}
+          ${rollBtnsHtml}
         </div>
+        ${weaponInputHtml}
       `;
+
       grid.appendChild(card);
 
-      const use = $("[data-use]", card);
-      if (use) {
-        use.addEventListener("click", () => {
+      // Handlers: use
+      const useBtn = $("[data-use]", card);
+      if (useBtn) {
+        useBtn.addEventListener("click", () => {
           AudioFX.click();
 
-          const key = (a.name || "").trim();
+          const nameKey = useBtn.dataset.name || "";
           const limit = a.effect?.limit === "once_per_combat" || a.limits?.once_per_combat;
-          if (limit && runtime.state.combat?.used?.[key]) {
+          if (limit && runtime.state.combat?.used?.[nameKey]) {
             AudioFX.error();
             toast("Limite", "—", "Essa habilidade já foi usada neste combate.", [], { reducedMotion: runtime.state.settings.reducedMotion });
             return;
           }
 
-          const costObj = JSON.parse(use.dataset.cost || "{}");
+          const costObj = JSON.parse(useBtn.dataset.cost || "{}");
           if (costObj && Object.keys(costObj).length) spend(costObj, a.name || "Habilidade");
 
-          // Efeitos automatizados (por enquanto só cura)
+          // efeitos automatizados (cura)
           if (a.effect?.type === "heal_percent") {
             const track = a.effect.track || "PS";
             const max = runtime.character.stats.tracks?.[track]?.max ?? 0;
             const amount = Math.max(1, Math.floor(max * Number(a.effect.percent ?? 0)));
             runtime.state.tracks[track] = clamp((runtime.state.tracks[track] ?? 0) + amount, 0, max);
-            saveState(runtime.state);
+            saveState();
             renderTracks();
             logLine(`+ Cura: ${amount} ${track} (${a.name || "Habilidade"})`);
             toast("Cura", amount, `${a.name || "Habilidade"}\n+${amount} ${track}\nCondição: deve haver sangue inimigo no chão.`, [], { reducedMotion: runtime.state.settings.reducedMotion });
           }
 
           if (limit) {
-            runtime.state.combat = runtime.state.combat || { used: {} };
-            runtime.state.combat.used = runtime.state.combat.used || {};
-            runtime.state.combat.used[key] = true;
-            saveState(runtime.state);
-            use.disabled = true;
-            use.textContent = use.textContent.replace("(1/combate)", "(usado)");
+            runtime.state.combat.used[nameKey] = true;
+            saveState();
+            useBtn.disabled = true;
+            useBtn.textContent = useBtn.textContent.replace("(1/combate)", "(usado)");
           }
 
           logLine(`Usou: ${a.name || "Habilidade"}${costObj && Object.keys(costObj).length ? ` (custo: ${formatCost(costObj)})` : ""}`);
@@ -779,167 +745,45 @@ const weaponUi = (a.ui && a.ui.weapon_damage_input) ? `
         });
       }
 
-      
-
-// Rolar dano configurável (arma pesada)
-const weaponBtn = $("[data-weapon-dmg-roll]", card);
-if (weaponBtn) {
-  const dmgInput = $("[data-weapon-dmg]", card);
-  weaponBtn.addEventListener("click", () => {
-    AudioFX.click();
-    const base = (dmgInput?.value || "").trim() || "0";
-    const add = (weaponBtn.dataset.weaponAdd || "@attributes.Força.quarter").trim();
-    const expr = `${base} + ${add}`;
-    doRoll(expr, `${a.name || "Dano"}`);
-  });
-}
-$$("[data-roll]", card).forEach((btn) => {
-        btn.addEventListener("click", () => {
-          AudioFX.click();
-          doRoll(btn.dataset.roll, btn.dataset.title || a.name || "Rolar");
-        });
-      });
-    }
-
-    container.appendChild(wrap);
-  }) {
-    const { sectionTitle = "", hint = "" } = opts;
-
-    const wrap = document.createElement("div");
-    wrap.className = "card";
-    wrap.innerHTML = `
-      <div class="card__head">
-        <div>
-          <div class="card__title">${escapeHtml(sectionTitle)}</div>
-          <div class="card__meta">${escapeHtml(hint)}</div>
-        </div>
-        <div class="badges">
-          <span class="badge">${abilities.length} itens</span>
-        </div>
-      </div>
-      <div class="hr"></div>
-      <div class="grid"></div>
-    `;
-
-    const grid = $(".grid", wrap);
-    grid.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
-
-    for (const a of abilities) {
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const type = a.type || "";
-      const level = a.level != null ? `Nível ${a.level}` : "";
-      const icon = a.icon ? `${a.icon} ` : "";
-      const cost = a.auto_cost && Object.keys(a.auto_cost).length ? formatCost(a.auto_cost) : "";
-
-      const rollBtns = (a.rolls || []).map((r) => `
-        <button class="btn btn--ghost" data-roll="${escapeAttr(r.expr)}" data-title="${escapeAttr(r.label)}">${escapeHtml(r.label)}</button>
-      `).join("");
-
-      const useBtn = (type.toLowerCase().includes("ativa") || cost) ? `
-        <button class="btn" data-use="1" data-cost='${escapeAttr(JSON.stringify(a.auto_cost || {}))}'>Usar${cost ? ` (-${cost})` : ""}</button>
-      ` : "";
-
-      card.innerHTML = `
-        <div class="card__head">
-          <div>
-            <div class="card__title">${escapeHtml(icon)}${escapeHtml(a.name || "Habilidade")}</div>
-            <div class="card__meta">${escapeHtml([level, type].filter(Boolean).join(" • "))}</div>
-          </div>
-          <div class="badges">
-            ${type ? `<span class="badge ${badgeForType(type)}">${escapeHtml(type)}</span>` : ""}
-            ${level ? `<span class="badge">${escapeHtml(level)}</span>` : ""}
-          </div>
-        </div>
-        <div class="card__text">${escapeHtml(a.text || "")}</div>
-        <div class="card__actions">
-          ${useBtn}
-          ${rollBtns}
-        </div>
-      `;
-      grid.appendChild(card);
-
-      // Use
-      const use = $("[data-use]", card);
-      if (use) {
-        use.addEventListener("click", () => {
-          AudioFX.click();
-          const costObj = JSON.parse(use.dataset.cost || "{}");
-          if (costObj && Object.keys(costObj).length) spend(costObj, a.name || "Habilidade");
-          logLine(`Usou: ${a.name || "Habilidade"}${costObj && Object.keys(costObj).length ? ` (custo: ${formatCost(costObj)})` : ""}`);
-          AudioFX.success();
-          toast("Ação", "OK", `${a.name || "Habilidade"}\nCusto: ${formatCost(costObj)}`, [], { reducedMotion: runtime.state.settings.reducedMotion });
-        });
-      }
-
-      // Rolls
+      // Handlers: rolls
       $$("[data-roll]", card).forEach((btn) => {
         btn.addEventListener("click", () => {
           AudioFX.click();
           doRoll(btn.dataset.roll, btn.dataset.title || a.name || "Rolar");
         });
       });
+
+      // Handlers: weapon input + damage roll
+      const weaponInput = $("[data-weapon-input]", card);
+      if (weaponInput) {
+        weaponInput.addEventListener("input", () => {
+          const wk = weaponInput.dataset.weaponKey;
+          runtime.state.ui.weaponDamage[wk] = weaponInput.value.trim();
+          saveState();
+        });
+      }
+      const weaponRollBtn = $("[data-weapon-roll]", card);
+      if (weaponRollBtn) {
+        weaponRollBtn.addEventListener("click", () => {
+          AudioFX.click();
+          const wk = weaponRollBtn.dataset.weaponKey;
+          const base = (runtime.state.ui.weaponDamage?.[wk] || defaultWeapon).trim() || defaultWeapon;
+          // dano base + 1/4 Força
+          doRoll(`${base} + @attributes.Força.quarter`, `${a.name || "Arma"} — Dano`);
+        });
+      }
     }
 
     container.appendChild(wrap);
   }
 
-  // --------------------------
-  // Render: Combat / Craft / Exclusive
-  // --------------------------
   function renderCombat() {
     const el = $("#tab-combat");
     el.innerHTML = "";
-
-    const list = runtime.character.abilities.combat_tree || [];
-
+    const list = runtime.character.abilities?.combat_tree || [];
     renderAbilityList(el, list, {
-      sectionTitle: "Combate — Ações base",
-      hint: "PV foi dividido: PVO (ofensivo) e PVD (defesa/reações). 'Usar' desconta PV automaticamente."
-    });
-
-    // Injeta input nos cards de arma pesada
-    $$(".card", el).forEach((card) => {
-      const titleEl = $(".card__title", card);
-      if (!titleEl) return;
-      const title = titleEl.textContent || "";
-      if (!title.toLowerCase().includes("arma pesada")) return;
-
-      const actions = $(".card__actions", card);
-      if (!actions) return;
-
-      const input = document.createElement("input");
-      input.className = "input";
-      input.style.maxWidth = "220px";
-      input.value = (runtime.state.weaponDamageHeavy || "2d6");
-      input.placeholder = "Ex: 2d6";
-
-      const dmgBtn = document.createElement("button");
-      dmgBtn.className = "btn btn--ghost";
-      dmgBtn.textContent = "Dano";
-      dmgBtn.title = "Rola (dano da arma) + 1/4 de Força";
-
-      const wrap = document.createElement("div");
-      wrap.style.display = "flex";
-      wrap.style.gap = "8px";
-      wrap.style.flexWrap = "wrap";
-      wrap.appendChild(input);
-      wrap.appendChild(dmgBtn);
-
-      actions.appendChild(wrap);
-
-      input.addEventListener("change", () => {
-        runtime.state.weaponDamageHeavy = input.value.trim();
-        saveState(runtime.state);
-      });
-
-      dmgBtn.addEventListener("click", () => {
-        AudioFX.click();
-        const base = input.value.trim();
-        const expr = `${base} + @attributes.Força.quarter`;
-        doRoll(expr, "Dano (Arma Pesada)");
-      });
+      sectionTitle: "Combate",
+      hint: "Ações ofensivas gastam PVO. (Você tem 2 por rodada.)"
     });
   }
 
@@ -947,8 +791,8 @@ $$("[data-roll]", card).forEach((btn) => {
     const el = $("#tab-exclusive");
     el.innerHTML = "";
 
-    const ex = runtime.character.abilities.exclusive;
-    const eq = ex?.equipment;
+    const ex = runtime.character.abilities?.exclusive || {};
+    const eq = ex.equipment;
 
     if (eq) {
       const card = document.createElement("div");
@@ -959,7 +803,7 @@ $$("[data-roll]", card).forEach((btn) => {
             <div class="card__title">${escapeHtml(eq.name || "Equipamento")}</div>
             <div class="card__meta">Descrição e propriedades.</div>
           </div>
-          <div class="badges"><span class="badge">Arma / Relíquia</span></div>
+          <div class="badges"><span class="badge">Equipamento</span></div>
         </div>
         <div class="hr"></div>
         <div id="eqSections"></div>
@@ -975,59 +819,20 @@ $$("[data-roll]", card).forEach((btn) => {
         `;
         box.appendChild(sec);
       });
-
       el.appendChild(card);
       el.appendChild(document.createElement("div")).className = "hr";
     }
 
-    const list = ex?.abilities || [];
-    const adapted = list.map((a) => ({
-      name: a.name,
-      type: a.type,
-      icon: "",
-      level: null,
-      text: buildExclusiveText(a),
-      rolls: a.rolls,
-      auto_cost: a.auto_cost
-    }));
-
-    renderAbilityList(el, adapted, {
+    const list = ex.abilities || [];
+    renderAbilityList(el, list, {
       sectionTitle: "Habilidades Exclusivas",
-      hint: "Custos detectados na ficha já são descontados automaticamente."
+      hint: "Ações defensivas/reações gastam PVD. (Você tem 3 por rodada.)"
     });
   }
 
-  function buildExclusiveText(a) {
-    const lines = [];
-    if (a.flavor) lines.push(`“${a.flavor}”`);
-    if (a.kv && Object.keys(a.kv).length) {
-      for (const [k, v] of Object.entries(a.kv)) lines.push(`${k}: ${v}`);
-    } else if (a.text) {
-      lines.push(a.text);
-    }
-    return lines.join("\n");
-  }
-
   // --------------------------
-  // Roller UI
+  // Roller + Topbar + Tabs
   // --------------------------
-  function doRoll(expr, title, mode = "normal") {
-    try {
-      AudioFX.roll();
-      const ctx = buildContext(runtime.character, runtime.state);
-      const r = rollDice(expr, ctx, mode);
-
-      logLine(`${title}: ${expr} = ${r.total}`);
-      toast(title, r.total, r.detail, r.diceFaces, { reducedMotion: runtime.state.settings.reducedMotion });
-
-      AudioFX.success();
-    } catch (e) {
-      AudioFX.error();
-      toast("Erro", "—", String(e?.message || e), [], { reducedMotion: runtime.state.settings.reducedMotion });
-      logLine(`ERRO: ${String(e?.message || e)}`);
-    }
-  }
-
   function wireRoller() {
     $("#btnRoll").addEventListener("click", () => {
       AudioFX.click();
@@ -1058,54 +863,54 @@ $$("[data-roll]", card).forEach((btn) => {
     });
   }
 
-  // --------------------------
-  // Settings buttons
-  // --------------------------
-  function wireTopbar() {
-    const restorePV = () => {
-      const tracks = runtime.character.stats.tracks || {};
-      for (const k of ["PVO", "PVD"]) {
-        if (tracks[k]) runtime.state.tracks[k] = tracks[k].max ?? runtime.state.tracks[k];
-      }
-    };
+  function wireTabs() {
+    $("#tabs").addEventListener("click", (e) => {
+      const btn = e.target.closest(".tab");
+      if (!btn) return;
+      AudioFX.click();
+      activateTab(btn.dataset.tab);
+    });
+  }
 
+  function wireTopbar() {
+    // Reset por combate: restaura PVO/PVD e libera 1/combate
     $("#btnNewCombat").addEventListener("click", () => {
       AudioFX.click();
+      const t = runtime.character.stats.tracks || {};
+      if (t.PVO) runtime.state.tracks.PVO = t.PVO.max ?? runtime.state.tracks.PVO;
+      if (t.PVD) runtime.state.tracks.PVD = t.PVD.max ?? runtime.state.tracks.PVD;
       runtime.state.combat = { used: {} };
-      restorePV();
-      saveState(runtime.state);
+      saveState();
       renderTracks();
-      logLine("Novo combate: usos por combate resetados e PVs restaurados.");
+      logLine("Novo combate: PVO/PVD restaurados e limites 1/combate resetados.");
       AudioFX.success();
-      toast("Novo combate", "OK", "Usos por combate resetados.\nPVO/PVD restaurados ao máximo.", [], { reducedMotion: runtime.state.settings.reducedMotion });
-      renderExclusive();
-      renderCombat();
+      toast("Novo combate", "OK", "PVO/PVD restaurados e limites por combate resetados.", [], { reducedMotion: runtime.state.settings.reducedMotion });
     });
 
+    // Nova rodada: só restaura PVO/PVD
     $("#btnNewRound").addEventListener("click", () => {
       AudioFX.click();
-      restorePV();
-      saveState(runtime.state);
+      const t = runtime.character.stats.tracks || {};
+      if (t.PVO) runtime.state.tracks.PVO = t.PVO.max ?? runtime.state.tracks.PVO;
+      if (t.PVD) runtime.state.tracks.PVD = t.PVD.max ?? runtime.state.tracks.PVD;
+      saveState();
       renderTracks();
       logLine("Nova rodada: PVO/PVD restaurados ao máximo.");
       AudioFX.success();
-      toast("Nova rodada", "OK", "PVO e PVD foram restaurados ao máximo.", [], { reducedMotion: runtime.state.settings.reducedMotion });
+      toast("Nova rodada", "OK", "PVO/PVD restaurados ao máximo.", [], { reducedMotion: runtime.state.settings.reducedMotion });
     });
 
+    // Reset total: tudo no máximo + libera limites por combate
     $("#btnFullReset").addEventListener("click", () => {
       AudioFX.click();
-      const tracks = runtime.character.stats.tracks || {};
-      for (const [k, t] of Object.entries(tracks)) {
-        runtime.state.tracks[k] = t.max ?? runtime.state.tracks[k];
-      }
-      runtime.state.combat = { used: {} };
-      saveState(runtime.state);
+      forceStartAtMax(runtime.character);
+      saveState();
       renderTracks();
-      logLine("Reset total: recursos restaurados ao máximo e combate resetado.");
-      AudioFX.success();
-      toast("Reset total", "OK", "PS, PVs e PF restaurados.\nCombate resetado.", [], { reducedMotion: runtime.state.settings.reducedMotion });
+      renderCombat();      // pra re-habilitar botões “(usado)”
       renderExclusive();
-      renderCombat();
+      logLine("Reset total: recursos no máximo e limites por combate resetados.");
+      AudioFX.success();
+      toast("Reset total", "OK", "Recursos no máximo e limites resetados.", [], { reducedMotion: runtime.state.settings.reducedMotion });
     });
 
     const soundToggle = $("#soundToggle");
@@ -1114,38 +919,22 @@ $$("[data-roll]", card).forEach((btn) => {
     soundToggle.addEventListener("change", () => {
       runtime.state.settings.sound = soundToggle.checked;
       AudioFX.setEnabled(soundToggle.checked);
-      saveState(runtime.state);
+      saveState();
       if (soundToggle.checked) AudioFX.click();
     });
 
     motionToggle.addEventListener("change", () => {
       runtime.state.settings.reducedMotion = motionToggle.checked;
-      saveState(runtime.state);
+      saveState();
       AudioFX.click();
     });
   }
 
-  // --------------------------
-  // Tabs wiring
-  // --------------------------
-  function wireTabs() {
-    $("#tabs").addEventListener("click", (e) => {
-      const btn = e.target.closest(".tab");
-      if (!btn) return;
-      AudioFX.click();
-      const tab = btn.dataset.tab;
-      activateTab(tab);
-    });
-  }
-
-  // --------------------------
-  // Log buttons
-  // --------------------------
   function wireLogButtons() {
     $("#btnClearLog").addEventListener("click", () => {
       AudioFX.click();
       runtime.state.log = [];
-      saveState(runtime.state);
+      saveState();
       renderLog();
       toast("Log", "OK", "Log limpo.", [], { reducedMotion: runtime.state.settings.reducedMotion });
     });
@@ -1164,7 +953,7 @@ $$("[data-roll]", card).forEach((btn) => {
   }
 
   // --------------------------
-  // Escape HTML / Attr
+  // Escape helpers
   // --------------------------
   function escapeHtml(s) {
     return String(s ?? "")
@@ -1175,69 +964,72 @@ $$("[data-roll]", card).forEach((btn) => {
       .replace(/'/g, "&#039;");
   }
   function escapeAttr(s) {
-    // atributo HTML: evita quebrar aspas
     return escapeHtml(s).replace(/\n/g, " ");
   }
 
   // --------------------------
   // Boot
   // --------------------------
-  async function boot() {
-    // 1) Preferir JSON embutido no HTML (funciona até abrindo o arquivo localmente)
-// 2) Se não existir, cair para fetch de ./data/character.json (GitHub Pages)
-let raw = document.getElementById("characterData")?.textContent?.trim();
-let character = null;
+  function getCharacterFromHtml() {
+    const raw = document.getElementById("characterData")?.textContent?.trim();
+    if (!raw) throw new Error("Não encontrei o JSON embutido da ficha (characterData).");
+    return JSON.parse(raw);
+  }
 
-if (raw) {
-  character = JSON.parse(raw);
-} else {
-  const res = await fetch("./data/character.json", { cache: "no-store" });
-  if (!res.ok) throw new Error("Não encontrei o JSON da ficha (characterData) e falhou ao carregar ./data/character.json");
-  character = await res.json();
-}
-
+  function boot() {
+    // 1) carrega ficha embutida (funciona local e Pages)
+    const character = getCharacterFromHtml();
     runtime.character = character;
 
+    // 2) estado salvo (só pra settings e logs), mas sempre começa com recursos no máximo
     const saved = loadState();
-    runtime.state = saved || buildDefaultState(character);
+    runtime.state = saved ? { ...buildDefaultState(character), ...saved } : buildDefaultState(character);
 
-    // Sempre iniciar com recursos no máximo (independente do que está salvo)
-    for (const [k, t] of Object.entries(character.stats.tracks || {})) {
-      runtime.state.tracks[k] = t.max ?? runtime.state.tracks[k] ?? 0;
-    }
-    // Sempre “zerar” limites por combate ao abrir o site
-    runtime.state.combat = { used: {} };
+    // garantir que os objetos existam
+    runtime.state.settings = runtime.state.settings || { sound: true, reducedMotion: false };
+    runtime.state.tracks = runtime.state.tracks || {};
+    runtime.state.combat = runtime.state.combat || { used: {} };
+    runtime.state.ui = runtime.state.ui || { weaponDamage: {} };
+    runtime.state.ui.weaponDamage = runtime.state.ui.weaponDamage || {};
 
-    $("#soundToggle").checked = !!runtime.state.settings.sound;
-    $("#motionToggle").checked = !!runtime.state.settings.reducedMotion;
-    AudioFX.setEnabled(!!runtime.state.settings.sound);
+    // força regra do Pedro
+    forceStartAtMax(character);
 
+    // Header
     $("#charName").textContent = character.meta?.name || "Ficha";
     const metaPieces = [];
     if (character.meta?.race?.name) metaPieces.push(`${character.meta.race.name}${character.meta.race.level ? " " + character.meta.race.level : ""}`);
     if (character.meta?.class?.name) metaPieces.push(`${character.meta.class.name}${character.meta.class.level ? " " + character.meta.class.level : ""}`);
     $("#charMeta").textContent = metaPieces.join(" • ") || "—";
 
+    // Toggles
+    $("#soundToggle").checked = !!runtime.state.settings.sound;
+    $("#motionToggle").checked = !!runtime.state.settings.reducedMotion;
+    AudioFX.setEnabled(!!runtime.state.settings.sound);
+
+    // Render tudo
     renderTracks();
     renderLog();
-
-    wireRoller();
-    wireTabs();
-    wireTopbar();
-    wireLogButtons();
-
     renderOverview();
     renderAttributes();
     renderSkills();
     renderCombat();
     renderExclusive();
 
+    // Wire
+    wireRoller();
+    wireTabs();
+    wireTopbar();
+    wireLogButtons();
+
     logLine("Ficha carregada. Recursos iniciados no máximo.");
-    saveState(runtime.state);
+    saveState();
   }
 
-  boot().catch((e) => {
+  try {
+    boot();
+  } catch (e) {
     console.error(e);
     alert(String(e?.message || e));
-  });
+  }
 })();
