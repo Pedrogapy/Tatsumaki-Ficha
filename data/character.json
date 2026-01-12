@@ -530,11 +530,11 @@
         }
       },
       {
-        "name": "Espada Especial (Armas Avançadas)",
+        "name": "Espada Tatsumaki (Armas Avançadas)",
         "type": "Ativa",
         "level": 1,
         "icon": "🗡️",
-        "text": "Teste: Armas Avançadas\nDano: 3d8 + 1/4 de Destreza",
+        "text": "Teste: Armas Avançadas (d20+11)\nDano: 3d8 + 1/4 de Destreza",
         "rolls": [
           {
             "label": "Teste",
