@@ -1,5 +1,5 @@
 /* =========================
-   Tatsumaki — Ficha Web (v3)
+   Tatsumaki — Ficha Web (v2)
    - Static (GitHub Pages)
    - Sem dependências externas
    - Sons via WebAudio
@@ -27,7 +27,6 @@
     .trim()
     .replace(/\s+/g, "_")
     .replace(/[^A-Za-zÀ-ÿ0-9_\-]/g, "");
-
   // --------------------------
   // Perícias: descrições (para exibir na tela)
   // --------------------------
@@ -87,13 +86,15 @@
     "Liderança": "Inspirar e comandar aliados em combate ou fora dele.",
     "Domar": "Treinar e manter controle sobre animais ou monstros.",
     "Ofício": "Criar, consertar ou aprimorar itens por meio de técnicas manuais.",
-    "Percepção": "Notar detalhes sutis no ambiente ou mudanças ao redor."
+    "Percepção": "Notar detalhes sutis no ambiente ou mudanças ao redor.",
   };
 
   const getSkillDesc = (name) => {
     const k = keyOf(name);
     return SKILL_DESC[k] || SKILL_DESC[String(name || "").trim()] || "";
   };
+
+
 
   // --------------------------
   // Storage
@@ -196,6 +197,7 @@
       attributes,
       skills,
       stats: character.stats,
+      // runtime.tracks é o estado atual (número)
       tracks: runtime.tracks,
     };
   }
@@ -222,9 +224,11 @@
   }
 
   function rollDice(exprRaw, ctx, mode = "normal") {
+    // mode: normal | adv | dis (apenas para 1d20 no começo: rola 2d20 e pega maior/menor)
     let expr = (exprRaw || "").trim();
     if (!expr) throw new Error("Expressão vazia.");
 
+    // Adv/Dis: se a expressão começar com 1d20 (ignora espaços)
     if (mode !== "normal") {
       const normalized = expr.replace(/\s+/g, "");
       if (normalized.startsWith("1d20")) {
@@ -234,6 +238,7 @@
 
     const withMacros = replaceMacros(expr, ctx);
 
+    // tokeniza dados NdM
     const diceRegex = /(\d*)d(\d+)/gi;
     const diceRolls = [];
     const replaced = withMacros.replace(diceRegex, (m, nStr, sidesStr) => {
@@ -244,6 +249,7 @@
       for (let i = 0; i < n; i++) rolls.push(1 + Math.floor(Math.random() * sides));
       diceRolls.push({ n, sides, rolls });
 
+      // adv/dis só para 2d20
       if (mode !== "normal" && sides === 20 && n === 2) {
         const a = rolls[0], b = rolls[1];
         const chosen = mode === "adv" ? Math.max(a, b) : Math.min(a, b);
@@ -252,6 +258,7 @@
       return String(rolls.reduce((a, b) => a + b, 0));
     });
 
+    // eval seguro: apenas números e operadores
     if (!/^[0-9+\-*/().\s]+$/.test(replaced)) {
       throw new Error("Expressão inválida (use apenas dados, números e + - * / ( ) ).");
     }
@@ -370,6 +377,7 @@
   }
 
   function spend(costObj, reason = "") {
+    // costObj: {PS: n, PV: n, PF: n}
     const keys = ["PS", "PV", "PF"];
     for (const k of keys) {
       const cost = Number(costObj?.[k] ?? 0);
@@ -475,12 +483,12 @@
           </div>
           <div class="card__text">
 Use o menu acima para navegar pelas seções.
-- Ativas normalmente consomem 1 PV (ação), se não houver custo definido.
+- Ativas normalmente consomem 1 PV (ação) se não tiver custo definido.
 - Exclusivas com custo definido já descontam PV/PF/PS automaticamente.
           </div>
           <div class="small" style="margin-top:10px;">
 Macros úteis:
-<code>@attributes.Força.half</code> • <code>@skills.FOR.Armas_Pesadas.total</code> • <code>@tracks.PF</code>
+<code>@attributes.Força.half</code> • <code>@skills.physical.Armas_Avançadas.total</code> • <code>@tracks.PF</code>
           </div>
         </div>
 
@@ -488,11 +496,11 @@ Macros úteis:
           <div class="card__title">Atalhos rápidos</div>
           <div class="card__text">Clique para rolar automaticamente:</div>
           <div class="card__actions">
-            <button class="btn" data-roll="1d20 + @skills.FOR.Lutar.total">Ataque (Lutar)</button>
-            <button class="btn" data-roll="1d20 + @skills.DES.Armas_Avançadas.total">Armas Avançadas</button>
-            <button class="btn" data-roll="1d20 + @skills.DES.Reflexo.total">Reflexo</button>
-            <button class="btn" data-roll="1d20 + @skills.SAB.Percepção.total">Percepção</button>
-            <button class="btn" data-roll="1d20 + @skills.ARC.Ocultismo.total">Ocultismo</button>
+            <button class="btn" data-roll="1d20 + @skills.physical.Lutar.total">Ataque (Lutar)</button>
+            <button class="btn" data-roll="1d20 + @skills.physical.Armas_Avançadas.total">Armas Avançadas</button>
+            <button class="btn" data-roll="1d20 + @skills.physical.Reflexo.total">Reflexo</button>
+            <button class="btn" data-roll="1d20 + @skills.intellectual.Percepção.total">Percepção</button>
+            <button class="btn" data-roll="1d20 + @skills.intellectual.Ocultismo.total">Ocultismo</button>
           </div>
         </div>
       </div>
@@ -530,9 +538,9 @@ Macros úteis:
           </div>
         </div>
         <div class="card__actions">
-          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${a.name}.half">Teste (1/2)</button>
-          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${a.name}.quarter">Teste (1/4)</button>
-          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${a.name}.eighth">Teste (1/8)</button>
+          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${escapeAttr(a.name)}.half">Teste (1/2)</button>
+          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${escapeAttr(a.name)}.quarter">Teste (1/4)</button>
+          <button class="btn btn--ghost" data-roll="1d20 + @attributes.${escapeAttr(a.name)}.eighth">Teste (1/8)</button>
         </div>
       `;
       grid.appendChild(card);
@@ -547,7 +555,7 @@ Macros úteis:
   }
 
   // --------------------------
-  // Render: Skills (agrupadas por atributo + descrição)
+  // Render: Skills
   // --------------------------
   function renderSkills() {
     const c = runtime.character;
@@ -621,6 +629,7 @@ Macros úteis:
       grid.appendChild(makeGroup(code, list));
     }
 
+    // fallback: se aparecer algum atributo fora do padrão, mostra no final
     const extraCodes = Object.keys(groups).filter(c0 => !ATTR_ORDER.includes(c0) && groups[c0]?.length);
     for (const code of extraCodes) {
       grid.appendChild(makeGroup(code, groups[code]));
@@ -702,6 +711,7 @@ Macros úteis:
       `;
       grid.appendChild(card);
 
+      // Use
       const use = $("[data-use]", card);
       if (use) {
         use.addEventListener("click", () => {
@@ -714,6 +724,7 @@ Macros úteis:
         });
       }
 
+      // Rolls
       $$("[data-roll]", card).forEach((btn) => {
         btn.addEventListener("click", () => {
           AudioFX.click();
@@ -725,10 +736,33 @@ Macros úteis:
     container.appendChild(wrap);
   }
 
+  // --------------------------
+  // Render: Combat / Craft / Exclusive
+  // --------------------------
   function renderCombat() {
     const el = $("#tab-combat");
     el.innerHTML = "";
     const list = runtime.character.abilities.combat_tree || [];
+
+    if (!list.length) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card__head">
+          <div>
+            <div class="card__title">Habilidades de Combate</div>
+            <div class="card__meta">Nenhuma habilidade de combate cadastrada no momento.</div>
+          </div>
+          <div class="badges"><span class="badge">0 itens</span></div>
+        </div>
+        <div class="card__text">
+Você pode adicionar novas habilidades editando <code>data/character.json</code> (campo <code>abilities.combat_tree</code>).
+        </div>
+      `;
+      el.appendChild(card);
+      return;
+    }
+
     renderAbilityList(el, list, {
       sectionTitle: "Habilidades de Combate",
       hint: "Ativas descontam 1 PV por padrão (ação), se não houver custo definido."
@@ -800,6 +834,9 @@ Macros úteis:
     return lines.join("\n");
   }
 
+  // --------------------------
+  // Roller UI
+  // --------------------------
   function doRoll(expr, title, mode = "normal") {
     try {
       AudioFX.roll();
@@ -847,6 +884,9 @@ Macros úteis:
     });
   }
 
+  // --------------------------
+  // Settings buttons
+  // --------------------------
   function wireTopbar() {
     $("#btnNewRound").addEventListener("click", () => {
       AudioFX.click();
@@ -887,6 +927,9 @@ Macros úteis:
     });
   }
 
+  // --------------------------
+  // Tabs wiring
+  // --------------------------
   function wireTabs() {
     $("#tabs").addEventListener("click", (e) => {
       const btn = e.target.closest(".tab");
@@ -897,6 +940,9 @@ Macros úteis:
     });
   }
 
+  // --------------------------
+  // Log buttons
+  // --------------------------
   function wireLogButtons() {
     $("#btnClearLog").addEventListener("click", () => {
       AudioFX.click();
@@ -919,6 +965,9 @@ Macros úteis:
     });
   }
 
+  // --------------------------
+  // Escape HTML / Attr
+  // --------------------------
   function escapeHtml(s) {
     return String(s ?? "")
       .replace(/&/g, "&amp;")
@@ -928,28 +977,36 @@ Macros úteis:
       .replace(/'/g, "&#039;");
   }
   function escapeAttr(s) {
+    // atributo HTML: evita quebrar aspas
     return escapeHtml(s).replace(/\n/g, " ");
   }
 
+  // --------------------------
+  // Boot
+  // --------------------------
   async function boot() {
     const res = await fetch("./data/character.json", { cache: "no-store" });
     if (!res.ok) throw new Error("Não consegui carregar data/character.json");
     const character = await res.json();
     runtime.character = character;
 
+    // Load state
     const saved = loadState();
     runtime.state = saved || buildDefaultState(character);
 
+    // apply settings
     $("#soundToggle").checked = !!runtime.state.settings.sound;
     $("#motionToggle").checked = !!runtime.state.settings.reducedMotion;
     AudioFX.setEnabled(!!runtime.state.settings.sound);
 
+    // Header
     $("#charName").textContent = character.meta?.name || "Ficha";
     const metaPieces = [];
     if (character.meta?.race?.name) metaPieces.push(`${character.meta.race.name}${character.meta.race.level ? " " + character.meta.race.level : ""}`);
     if (character.meta?.class?.name) metaPieces.push(`${character.meta.class.name}${character.meta.class.level ? " " + character.meta.class.level : ""}`);
     $("#charMeta").textContent = metaPieces.join(" • ") || "—";
 
+    // UI
     renderTracks();
     renderLog();
 
@@ -958,13 +1015,21 @@ Macros úteis:
     wireTopbar();
     wireLogButtons();
 
+    // Chips com macros usando keyOf (sem espaços)
+    $$(".chip").forEach((c) => {
+      c.dataset.macro = c.dataset.macro
+        .replace("Armas Avançadas", "Armas_Avançadas")
+        .replace("Primeiros Socorros", "Primeiros_Socorros")
+        .replace("Armas Pesadas", "Armas_Pesadas")
+        .replace("Seguir Trilhas", "Seguir_Trilhas");
+    });
+
     renderOverview();
     renderAttributes();
     renderSkills();
     renderCombat();
     renderExclusive();
-
-    logLine("Ficha carregada. Bom jogo.");
+logLine("Ficha carregada. Bom jogo.");
   }
 
   boot().catch((e) => {

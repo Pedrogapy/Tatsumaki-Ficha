@@ -40,18 +40,18 @@
         <h2 class="panel__title">Rolador</h2>
 
         <div class="roller">
-          <input id="rollInput" class="input" placeholder="Ex: 1d20 + @skills.FOR.Lutar.total" />
+          <input id="rollInput" class="input" placeholder="Ex: 1d20 + @skills.physical.Lutar.total" />
           <div class="row">
             <button class="btn" id="btnRoll">Rolar</button>
             <button class="btn btn--ghost" id="btnRollAdv" title="Rola 2d20 e pega o maior">Vantagem</button>
             <button class="btn btn--ghost" id="btnRollDis" title="Rola 2d20 e pega o menor">Desvantagem</button>
           </div>
           <div class="row row--wrap">
-            <button class="chip" data-macro="1d20 + @skills.FOR.Lutar.total">Ataque (Lutar)</button>
-            <button class="chip" data-macro="1d20 + @skills.DES.Reflexo.total">Reflexo</button>
-            <button class="chip" data-macro="1d20 + @skills.SAB.Percepção.total">Percepção</button>
-            <button class="chip" data-macro="1d20 + @skills.INT.Investigação.total">Investigação</button>
-            <button class="chip" data-macro="1d20 + @skills.ARC.Ocultismo.total">Ocultismo</button>
+            <button class="chip" data-macro="1d20 + @skills.physical.Lutar.total">Ataque (Lutar)</button>
+            <button class="chip" data-macro="1d20 + @skills.physical.Reflexo.total">Reflexo</button>
+            <button class="chip" data-macro="1d20 + @skills.intellectual.Percepção.total">Percepção</button>
+            <button class="chip" data-macro="1d20 + @skills.intellectual.Investigação.total">Investigação</button>
+            <button class="chip" data-macro="1d20 + @skills.intellectual.Ocultismo.total">Ocultismo</button>
           </div>
         </div>
       </section>
@@ -75,14 +75,14 @@
         <button class="tab" data-tab="skills">Perícias</button>
         <button class="tab" data-tab="combat">Combate</button>
         <button class="tab" data-tab="exclusive">Exclusivas</button>
-      </nav>
+</nav>
 
       <section class="tabpane is-active" id="tab-overview"></section>
       <section class="tabpane" id="tab-attributes"></section>
       <section class="tabpane" id="tab-skills"></section>
       <section class="tabpane" id="tab-combat"></section>
       <section class="tabpane" id="tab-exclusive"></section>
-    </section>
+</section>
   </main>
 
   <div id="toastHost" class="toastHost" aria-live="polite" aria-atomic="true"></div>
