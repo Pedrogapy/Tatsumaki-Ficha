@@ -1,75 +1,88 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Tatsumaki ShadowHeart Gojo</title>
-<link rel="stylesheet" href="styles.css"/>
+  <meta charset="UTF-8" />
+  <title>Tatsumaki ShadowHeart Gojo</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+
 <header>
   <h1>Tatsumaki ShadowHeart Gojo</h1>
-  <div class="tracks">
+
+  <div class="resources">
     <div>PS: <span id="ps"></span></div>
     <div>PVO: <span id="pvo"></span></div>
     <div>PVD: <span id="pvd"></span></div>
     <div>PF: <span id="pf"></span></div>
-  </div>
-  <div class="controls">
-    <button id="newRound">Nova rodada</button>
-    <button id="newCombat">Novo combate</button>
-    <button id="resetAll">Reset total</button>
+    <div>Rodada: <span id="round"></span></div>
   </div>
 </header>
 
 <main>
+
 <section class="card">
-<h2>Combate</h2>
-<div class="row">
-  <button id="atk_melee">Atacar (Corpo a corpo)</button>
-  <button id="dmg_melee">Dano (Corpo a corpo)</button>
-</div>
-<div class="row">
-  <button id="atk_sword">Atacar (Espada Tatsumaki)</button>
-  <button id="dmg_sword">Dano (Espada Tatsumaki)</button>
-</div>
-<div class="row">
-  <label>Dano Arma Pesada:</label>
-  <input id="heavy_base" value="2d6"/>
-  <button id="atk_heavy">Atacar (Arma Pesada)</button>
-  <button id="dmg_heavy">Dano (Arma Pesada)</button>
-</div>
+  <h2>Essência — Passivas</h2>
+  <ul>
+    <li>Essência Verdadeira (Nível 3): +1 dado em todos os ataques</li>
+    <li>Essência Ofensiva (Nível 2): +2 dados em todos os ataques</li>
+    <li>Aptidão Mágica (Nível 1): Vantagem automática em testes mágicos</li>
+    <li>Aura Defensiva disponível (2d6 + ¼ Arcano)</li>
+  </ul>
 </section>
 
 <section class="card">
-<h2>Habilidades</h2>
-<div class="row">
-  <select id="target_sanguenta">
-    <option value="melee">Mãos</option>
-    <option value="sword">Espada Tatsumaki</option>
-    <option value="heavy">Arma Pesada</option>
-  </select>
-  <button id="use_sanguenta">Arma Sanguenta</button>
-</div>
-<div class="row">
-  <select id="target_plasma">
-    <option value="melee">Mãos</option>
-    <option value="sword">Espada Tatsumaki</option>
-    <option value="heavy">Arma Pesada</option>
-  </select>
-  <button id="toggle_plasma">Arma de Plasma (On/Off)</button>
-</div>
+  <h2>Combate</h2>
+
+  <button onclick="attackMelee()">Teste Corpo a Corpo (Lutar)</button>
+  <button onclick="damageMelee()">Dano Corpo a Corpo</button>
+
+  <button onclick="attackSword()">Teste Espada Tatsumaki</button>
+  <button onclick="damageSword()">Dano Espada Tatsumaki</button>
+
+  <button onclick="attackHeavy()">Teste Arma Pesada</button>
+  <button onclick="damageHeavy()">Dano Arma Pesada</button>
 </section>
 
 <section class="card">
-<h2>Efeitos Ativos</h2>
-<ul id="effects"></ul>
+  <h2>Habilidades de Imbuição</h2>
+
+  <div class="row">
+    <select id="sanguentaTarget">
+      <option value="melee">Mãos</option>
+      <option value="sword">Espada Tatsumaki</option>
+      <option value="heavy">Arma Pesada</option>
+    </select>
+    <button onclick="activateSanguenta()">Arma Sanguenta</button>
+  </div>
+
+  <div class="row">
+    <select id="plasmaTarget">
+      <option value="melee">Mãos</option>
+      <option value="sword">Espada Tatsumaki</option>
+      <option value="heavy">Arma Pesada</option>
+    </select>
+    <button onclick="togglePlasma()">Arma de Plasma</button>
+  </div>
 </section>
 
 <section class="card">
-<h2>Log</h2>
-<pre id="log"></pre>
+  <h2>Iniciativa</h2>
+  <input id="initName" placeholder="Nome" />
+  <button onclick="addInitiative()">Adicionar</button>
+  <ul id="initiative"></ul>
 </section>
+
+<section class="card">
+  <h2>Efeitos Ativos</h2>
+  <ul id="effects"></ul>
+</section>
+
+<section class="card">
+  <h2>Log</h2>
+  <pre id="log"></pre>
+</section>
+
 </main>
 
 <script src="app.js"></script>
