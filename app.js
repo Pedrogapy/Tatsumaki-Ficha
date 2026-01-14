@@ -288,6 +288,14 @@ function nextRound(){
   log("Nova rodada: PVO/PVD restaurados.");
 }
 
+function startTurn(){
+  // Sem aumentar rodada: só restaura ações (útil quando você quer usar "rodada" como contador global)
+  state.pvo = MAX.pvo;
+  state.pvd = MAX.pvd;
+  render();
+  log("Turno iniciado: PVO/PVD restaurados.");
+}
+
 // ------------------------------
 // Damage modifiers (Essência + efeitos por alvo)
 // ------------------------------
@@ -486,6 +494,10 @@ async function init(){
   loadState();
 
   // Hook controls
+  const startTurnBtn = document.getElementById("startTurn");
+  if(startTurnBtn){
+    startTurnBtn.onclick = () => { startTurn(); };
+  }
   document.getElementById("newRound").onclick = () => { nextRound(); };
   document.getElementById("newCombat").onclick = () => {
     state.round = 1;
@@ -507,7 +519,8 @@ async function init(){
   // Sorte
   document.getElementById("roll_luck").onclick = () => {
     const mod = Number(character?.stats?.luck ?? 0);
-    const res = rollD20WithMode(mod, "normal");
+    const mode = (document.getElementById("luckMode")?.value || "normal");
+    const res = rollD20WithMode(mod, mode);
     log(`Sorte: ${res.detail}`);
     render();
   };

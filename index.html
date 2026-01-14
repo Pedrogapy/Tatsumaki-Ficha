@@ -18,6 +18,11 @@
             <div class="metaItem">
               <span class="label">Sorte</span>
               <span id="luck" class="value">—</span>
+              <select id="luckMode" class="select select-sm" aria-label="Modo da sorte">
+                <option value="normal">Normal</option>
+                <option value="adv">Vantagem</option>
+                <option value="dis">Desvantagem</option>
+              </select>
               <button id="roll_luck" class="btn btn-ghost btn-sm">Rolar</button>
             </div>
             <div class="metaItem">
@@ -32,22 +37,51 @@
         <div class="track">
           <div class="trackLabel">PS</div>
           <div id="ps" class="trackValue">—</div>
+          <div class="trackControls" aria-label="Ajuste PS">
+            <button class="mini" data-track="ps" data-delta="-5">-5</button>
+            <button class="mini" data-track="ps" data-delta="-1">-1</button>
+            <button class="mini" data-track="ps" data-delta="+1">+1</button>
+            <button class="mini" data-track="ps" data-delta="+5">+5</button>
+            <button class="mini mini-ghost" data-track="ps" data-set="1" title="Definir valor">Set</button>
+          </div>
         </div>
         <div class="track">
           <div class="trackLabel">PF</div>
           <div id="pf" class="trackValue">—</div>
+          <div class="trackControls" aria-label="Ajuste PF">
+            <button class="mini" data-track="pf" data-delta="-5">-5</button>
+            <button class="mini" data-track="pf" data-delta="-1">-1</button>
+            <button class="mini" data-track="pf" data-delta="+1">+1</button>
+            <button class="mini" data-track="pf" data-delta="+5">+5</button>
+            <button class="mini mini-ghost" data-track="pf" data-set="1" title="Definir valor">Set</button>
+          </div>
         </div>
         <div class="track">
           <div class="trackLabel">PVO</div>
           <div id="pvo" class="trackValue">—</div>
+          <div class="trackControls" aria-label="Ajuste PVO">
+            <button class="mini" data-track="pvo" data-delta="-1">-1</button>
+            <button class="mini" data-track="pvo" data-delta="+1">+1</button>
+            <button class="mini mini-ghost" data-track="pvo" data-reset="1" title="Voltar ao máximo">Max</button>
+          </div>
         </div>
         <div class="track">
           <div class="trackLabel">PVD</div>
           <div id="pvd" class="trackValue">—</div>
+          <div class="trackControls" aria-label="Ajuste PVD">
+            <button class="mini" data-track="pvd" data-delta="-1">-1</button>
+            <button class="mini" data-track="pvd" data-delta="+1">+1</button>
+            <button class="mini mini-ghost" data-track="pvd" data-reset="1" title="Voltar ao máximo">Max</button>
+          </div>
         </div>
       </div>
 
       <div class="topActions">
+        <div class="soundControls" aria-label="Controles de som">
+          <button id="sfxToggle" class="btn btn-ghost btn-sm" aria-pressed="true" title="Ativar/Desativar som">Som: ON</button>
+          <input id="sfxVolume" class="range" type="range" min="0" max="100" value="35" aria-label="Volume do som" />
+        </div>
+        <button id="startTurn" class="btn btn-ghost">Começar turno</button>
         <button id="newRound" class="btn">Nova rodada</button>
         <button id="newCombat" class="btn">Novo combate</button>
         <button id="resetAll" class="btn btn-danger">Reset total</button>
@@ -125,6 +159,13 @@
           <div class="cardHeaderRow">
             <h2>Log</h2>
             <div class="logTools">
+              <select id="logKind" class="select select-sm" aria-label="Filtrar log">
+                <option value="all">Tudo</option>
+                <option value="rolls">Rolagens</option>
+                <option value="resources">Recursos</option>
+                <option value="effects">Efeitos</option>
+              </select>
+              <input id="logSearch" class="input input-sm" placeholder="Buscar no log…" />
               <button id="copyLog" class="btn btn-ghost btn-sm">Copiar</button>
               <button id="clearLog" class="btn btn-ghost btn-sm">Limpar</button>
             </div>
@@ -139,6 +180,7 @@
 
   <script src="ui.js"></script>
   <script src="app.js"></script>
+  <script src="sfx.js"></script>
   <script src="ux.js"></script>
 </body>
 </html>

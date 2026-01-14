@@ -2,6 +2,10 @@
 // - Copiar/Limpar log
 // - Flash visual em mudanças de PS/PF/PVO/PVD
 // - Toasts discretos para eventos importantes
+//
+// Etapa 4
+// - Botões de ajuste rápido no HUD (PS/PF/PVO/PVD)
+// - Filtro + busca no log (Tudo/Rolagens/Recursos/Efeitos)
 
 (function(){
   const qs = (sel) => document.querySelector(sel);
@@ -111,31 +115,39 @@
     const l = String(line || '').toLowerCase();
 
     if(l.includes('sem recurso')){
-      return { title: 'Sem recurso', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: 'bad' };
+      return { title: 'Sem recurso', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: 'bad', sfx: 'error' };
     }
 
     if(l.includes('reset total')){
-      return { title: 'Reset total', detail: 'Tudo voltou ao máximo e o log foi reiniciado.', type: 'bad' };
+      return { title: 'Reset total', detail: 'Tudo voltou ao máximo e o log foi reiniciado.', type: 'bad', sfx: 'reset' };
     }
 
     if(l.includes('novo combate')){
-      return { title: 'Novo combate', detail: 'Rodada e ações reiniciadas.', type: '' };
+      return { title: 'Novo combate', detail: 'Rodada e ações reiniciadas.', type: '', sfx: 'round' };
     }
 
     if(l.includes('nova rodada')){
-      return { title: 'Nova rodada', detail: 'PVO/PVD restaurados.', type: '' };
+      return { title: 'Nova rodada', detail: 'PVO/PVD restaurados.', type: '', sfx: 'round' };
+    }
+
+    if(l.includes('turno iniciado')){
+      return { title: 'Turno', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: '', sfx: 'turn' };
     }
 
     if(l.includes('arma sanguenta')){
-      return { title: 'Arma Sanguenta', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: '' };
+      return { title: 'Arma Sanguenta', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: '', sfx: 'blood' };
     }
 
     if(l.includes('plasma ativado')){
-      return { title: 'Plasma ativado', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: '' };
+      return { title: 'Plasma ativado', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: '', sfx: 'plasma' };
+    }
+
+    if(l.includes('plasma desligado')){
+      return { title: 'Plasma desligado', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: '', sfx: 'click' };
     }
 
     if(l.startsWith('sorte:') || l.includes('sorte:')){
-      return { title: 'Sorte', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: 'good' };
+      return { title: 'Sorte', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: 'good', sfx: 'roll' };
     }
 
     return null;
@@ -148,13 +160,22 @@
     let lastFirstLine = '';
 
     const obs = new MutationObserver(() => {
+      try{
+        if(window.__tatsUx && typeof window.__tatsUx.suppressToasts === 'function' && window.__tatsUx.suppressToasts()){
+          return;
+        }
+      }catch(_){/* ignore */}
+
       const txt = String(logEl.textContent || '');
       const firstLine = (txt.split('\n')[0] || '').trim();
       if(!firstLine || firstLine === lastFirstLine) return;
       lastFirstLine = firstLine;
 
       const info = classifyToastFromLogLine(firstLine);
-      if(info) toast(info.title, info.detail, info.type);
+      if(info){
+        toast(info.title, info.detail, info.type);
+        try{ window.__sfx?.play?.(info.sfx || (info.type === 'bad' ? 'error' : 'click')); }catch(_){/* ignore */}
+      }
     });
 
     obs.observe(logEl, { childList: true, characterData: true, subtree: true });
@@ -189,12 +210,152 @@
     }
   }
 
+  function clamp(n, min, max){
+    if(!Number.isFinite(n)) return min;
+    return Math.min(max, Math.max(min, n));
+  }
+
+  function trackLabel(key){
+    const k = String(key || '').toLowerCase();
+    if(k === 'ps') return 'PS';
+    if(k === 'pf') return 'PF';
+    if(k === 'pvo') return 'PVO';
+    if(k === 'pvd') return 'PVD';
+    return k.toUpperCase();
+  }
+
+  function setupTrackControls(){
+    const btns = Array.from(document.querySelectorAll('.trackControls button'));
+    if(!btns.length) return;
+
+    const api = window.__tats;
+    if(!api || !api.state || !api.MAX) return;
+
+    function setTrack(key, next, reason){
+      const k = String(key || '').toLowerCase();
+      if(typeof api.state[k] !== 'number') return;
+
+      const max = Number(api.MAX[k] ?? api.state[k]);
+      const cur = Number(api.state[k]);
+      const v = clamp(Number(next), 0, max);
+      if(v === cur) return;
+
+      api.state[k] = v;
+      api.render?.();
+      api.log?.(`${trackLabel(k)} ${reason || 'ajustado'}: ${cur} → ${v}/${max}`);
+    }
+
+    function addDelta(key, delta){
+      const k = String(key || '').toLowerCase();
+      if(typeof api.state[k] !== 'number') return;
+      const max = Number(api.MAX[k] ?? api.state[k]);
+      const cur = Number(api.state[k]);
+      const next = clamp(cur + Number(delta), 0, max);
+      if(next === cur) return;
+      api.state[k] = next;
+      api.render?.();
+      const sign = delta > 0 ? `+${delta}` : String(delta);
+      api.log?.(`${trackLabel(k)} ${sign}: ${next}/${max}`);
+    }
+
+    btns.forEach(b => {
+      b.addEventListener('click', () => {
+        const k = b.dataset.track;
+        if(!k) return;
+
+        if(b.dataset.reset){
+          const max = Number(api.MAX[String(k).toLowerCase()] ?? 0);
+          setTrack(k, max, 'max');
+          return;
+        }
+
+        if(b.dataset.set){
+          const cur = Number(api.state[String(k).toLowerCase()] ?? 0);
+          const max = Number(api.MAX[String(k).toLowerCase()] ?? cur);
+          const raw = prompt(`Definir ${trackLabel(k)} (0 a ${max})`, String(cur));
+          if(raw == null) return;
+          const n = Number(String(raw).trim().replace(',', '.'));
+          if(!Number.isFinite(n)){
+            toast('Valor inválido', `Não entendi: "${raw}"`, 'bad');
+            try{ window.__sfx?.play?.('error'); }catch(_){/* ignore */}
+            return;
+          }
+          setTrack(k, n, 'set');
+          return;
+        }
+
+        const d = Number(b.dataset.delta ?? 0);
+        if(Number.isFinite(d) && d !== 0){
+          addDelta(k, d);
+        }
+      });
+    });
+  }
+
+  function classifyLogLine(line, kind){
+    const l = String(line || '').toLowerCase();
+    if(kind === 'rolls'){
+      return l.includes('=>') || l.includes('1d20') || l.includes('dano');
+    }
+    if(kind === 'resources'){
+      return /\b(ps|pf|pvo|pvd)\b/.test(l) || l.includes('sem recurso') || l.includes('restaurados');
+    }
+    if(kind === 'effects'){
+      return l.includes('sanguenta') || l.includes('plasma') || l.includes('aura');
+    }
+    return true;
+  }
+
+  function setupLogFilter(){
+    const api = window.__tats;
+    const kindEl = document.getElementById('logKind');
+    const searchEl = document.getElementById('logSearch');
+    const logEl = document.getElementById('log');
+    if(!api || !api.state || !logEl || !kindEl || !searchEl) return;
+
+    let suppressToastsUntil = 0;
+    window.__tatsUx = window.__tatsUx || {};
+    window.__tatsUx.suppressToasts = () => (Date.now() < suppressToastsUntil);
+
+    function apply(){
+      const kind = String(kindEl.value || 'all');
+      const q = String(searchEl.value || '').trim().toLowerCase();
+      const lines = Array.isArray(api.state.logLines) ? api.state.logLines : [];
+
+      let out = lines;
+      if(kind !== 'all') out = out.filter(l => classifyLogLine(l, kind));
+      if(q) out = out.filter(l => String(l).toLowerCase().includes(q));
+
+      const desired = out.join('\n');
+      if(logEl.textContent !== desired) logEl.textContent = desired;
+    }
+
+    kindEl.addEventListener('change', () => {
+      suppressToastsUntil = Date.now() + 350;
+      apply();
+    });
+    searchEl.addEventListener('input', () => {
+      suppressToastsUntil = Date.now() + 350;
+      apply();
+    });
+
+    // Sempre que o app re-renderizar o log, reaplica filtro se necessário
+    const obs = new MutationObserver(() => {
+      if(String(kindEl.value) !== 'all' || String(searchEl.value).trim()){
+        apply();
+      }
+    });
+    obs.observe(logEl, { childList: true, characterData: true, subtree: true });
+  }
+
   function waitForAppReady(){
     // Se o app já estiver pronto, dispara setup imediatamente
     if(window.__tats && window.__tats.state){
       setupLogTools();
       setupTrackFlash();
       setupLogToasts();
+      setupTrackControls();
+      setupLogFilter();
       return;
     }
 
@@ -202,6 +363,8 @@
       setupLogTools();
       setupTrackFlash();
       setupLogToasts();
+      setupTrackControls();
+      setupLogFilter();
     }, { once: true });
 
     // fallback: tenta por um tempo
@@ -213,6 +376,8 @@
         setupLogTools();
         setupTrackFlash();
         setupLogToasts();
+        setupTrackControls();
+        setupLogFilter();
       }
       if(tries > 60) clearInterval(timer);
     }, 100);

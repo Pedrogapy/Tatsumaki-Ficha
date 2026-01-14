@@ -176,6 +176,37 @@ a{color:inherit}
 .trackLabel{font-size:.78rem; letter-spacing:.7px; color: var(--muted); text-transform:uppercase}
 .trackValue{margin-top:6px; font-size:1.05rem; font-weight:850}
 
+.trackControls{
+  margin-top:8px;
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.mini{
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,77,77,.24);
+  background: rgba(19,21,33,.42);
+  color: var(--text);
+  font-weight: 900;
+  cursor: pointer;
+  letter-spacing: .2px;
+  box-shadow: 0 10px 22px rgba(0,0,0,.35);
+  transition: transform .08s ease, filter .12s ease, border-color .12s ease;
+}
+
+.mini:hover{filter: brightness(1.10); border-color: rgba(255,77,77,.42)}
+.mini:active{transform: translateY(1px)}
+
+.mini-ghost{
+  border-color: rgba(92,98,140,.55);
+  background: transparent;
+  box-shadow: none;
+  opacity: .95;
+}
+
 /* Top actions */
 .topActions{
   display:flex;
@@ -184,6 +215,70 @@ a{color:inherit}
   justify-content:flex-end;
   align-items:stretch;
   flex: 1 1 280px;
+}
+
+/* Sound controls */
+.soundControls{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:flex-end;
+  flex: 1 1 100%;
+  padding: 6px 8px;
+  border: 1px solid rgba(255,77,77,.18);
+  border-radius: 16px;
+  background: rgba(10,11,18,.52);
+  box-shadow: 0 18px 40px rgba(0,0,0,.38);
+}
+
+.range{
+  width: 140px;
+  accent-color: rgba(255,77,77,.85);
+}
+
+/* Better range styling */
+input[type="range"].range{
+  -webkit-appearance: none;
+  appearance: none;
+  height: 30px;
+  background: transparent;
+}
+
+input[type="range"].range:focus{outline: none}
+
+input[type="range"].range::-webkit-slider-runnable-track{
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,77,77,.65), rgba(92,98,140,.35));
+  border: 1px solid rgba(255,77,77,.18);
+}
+
+input[type="range"].range::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -4px;
+  border-radius: 999px;
+  background: rgba(255,77,77,.95);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 10px 24px rgba(255,77,77,.18), 0 10px 26px rgba(0,0,0,.35);
+}
+
+input[type="range"].range::-moz-range-track{
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,77,77,.65), rgba(92,98,140,.35));
+  border: 1px solid rgba(255,77,77,.18);
+}
+
+input[type="range"].range::-moz-range-thumb{
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(255,77,77,.95);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 10px 24px rgba(255,77,77,.18), 0 10px 26px rgba(0,0,0,.35);
 }
 
 /* Tabs */
@@ -318,6 +413,16 @@ select,input{
   padding: 10px 12px;
 }
 
+/* utilitários (para manter HTML limpo) */
+.select, .input{width: auto}
+
+.select-sm, .input-sm{
+  height: 34px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-size: .92rem;
+}
+
 .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
 .inline{display:flex; gap:10px; align-items:center}
 .inline span{color: var(--muted); font-size:.9rem}
@@ -415,6 +520,9 @@ select,input{
 
 .logTools{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
 
+.logTools .input{flex: 1 1 220px; min-width: 180px}
+.logTools .select{flex: 0 0 auto}
+
 /* Log com caixa e scroll */
 .log{
   margin:0;
@@ -488,6 +596,8 @@ select,input{
   .hud{min-width: 100%; grid-template-columns: repeat(2, minmax(140px, 1fr)); flex: 1 1 100%}
   .topActions{flex: 1 1 100%; justify-content:stretch}
   .topActions .btn{flex: 1 1 30%}
+  .soundControls{justify-content:space-between}
+  .range{width: 100%; max-width: 220px}
 }
 
 @media (max-width: 420px){
@@ -495,4 +605,6 @@ select,input{
   .topActions{gap:8px}
   .topActions .btn{height: 40px; padding: 10px 10px; font-size: .95rem}
   .brandText h1{font-size: 1rem}
+  .soundControls{gap:8px; padding: 6px 8px}
+  .range{max-width: 180px}
 }
