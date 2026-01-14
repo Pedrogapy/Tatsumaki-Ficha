@@ -1,69 +1,131 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Tatsumaki ShadowHeart Gojo</title>
-<link rel="stylesheet" href="styles.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tatsumaki ShadowHeart Gojo</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
-<header>
-  <h1 id="charName">Carregando...</h1>
-  <div class="tracks">
-    <div>PS: <span id="ps"></span></div>
-    <div>PVO: <span id="pvo"></span></div>
-    <div>PVD: <span id="pvd"></span></div>
-    <div>PF: <span id="pf"></span></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="portrait" aria-hidden="true"></div>
+        <div class="brandText">
+          <h1 id="charName">Carregando…</h1>
+          <div class="submeta">
+            <div class="metaItem">
+              <span class="label">Sorte</span>
+              <span id="luck" class="value">—</span>
+              <button id="roll_luck" class="btn btn-ghost btn-sm">Rolar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud">
+        <div class="track">
+          <div class="trackLabel">PS</div>
+          <div id="ps" class="trackValue">—</div>
+        </div>
+        <div class="track">
+          <div class="trackLabel">PF</div>
+          <div id="pf" class="trackValue">—</div>
+        </div>
+        <div class="track">
+          <div class="trackLabel">PVO</div>
+          <div id="pvo" class="trackValue">—</div>
+        </div>
+        <div class="track">
+          <div class="trackLabel">PVD</div>
+          <div id="pvd" class="trackValue">—</div>
+        </div>
+      </div>
+
+      <div class="topActions">
+        <button id="newRound" class="btn">Nova rodada</button>
+        <button id="newCombat" class="btn">Novo combate</button>
+        <button id="resetAll" class="btn btn-danger">Reset total</button>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Navegação">
+      <button class="tab active" data-tab="tab-combat" aria-controls="tab-combat" aria-selected="true">Combate</button>
+      <button class="tab" data-tab="tab-skills" aria-controls="tab-skills" aria-selected="false">Perícias</button>
+      <button class="tab" data-tab="tab-essence" aria-controls="tab-essence" aria-selected="false">Essência</button>
+      <button class="tab" data-tab="tab-abilities" aria-controls="tab-abilities" aria-selected="false">Habilidades</button>
+      <button class="tab" data-tab="tab-log" aria-controls="tab-log" aria-selected="false">Log</button>
+    </nav>
+
+    <main class="content">
+      <section id="tab-combat" class="panel active" role="tabpanel">
+        <div class="grid2">
+          <section class="card">
+            <h2>Combate</h2>
+            <div id="combatActions" class="actions"></div>
+          </section>
+
+          <section class="card">
+            <h2>Efeitos Ativos</h2>
+            <ul id="effects" class="effectsList"></ul>
+          </section>
+        </div>
+      </section>
+
+      <section id="tab-skills" class="panel" role="tabpanel">
+        <section class="card">
+          <h2>Perícias</h2>
+          <p class="muted">Esta aba entra na Etapa 12: lista completa com busca e rolagem (Normal/Vantagem/Desvantagem).</p>
+        </section>
+      </section>
+
+      <section id="tab-essence" class="panel" role="tabpanel">
+        <section class="card">
+          <h2>Essência</h2>
+          <p class="muted">Esta aba entra na Etapa 16: painel de Essência (EV/Of/Def/Apt) + bônus automáticos + Aura Defensiva.</p>
+        </section>
+      </section>
+
+      <section id="tab-abilities" class="panel" role="tabpanel">
+        <section class="card">
+          <h2>Habilidades rápidas</h2>
+          <div class="row">
+            <label class="inline">
+              <span>Alvo</span>
+              <select id="target_sanguenta">
+                <option value="melee">Mãos</option>
+                <option value="sword">Espada Tatsumaki</option>
+                <option value="heavy">Arma Pesada</option>
+              </select>
+            </label>
+            <button id="use_sanguenta" class="btn">Arma Sanguenta</button>
+          </div>
+
+          <div class="row">
+            <label class="inline">
+              <span>Alvo</span>
+              <select id="target_plasma">
+                <option value="melee">Mãos</option>
+                <option value="sword">Espada Tatsumaki</option>
+                <option value="heavy">Arma Pesada</option>
+              </select>
+            </label>
+            <button id="toggle_plasma" class="btn">Arma de Plasma (On/Off)</button>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-log" class="panel" role="tabpanel">
+        <section class="card">
+          <h2>Log</h2>
+          <pre id="log" class="log"></pre>
+        </section>
+      </section>
+    </main>
   </div>
-  <div class="meta-row">
-    <div>Sorte: <span id="luck"></span></div>
-    <button id="roll_luck" class="small">Rolar Sorte</button>
-  </div>
-  <div class="controls">
-    <button id="newRound">Nova rodada</button>
-    <button id="newCombat">Novo combate</button>
-    <button id="resetAll">Reset total</button>
-  </div>
-</header>
 
-<main>
-<section class="card">
-<h2>Combate</h2>
-
-<div id="combatActions" class="actions"></div>
-</section>
-
-<section class="card">
-<h2>Habilidades</h2>
-<div class="row">
-  <select id="target_sanguenta">
-    <option value="melee">Mãos</option>
-    <option value="sword">Espada Tatsumaki</option>
-    <option value="heavy">Arma Pesada</option>
-  </select>
-  <button id="use_sanguenta">Arma Sanguenta</button>
-</div>
-<div class="row">
-  <select id="target_plasma">
-    <option value="melee">Mãos</option>
-    <option value="sword">Espada Tatsumaki</option>
-    <option value="heavy">Arma Pesada</option>
-  </select>
-  <button id="toggle_plasma">Arma de Plasma (On/Off)</button>
-</div>
-</section>
-
-<section class="card">
-<h2>Efeitos Ativos</h2>
-<ul id="effects"></ul>
-</section>
-
-<section class="card">
-<h2>Log</h2>
-<pre id="log"></pre>
-</section>
-</main>
-
-<script src="app.js"></script>
+  <script src="ui.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
