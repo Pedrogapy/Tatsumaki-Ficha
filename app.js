@@ -1,197 +1,138 @@
-// ======== DADOS FIXOS DA FICHA =========
-const ATTR = {
-  for: 6,
-  dex: 6,
-  arc: 5
-};
+// --- Simple dice roller
+function roll(expr){
+  const m = expr.match(/(\d+)d(\d+)([+-]\d+)?/i);
+  if(!m) return {total:0, detail:expr};
+  const n=+m[1], s=+m[2], mod=+m[3]||0;
+  let rolls=[]; let sum=0;
+  for(let i=0;i<n;i++){ const r=1+Math.floor(Math.random()*s); rolls.push(r); sum+=r; }
+  sum+=mod;
+  return {total:sum, detail:`${expr} => [${rolls.join(', ')}] ${mod? (mod>0?'+':'')+mod:''} = ${sum}`};
+}
 
-// Essência: Verdadeira 3 + Ofensiva 2 = +3 dados
-const ESSENCE_DICE_BONUS = 3;
-
-// Recursos máximos
-const MAX = {
-  ps: 108,
-  pvo: 2,
-  pvd: 3,
-  pf: 66
-};
-
+// --- State
+const MAX = { ps:100, pvo:2, pvd:3, pf:100 };
 let state = {
-  ps: MAX.ps,
-  pvo: MAX.pvo,
-  pvd: MAX.pvd,
-  pf: MAX.pf,
-  round: 1,
-  initiative: [],
+  ps:MAX.ps, pvo:MAX.pvo, pvd:MAX.pvd, pf:MAX.pf,
+  round:1,
   effects: {
-    sanguenta: null,
-    plasma: null
+    sanguenta: null, // {target, rounds}
+    plasma: null // {target}
   }
 };
 
-// ======== UTIL =========
-function log(msg) {
-  const el = document.getElementById("log");
-  el.textContent = msg + "\n" + el.textContent;
+function resetTracks(){
+  state.ps=MAX.ps; state.pvo=MAX.pvo; state.pvd=MAX.pvd; state.pf=MAX.pf;
 }
 
-function roll(expr) {
-  const match = expr.match(/(\d+)d(\d+)([+-]\d+)?/);
-  let total = 0;
-  let rolls = [];
-  if (!match) return 0;
-  let [_, n, d, mod] = match;
-  for (let i = 0; i < +n; i++) {
-    let r = Math.floor(Math.random() * +d) + 1;
-    rolls.push(r);
-    total += r;
+function log(msg){
+  const el=document.getElementById('log');
+  el.textContent = msg + '\n' + el.textContent;
+}
+
+// --- Effects helpers
+function applySanguenta(target){
+  const dur = roll('1d4+1').total;
+  state.effects.sanguenta = { target, rounds: dur };
+  // rule: substitutes plasma on same target
+  if(state.effects.plasma && state.effects.plasma.target===target){
+    state.effects.plasma = null;
   }
-  if (mod) total += +mod;
-  return { total, rolls };
-}
-
-function render() {
-  ps.textContent = state.ps;
-  pvo.textContent = state.pvo;
-  pvd.textContent = state.pvd;
-  pf.textContent = state.pf;
-  round.textContent = state.round;
+  log(`Arma Sanguenta em ${target} por ${dur} rodadas (+1d8 dano).`);
   renderEffects();
 }
 
-// ======== ATAQUES =========
-function attackMelee() {
-  log(`Teste Lutar: 1d20+6 → ${roll("1d20+6").total}`);
-}
-
-function damageMelee() {
-  damage("melee", `2d8+${ATTR.for}`);
-}
-
-function attackSword() {
-  log(`Teste Espada: 1d20+11 → ${roll("1d20+11").total}`);
-}
-
-function damageSword() {
-  damage("sword", `3d8+${ATTR.dex}`);
-}
-
-function attackHeavy() {
-  log(`Teste Arma Pesada: 1d20+11 → ${roll("1d20+11").total}`);
-}
-
-function damageHeavy() {
-  damage("heavy", `2d6+${ATTR.for}`);
-}
-
-// ======== DANO COM ESSÊNCIA + BUFFS =========
-function damage(target, baseExpr) {
-  let [dice, sides] = baseExpr.split("d");
-  dice = parseInt(dice) + ESSENCE_DICE_BONUS;
-
-  let expr = `${dice}d${sides}`;
-  let notes = ["Essência +3d"];
-
-  if (state.effects.sanguenta?.target === target) {
-    expr += "+1d8";
-    notes.push("Sanguenta");
-  }
-
-  if (state.effects.plasma?.target === target) {
-    expr += "+1d12";
-    notes.push("Plasma (ignora resistências)");
-  }
-
-  const r = roll(expr);
-  log(`Dano ${expr} = ${r.total} [${notes.join(", ")}]`);
-}
-
-// ======== HABILIDADES =========
-function activateSanguenta() {
-  if (state.pvo < 1 || state.ps < 4) return;
-  const target = sanguentaTarget.value;
-
-  state.ps -= 4;
-  state.pvo -= 1;
-
-  const duration = roll("1d4+1").total;
-
-  state.effects.plasma = state.effects.plasma?.target === target ? null : state.effects.plasma;
-  state.effects.sanguenta = { target, rounds: duration };
-
-  log(`Arma Sanguenta em ${target} por ${duration} rodadas`);
-  render();
-}
-
-function togglePlasma() {
-  if (state.pvo < 1 || state.pf < 8) return;
-  const target = plasmaTarget.value;
-
-  if (state.effects.plasma?.target === target) {
+function togglePlasma(target){
+  if(state.effects.plasma && state.effects.plasma.target===target){
     state.effects.plasma = null;
-    log("Plasma desativado");
+    log(`Plasma desligado em ${target}.`);
   } else {
-    state.pvo -= 1;
-    state.pf -= 8;
-    state.effects.sanguenta = state.effects.sanguenta?.target === target ? null : state.effects.sanguenta;
     state.effects.plasma = { target };
-    log(`Plasma ativado em ${target}`);
-  }
-  render();
-}
-
-// ======== INICIATIVA =========
-function addInitiative() {
-  const name = initName.value.trim();
-  if (!name) return;
-  state.initiative.push({ name, done: false });
-  initName.value = "";
-  renderInitiative();
-}
-
-function renderInitiative() {
-  initiative.innerHTML = "";
-  state.initiative.forEach((c, i) => {
-    const li = document.createElement("li");
-    li.textContent = c.done ? `✔ ${c.name}` : c.name;
-    li.onclick = () => endTurn(i);
-    initiative.appendChild(li);
-  });
-}
-
-function endTurn(i) {
-  state.initiative[i].done = true;
-  if (state.initiative.every(c => c.done)) {
-    nextRound();
-  }
-  renderInitiative();
-}
-
-// ======== RODADAS =========
-function nextRound() {
-  state.round++;
-  state.initiative.forEach(c => c.done = false);
-
-  if (state.effects.sanguenta) {
-    state.effects.sanguenta.rounds--;
-    if (state.effects.sanguenta.rounds <= 0) {
-      log("Arma Sanguenta expirou");
+    // rule: substitutes sanguenta on same target
+    if(state.effects.sanguenta && state.effects.sanguenta.target===target){
       state.effects.sanguenta = null;
     }
+    log(`Plasma ativado em ${target} (+1d12, ignora resistências).`);
   }
-  render();
+  renderEffects();
 }
 
-// ======== EFEITOS =========
-function renderEffects() {
-  effects.innerHTML = "";
-  if (state.effects.sanguenta) {
-    effects.innerHTML += `<li>Sanguenta (${state.effects.sanguenta.target}) — ${state.effects.sanguenta.rounds} rod.</li>`;
+function nextRound(){
+  state.round++;
+  if(state.effects.sanguenta){
+    state.effects.sanguenta.rounds--;
+    if(state.effects.sanguenta.rounds<=0){
+      log(`Arma Sanguenta expirou.`);
+      state.effects.sanguenta=null;
+    }
   }
-  if (state.effects.plasma) {
-    effects.innerHTML += `<li>Plasma (${state.effects.plasma.target})</li>`;
+  renderEffects();
+}
+
+// --- Damage calc
+function damageFor(target, baseExpr, attrQuarter){
+  let totalExpr = baseExpr;
+  let notes=[];
+  // Essence: +2 dice simulated by +2d8 baseline for demo
+  totalExpr = totalExpr.replace(/(\d+)d(\d+)/, (m,a,b)=>`${+a+2}d${b}`);
+  if(state.effects.sanguenta && state.effects.sanguenta.target===target){
+    totalExpr += '+1d8'; notes.push('Sanguenta');
+  }
+  if(state.effects.plasma && state.effects.plasma.target===target){
+    totalExpr += '+1d12'; notes.push('Plasma (ignora resistências)');
+  }
+  const res = roll(totalExpr.replace(/\+\s*/g,'+'));
+  log(res.detail + (notes.length? ` | ${notes.join(', ')}`:''));
+}
+
+// --- UI
+function render(){
+  document.getElementById('ps').textContent=state.ps;
+  document.getElementById('pvo').textContent=state.pvo;
+  document.getElementById('pvd').textContent=state.pvd;
+  document.getElementById('pf').textContent=state.pf;
+  renderEffects();
+}
+function renderEffects(){
+  const ul=document.getElementById('effects'); ul.innerHTML='';
+  if(state.effects.sanguenta){
+    const li=document.createElement('li');
+    li.textContent = `Sanguenta em ${state.effects.sanguenta.target} (${state.effects.sanguenta.rounds} rodadas)`;
+    ul.appendChild(li);
+  }
+  if(state.effects.plasma){
+    const li=document.createElement('li');
+    li.textContent = `Plasma em ${state.effects.plasma.target} (∞)`;
+    ul.appendChild(li);
+  }
+  if(!state.effects.sanguenta && !state.effects.plasma){
+    const li=document.createElement('li'); li.textContent='—';
+    ul.appendChild(li);
   }
 }
 
-// ======== INIT =========
+document.getElementById('newRound').onclick=()=>{ nextRound(); };
+document.getElementById('newCombat').onclick=()=>{ state.round=1; state.pvo=MAX.pvo; state.pvd=MAX.pvd; render(); };
+document.getElementById('resetAll').onclick=()=>{ resetTracks(); state.effects={sanguenta:null, plasma:null}; render(); log('Reset total.'); };
+
+document.getElementById('atk_melee').onclick=()=>log(roll('1d20+6').detail);
+document.getElementById('atk_sword').onclick=()=>log(roll('1d20+11').detail);
+document.getElementById('atk_heavy').onclick=()=>log(roll('1d20+11').detail);
+
+document.getElementById('dmg_melee').onclick=()=>damageFor('melee','2d8', 'for');
+document.getElementById('dmg_sword').onclick=()=>damageFor('sword','3d8', 'dex');
+document.getElementById('dmg_heavy').onclick=()=>{
+  const base=document.getElementById('heavy_base').value||'2d6';
+  damageFor('heavy', base, 'for');
+};
+
+document.getElementById('use_sanguenta').onclick=()=>{
+  const t=document.getElementById('target_sanguenta').value;
+  applySanguenta(t);
+};
+document.getElementById('toggle_plasma').onclick=()=>{
+  const t=document.getElementById('target_plasma').value;
+  togglePlasma(t);
+};
+
+resetTracks();
 render();
