@@ -430,7 +430,68 @@ function applyStateToSkillUi(){
   if(autoEl) autoEl.checked = !!state?.ui?.autoMagicAdv;
 }
 
-function rollSkillCheck(entry, modeOverride){
+// Etapa 9 — helpers de UI (resultado destacado + animação + atalhos)
+let skillResultTimer = null;
+let skillsHotkeysBound = false;
+
+function skillKey(attrCode, skillName){
+  return `${String(attrCode||'').toUpperCase()}:${normKey(skillName)}`;
+}
+
+function modeLabel(mode){
+  if(mode === 'adv') return 'Vantagem';
+  if(mode === 'dis') return 'Desvantagem';
+  return 'Normal';
+}
+
+function showSkillResultBanner(payload){
+  const el = document.getElementById('skillResult');
+  if(!el) return;
+
+  const name = payload?.name || 'Perícia';
+  const attr = String(payload?.attr || '').toUpperCase();
+  const total = payload?.total;
+  const mode = payload?.mode || 'normal';
+  const detail = payload?.detail || '';
+
+  el.hidden = false;
+  el.classList.remove('show');
+
+  // Conteúdo
+  el.innerHTML = `
+    <div class="srTitle">
+      <div class="srName">${name} <span class="muted">[${attr}]</span></div>
+      <div class="srMode">${modeLabel(mode)}</div>
+    </div>
+    <div class="srValue">Resultado: ${fmtNumber(Number(total))}</div>
+    <div class="srDetail">${detail}</div>
+  `;
+
+  // animação
+  requestAnimationFrame(() => el.classList.add('show'));
+
+  // auto-hide
+  if(skillResultTimer) clearTimeout(skillResultTimer);
+  skillResultTimer = setTimeout(() => {
+    el.classList.remove('show');
+    el.hidden = true;
+  }, 9000);
+}
+
+function animateSkillCard(cardEl){
+  if(!cardEl) return;
+  // remove destaque de outros
+  document.querySelectorAll('.skillCard.is-last').forEach(n => n.classList.remove('is-last'));
+  cardEl.classList.add('is-last');
+  // shimmer
+  cardEl.classList.remove('is-rolling');
+  // força reflow
+  void cardEl.offsetWidth;
+  cardEl.classList.add('is-rolling');
+  setTimeout(() => cardEl.classList.remove('is-rolling'), 650);
+}
+
+function rollSkillCheck(entry, modeOverride, cardEl){
   const autoMagic = !!document.getElementById("autoMagicAdv")?.checked;
   const uiMode = String(document.getElementById("skillMode")?.value || "normal");
   let mode = String(modeOverride || uiMode);
@@ -447,6 +508,17 @@ function rollSkillCheck(entry, modeOverride){
 
   log(`Perícia ${entry.name} [${entry.attr}]${modeTxt}${tagTxt}: ${res.detail}`);
   try{ window.__sfx?.play?.("roll"); }catch(_){/* ignore */}
+
+  // Etapa 9 — resultado destacado + memorização do último resultado
+  const key = skillKey(entry.attr, entry.name);
+  const info = { total: res.total, mode, detail: res.detail, at: Date.now() };
+  state.ui.lastSkillRolls = state.ui.lastSkillRolls || {};
+  state.ui.lastSkillRolls[key] = info;
+  state.ui.lastSkillResult = { name: entry.name, attr: entry.attr, total: res.total, mode, detail: res.detail };
+  saveState();
+
+  showSkillResultBanner(state.ui.lastSkillResult);
+  animateSkillCard(cardEl);
   render();
 }
 
@@ -503,8 +575,16 @@ function renderSkillsTab(){
         const prof = !!skillData.proficient;
         const magic = !!s.magic;
 
+        const k = skillKey(gCode, s.name);
+
         const card = document.createElement("div");
         card.className = "skillCard";
+        card.tabIndex = 0;
+        card.dataset.skillKey = k;
+        card.dataset.skillName = s.name;
+        card.dataset.skillAttr = gCode;
+        card.dataset.skillTotal = String(total);
+        card.dataset.skillMagic = magic ? "1" : "0";
 
         const top = document.createElement("div");
         top.className = "skillTop";
@@ -551,17 +631,17 @@ function renderSkillsTab(){
         const btnRoll = document.createElement("button");
         btnRoll.className = "btn btn-sm";
         btnRoll.textContent = "Rolar";
-        btnRoll.onclick = () => rollSkillCheck({ name: s.name, attr: gCode, total, magic }, null);
+        btnRoll.onclick = () => rollSkillCheck({ name: s.name, attr: gCode, total, magic }, null, card);
 
         const btnAdv = document.createElement("button");
         btnAdv.className = "btn btn-ghost btn-sm";
         btnAdv.textContent = "Adv";
-        btnAdv.onclick = () => rollSkillCheck({ name: s.name, attr: gCode, total, magic }, "adv");
+        btnAdv.onclick = () => rollSkillCheck({ name: s.name, attr: gCode, total, magic }, "adv", card);
 
         const btnDis = document.createElement("button");
         btnDis.className = "btn btn-ghost btn-sm";
         btnDis.textContent = "Dis";
-        btnDis.onclick = () => rollSkillCheck({ name: s.name, attr: gCode, total, magic }, "dis");
+        btnDis.onclick = () => rollSkillCheck({ name: s.name, attr: gCode, total, magic }, "dis", card);
 
         actions.appendChild(btnRoll);
         actions.appendChild(btnAdv);
@@ -573,6 +653,15 @@ function renderSkillsTab(){
           desc.className = "skillDesc";
           desc.textContent = String(s.desc);
           card.appendChild(desc);
+        }
+
+        // Último resultado (Etapa 9)
+        const lastInfo = state?.ui?.lastSkillRolls ? state.ui.lastSkillRolls[k] : null;
+        if(lastInfo){
+          const last = document.createElement('div');
+          last.className = 'skillLast';
+          last.innerHTML = `Último: <b>${fmtNumber(Number(lastInfo.total))}</b> <span>(${modeLabel(lastInfo.mode)})</span>`;
+          card.appendChild(last);
         }
 
         grid.appendChild(card);
@@ -613,6 +702,126 @@ function initSkillsUi(){
       applySkillUiToState();
       saveState();
       renderSkillsTab();
+    });
+  }
+
+  // Mostra o último resultado, se existir
+  if(state?.ui?.lastSkillResult){
+    showSkillResultBanner(state.ui.lastSkillResult);
+  }
+
+  // Teclado dentro da lista (setas/enter)
+  root.addEventListener('focusin', (e) => {
+    const card = e.target?.closest?.('.skillCard');
+    if(card?.dataset?.skillKey){
+      state.ui.lastFocusedSkillKey = card.dataset.skillKey;
+      saveState();
+    }
+  });
+
+  root.addEventListener('keydown', (e) => {
+    // Se o foco estiver em um botão/controle dentro do card, deixa o comportamento padrão
+    const tgt = e.target;
+    if(tgt && (tgt.tagName === 'BUTTON' || tgt.tagName === 'INPUT' || tgt.tagName === 'SELECT' || tgt.tagName === 'TEXTAREA')) return;
+
+    const card = e.target?.closest?.('.skillCard');
+    if(!card) return;
+    const key = e.key;
+
+    const cards = Array.from(root.querySelectorAll('.skillCard'));
+    const idx = cards.indexOf(card);
+    if(idx < 0) return;
+
+    const detectCols = () => {
+      if(cards.length < 2) return 1;
+      const y0 = cards[0].getBoundingClientRect().top;
+      for(let i=1;i<cards.length;i++){
+        const y = cards[i].getBoundingClientRect().top;
+        if(Math.abs(y - y0) > 2) return i; // primeira quebra de linha
+      }
+      return 1;
+    };
+    const cols = detectCols();
+    const focusIndex = (ni) => {
+      const j = Math.max(0, Math.min(cards.length-1, ni));
+      const t = cards[j];
+      if(!t) return;
+      t.focus({ preventScroll: true });
+      t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    };
+
+    // Enter/Space = rolar (modo atual)
+    if(key === 'Enter' || key === ' '){
+      e.preventDefault();
+      const entry = {
+        name: card.dataset.skillName,
+        attr: card.dataset.skillAttr,
+        total: Number(card.dataset.skillTotal || 0),
+        magic: card.dataset.skillMagic === '1'
+      };
+      rollSkillCheck(entry, null, card);
+      return;
+    }
+
+    // A = vantagem, D = desvantagem
+    if(key === 'a' || key === 'A'){
+      e.preventDefault();
+      const entry = {
+        name: card.dataset.skillName,
+        attr: card.dataset.skillAttr,
+        total: Number(card.dataset.skillTotal || 0),
+        magic: card.dataset.skillMagic === '1'
+      };
+      rollSkillCheck(entry, 'adv', card);
+      return;
+    }
+    if(key === 'd' || key === 'D'){
+      e.preventDefault();
+      const entry = {
+        name: card.dataset.skillName,
+        attr: card.dataset.skillAttr,
+        total: Number(card.dataset.skillTotal || 0),
+        magic: card.dataset.skillMagic === '1'
+      };
+      rollSkillCheck(entry, 'dis', card);
+      return;
+    }
+
+    // Navegação por setas
+    if(key === 'ArrowRight'){ e.preventDefault(); focusIndex(idx + 1); return; }
+    if(key === 'ArrowLeft'){ e.preventDefault(); focusIndex(idx - 1); return; }
+    if(key === 'ArrowDown'){ e.preventDefault(); focusIndex(idx + cols); return; }
+    if(key === 'ArrowUp'){ e.preventDefault(); focusIndex(idx - cols); return; }
+    if(key === 'Home'){ e.preventDefault(); focusIndex(0); return; }
+    if(key === 'End'){ e.preventDefault(); focusIndex(cards.length-1); return; }
+  });
+
+  // Teclas globais (/, Esc) quando a aba Perícias estiver ativa
+  if(!skillsHotkeysBound){
+    skillsHotkeysBound = true;
+    document.addEventListener('keydown', (e) => {
+      const skillsPanel = document.getElementById('tab-skills');
+      if(!skillsPanel || !skillsPanel.classList.contains('active')) return;
+
+      const t = e.target;
+      const isTyping = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+
+      if(e.key === '/' && !isTyping){
+        e.preventDefault();
+        const se = document.getElementById('skillSearch');
+        if(se){ se.focus(); se.select?.(); }
+        return;
+      }
+
+      if(e.key === 'Escape'){
+        const se = document.getElementById('skillSearch');
+        if(se && se.value){
+          e.preventDefault();
+          se.value = '';
+          renderSkillsTab();
+          return;
+        }
+      }
     });
   }
 
@@ -671,7 +880,11 @@ let state = {
 
   ui: {
     skillMode: "normal",
-    autoMagicAdv: true
+    autoMagicAdv: true,
+    // Etapa 9 — guarda últimos resultados (por perícia) e último destaque
+    lastSkillRolls: {},
+    lastSkillResult: null,
+    lastFocusedSkillKey: null
   }
 };
 
@@ -709,6 +922,11 @@ function loadState(){
     state.effects = s.effects ?? state.effects;
     state.globalDamageBonusDice = (typeof s.globalDamageBonusDice === "number") ? s.globalDamageBonusDice : state.globalDamageBonusDice;
     state.logLines = Array.isArray(s.logLines) ? s.logLines : [];
+    if(s.ui && typeof s.ui === 'object'){
+      state.ui = { ...state.ui, ...s.ui };
+      // garante forma
+      if(!state.ui.lastSkillRolls || typeof state.ui.lastSkillRolls !== 'object') state.ui.lastSkillRolls = {};
+    }
     return true;
   }catch(_){
     return false;
