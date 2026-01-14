@@ -79,6 +79,15 @@
       <div class="topActions">
         <div class="soundControls" aria-label="Controles de som">
           <button id="sfxToggle" class="btn btn-ghost btn-sm" aria-pressed="true" title="Ativar/Desativar som">Som: ON</button>
+          <label class="soundInline" aria-label="Modo de efeitos sonoros">
+            <span class="soundLabel">Modo</span>
+            <select id="sfxPack" class="select select-sm" aria-label="Pacote de sons">
+              <option value="subtle">Sutil</option>
+              <option value="shadowheart" selected>ShadowHeart</option>
+              <option value="aggressive">Agressivo</option>
+            </select>
+          </label>
+          <button id="ambToggle" class="btn btn-ghost btn-sm" aria-pressed="false" title="Som ambiente opcional (desligado por padrão)">Ambiente: OFF</button>
           <input id="sfxVolume" class="range" type="range" min="0" max="100" value="35" aria-label="Volume do som" />
         </div>
         <button id="startTurn" class="btn btn-ghost">Começar turno</button>
