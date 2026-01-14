@@ -138,6 +138,10 @@
       return { title: 'Arma Sanguenta', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: '', sfx: 'blood' };
     }
 
+    if(l.includes('aura defensiva')){
+      return { title: 'Aura Defensiva', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: 'good', sfx: 'aura' };
+    }
+
     if(l.includes('plasma ativado')){
       return { title: 'Plasma ativado', detail: line.replace(/^\[[^\]]+\]\s*/, ''), type: '', sfx: 'plasma' };
     }

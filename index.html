@@ -147,8 +147,130 @@
 
       <section id="tab-essence" class="panel" role="tabpanel">
         <section class="card">
-          <h2>Essência</h2>
-          <p class="muted">Esta aba entra na Etapa 16: painel de Essência (EV/Of/Def/Apt) + bônus automáticos + Aura Defensiva.</p>
+          <div class="cardHeaderRow">
+            <h2>Essência</h2>
+            <div class="row">
+              <label class="inline small">
+                <span>Empilhamento</span>
+                <select id="essenceStackMode" class="select select-sm" aria-label="Modo de empilhamento de bônus de dano">
+                  <option value="conservative">Conservador</option>
+                  <option value="literal">Literal</option>
+                </select>
+              </label>
+              <button id="essenceApplyRecommended" class="btn btn-ghost btn-sm" title="Aplica o recomendado ao bônus global de dados">Aplicar recomendado</button>
+            </div>
+          </div>
+
+          <div class="essenceGrid">
+            <div class="levelControl">
+              <div class="labelRow">
+                <strong>Essência Verdadeira</strong>
+                <span class="muted">EV</span>
+              </div>
+              <div class="levelRow">
+                <button class="btn btn-ghost btn-sm" data-stepper="dec" data-ess="ev">−</button>
+                <input id="essEV" class="input input-sm" type="number" min="0" max="5" step="1" />
+                <button class="btn btn-ghost btn-sm" data-stepper="inc" data-ess="ev">+</button>
+              </div>
+              <div class="mini muted" id="essEVHint">—</div>
+            </div>
+
+            <div class="levelControl">
+              <div class="labelRow">
+                <strong>Ofensiva</strong>
+                <span class="muted">OF</span>
+              </div>
+              <div class="levelRow">
+                <button class="btn btn-ghost btn-sm" data-stepper="dec" data-ess="off">−</button>
+                <input id="essOFF" class="input input-sm" type="number" min="0" max="5" step="1" />
+                <button class="btn btn-ghost btn-sm" data-stepper="inc" data-ess="off">+</button>
+              </div>
+              <div class="mini muted" id="essOFFHint">—</div>
+            </div>
+
+            <div class="levelControl">
+              <div class="labelRow">
+                <strong>Defensiva</strong>
+                <span class="muted">DEF</span>
+              </div>
+              <div class="levelRow">
+                <button class="btn btn-ghost btn-sm" data-stepper="dec" data-ess="def">−</button>
+                <input id="essDEF" class="input input-sm" type="number" min="0" max="5" step="1" />
+                <button class="btn btn-ghost btn-sm" data-stepper="inc" data-ess="def">+</button>
+              </div>
+              <div class="mini muted" id="essDEFHint">—</div>
+            </div>
+
+            <div class="levelControl">
+              <div class="labelRow">
+                <strong>Aptidão Mágica</strong>
+                <span class="muted">APT</span>
+              </div>
+              <div class="levelRow">
+                <button class="btn btn-ghost btn-sm" data-stepper="dec" data-ess="apt">−</button>
+                <input id="essAPT" class="input input-sm" type="number" min="0" max="5" step="1" />
+                <button class="btn btn-ghost btn-sm" data-stepper="inc" data-ess="apt">+</button>
+              </div>
+              <div class="mini muted" id="essAPTHint">—</div>
+            </div>
+          </div>
+
+          <div class="essenceSummary">
+            <div class="kv">
+              <span class="muted">Bônus recomendado (dados)</span>
+              <strong id="essenceRecommendedDice">—</strong>
+            </div>
+            <div class="kv">
+              <span class="muted">Bônus atual (dados)</span>
+              <div class="levelRow">
+                <button class="btn btn-ghost btn-sm" data-stepper="dec" data-ess="dmg">−</button>
+                <input id="globalDamageDice" class="input input-sm" type="number" min="0" max="10" step="1" />
+                <button class="btn btn-ghost btn-sm" data-stepper="inc" data-ess="dmg">+</button>
+              </div>
+            </div>
+            <div class="kv">
+              <span class="muted">Auto vantagem (magia)</span>
+              <label class="inline">
+                <input id="essenceAutoMagicAdv" type="checkbox" />
+                <span class="muted">Ativo</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="muted mini">
+            Conservador = usa o maior bônus entre EV e Ofensiva. Literal = soma os bônus.
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeaderRow">
+            <h2>Aura Defensiva</h2>
+            <div class="row">
+              <button id="auraRoll" class="btn btn-ghost btn-sm" title="Rola a defesa da aura, se estiver ativa">Rolar defesa</button>
+              <button id="auraEnd" class="btn btn-ghost btn-sm" title="Encerra a aura ativa">Encerrar</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <label class="inline">
+              <span>Custo (PF)</span>
+              <input id="auraCostPF" class="input input-sm" type="number" min="0" max="99" step="1" value="3" />
+            </label>
+            <button id="auraActivate" class="btn">Ativar Aura</button>
+            <div class="muted" id="auraStatus">—</div>
+          </div>
+
+          <div class="row">
+            <label class="inline" style="flex:1">
+              <span>Resistência passiva (DEF 3+)</span>
+              <input id="defPassiveRes" class="input input-sm" placeholder="Ex.: resistência a cortante / fogo / maldição…" />
+            </label>
+          </div>
+
+          <details class="details">
+            <summary>Livro da Essência (referência rápida)</summary>
+            <pre id="essenceBook" class="preWrap muted">Carregando…</pre>
+          </details>
         </section>
       </section>
 

@@ -420,7 +420,7 @@ function applySkillUiToState(){
   const modeEl = document.getElementById("skillMode");
   const autoEl = document.getElementById("autoMagicAdv");
   if(modeEl) state.ui.skillMode = String(modeEl.value || "normal");
-  if(autoEl) state.ui.autoMagicAdv = !!autoEl.checked;
+  if(autoEl) setAutoMagicAdv(!!autoEl.checked);
 }
 
 function applyStateToSkillUi(){
@@ -428,6 +428,8 @@ function applyStateToSkillUi(){
   const autoEl = document.getElementById("autoMagicAdv");
   if(modeEl) modeEl.value = state?.ui?.skillMode || "normal";
   if(autoEl) autoEl.checked = !!state?.ui?.autoMagicAdv;
+  const b = document.getElementById('essenceAutoMagicAdv');
+  if(b) b.checked = !!state?.ui?.autoMagicAdv;
 }
 
 // Etapa 9 — helpers de UI (resultado destacado + animação + atalhos)
@@ -871,9 +873,21 @@ let state = {
   // configurable (kept as 2 to match your current behavior)
   globalDamageBonusDice: 2,
 
+  // Etapa 10 — níveis de Essência (EV/Of/Def/Apt) e preferências
+  // Defaults: Tatsumaki (EV3, OF2, DEF1, APT1)
+  essence: {
+    ev: 3,
+    off: 2,
+    def: 1,
+    apt: 1,
+    stackMode: "conservative", // conservative | literal
+    defPassiveRes: ""
+  },
+
   effects: {
     sanguenta: null, // {target, rounds}
-    plasma: null     // {target}
+    plasma: null,    // {target}
+    aura: null       // {rounds, dice}
   },
 
   logLines: [],
@@ -900,6 +914,7 @@ function saveState(){
       round: state.round,
       tracks: { ps: state.ps, pf: state.pf, pvo: state.pvo, pvd: state.pvd },
       effects: state.effects,
+      essence: state.essence,
       globalDamageBonusDice: state.globalDamageBonusDice,
       logLines: state.logLines,
       ui: state.ui
@@ -920,6 +935,15 @@ function loadState(){
     state.pvo = s.tracks?.pvo ?? state.pvo;
     state.pvd = s.tracks?.pvd ?? state.pvd;
     state.effects = s.effects ?? state.effects;
+    // garante chaves novas
+    if(!state.effects || typeof state.effects !== 'object') state.effects = { sanguenta: null, plasma: null, aura: null };
+    if(!('aura' in state.effects)) state.effects.aura = null;
+    if(!('sanguenta' in state.effects)) state.effects.sanguenta = null;
+    if(!('plasma' in state.effects)) state.effects.plasma = null;
+
+    if(s.essence && typeof s.essence === 'object'){
+      state.essence = { ...state.essence, ...s.essence };
+    }
     state.globalDamageBonusDice = (typeof s.globalDamageBonusDice === "number") ? s.globalDamageBonusDice : state.globalDamageBonusDice;
     state.logLines = Array.isArray(s.logLines) ? s.logLines : [];
     if(s.ui && typeof s.ui === 'object'){
@@ -949,6 +973,283 @@ function spend(resourceKey, amount){
   }
   state[k] -= amount;
   return true;
+}
+
+// ------------------------------
+// Essência (Etapa 10)
+// ------------------------------
+function clampInt(n, min, max){
+  const v = Number(n);
+  if(!Number.isFinite(v)) return min;
+  return Math.min(max, Math.max(min, Math.round(v)));
+}
+
+function getEssence(){
+  const e = state.essence || {};
+  return {
+    ev: clampInt(e.ev, 0, 5),
+    off: clampInt(e.off, 0, 5),
+    def: clampInt(e.def, 0, 5),
+    apt: clampInt(e.apt, 0, 5),
+    stackMode: (e.stackMode === 'literal') ? 'literal' : 'conservative',
+    defPassiveRes: String(e.defPassiveRes || '')
+  };
+}
+
+function computeEssenceDamageDice(){
+  const e = getEssence();
+
+  // EV 3: +1 dado (todos os ataques)
+  // EV 5: +1 dado (qualquer ataque físico ou mágico)
+  const evDice = (e.ev >= 3 ? 1 : 0) + (e.ev >= 5 ? 1 : 0);
+
+  // Ofensiva
+  // OF 1: +1 dado (todos os ataques)
+  // OF 2: +1 dado extra (todos os ataques)
+  // OF 5: +2 dados extras (passivo)
+  let offDice = 0;
+  if(e.off >= 1) offDice += 1;
+  if(e.off >= 2) offDice += 1;
+  if(e.off >= 5) offDice += 2;
+
+  const literal = evDice + offDice;
+  const conservative = Math.max(evDice, offDice);
+  const recommended = (e.stackMode === 'literal') ? literal : conservative;
+
+  return { evDice, offDice, literal, conservative, recommended };
+}
+
+function applyRecommendedDamageDice(){
+  const r = computeEssenceDamageDice();
+  state.globalDamageBonusDice = clampInt(r.recommended, 0, 10);
+  log(`Essência: bônus global de dano definido para ${state.globalDamageBonusDice} dado(s) (${getEssence().stackMode}).`);
+  render();
+}
+
+function setAutoMagicAdv(v){
+  state.ui.autoMagicAdv = !!v;
+  const a = document.getElementById('autoMagicAdv');
+  const b = document.getElementById('essenceAutoMagicAdv');
+  if(a) a.checked = !!v;
+  if(b) b.checked = !!v;
+  saveState();
+}
+
+function essenceHintEV(ev){
+  if(ev >= 3) return 'EV 3+: +1 dado em todos os ataques.';
+  return 'EV 1–2: foco em treinamento/conexão (sem bônus automático de dano).';
+}
+
+function essenceHintOFF(off){
+  if(off >= 5) return 'OF 5: +2 dados (passivo) + habilidade ofensiva suprema.';
+  if(off >= 2) return 'OF 2: +1 PV e +1 dado extra em todos os ataques.';
+  if(off >= 1) return 'OF 1: +1 dado em qualquer ataque.';
+  return 'OF 0: sem bônus ofensivo automático.';
+}
+
+function essenceHintDEF(def){
+  if(def >= 5) return 'DEF 5: nova habilidade defensiva +2 dados na Aura.';
+  if(def >= 4) return 'DEF 4: Aura de Aço (ignora efeitos que ignoram armadura por 1d4 turnos).';
+  if(def >= 3) return 'DEF 3: resistência passiva permanente (escolha um tipo).';
+  if(def >= 2) return 'DEF 2: Aura +1 turno e +2 dados de defesa.';
+  if(def >= 1) return 'DEF 1: Aura Defensiva (2d6 + 1/4 Arcano) por 1d4 turnos.';
+  return 'DEF 0: sem Aura Defensiva.';
+}
+
+function essenceHintAPT(apt){
+  if(apt >= 5) return 'APT 5: -2 PF em custos e +2 dados de dano em habilidades.';
+  if(apt >= 3) return 'APT 3: +2 em acertos mágicos e pode ignorar reação 2x por combate (1x/dia).';
+  if(apt >= 2) return 'APT 2: habilidades custam -1 PF.';
+  if(apt >= 1) return 'APT 1: vantagem em perícias relacionadas à magia.';
+  return 'APT 0: sem bônus mágico automático.';
+}
+
+function auraParams(){
+  const e = getEssence();
+  // Base: 2d6 + Arcano/4, duração 1d4
+  // DEF 2: +2 dados e +1 turno
+  // DEF 5: +2 dados adicionais na Aura (além do que já tiver)
+  const dice = 2 + (e.def >= 2 ? 2 : 0) + (e.def >= 5 ? 2 : 0);
+  const durExpr = (e.def >= 2) ? '1d4+1' : '1d4';
+  return { dice, durExpr, defLevel: e.def };
+}
+
+function activateAura(){
+  const e = getEssence();
+  if(e.def < 1){
+    log('Aura Defensiva indisponível (precisa DEF 1+).');
+    return;
+  }
+
+  const costEl = document.getElementById('auraCostPF');
+  const cost = clampInt(costEl ? costEl.value : 3, 0, 99);
+  if(!spend('PF', cost)) return;
+
+  const p = auraParams();
+  const dur = evalExpr(p.durExpr, ctx).total;
+  state.effects.aura = { rounds: dur, dice: p.dice };
+  log(`Aura Defensiva ativada por ${dur} rodada(s).`);
+  render();
+}
+
+function rollAuraDefense(){
+  if(!state.effects.aura){
+    log('Aura Defensiva não está ativa.');
+    return;
+  }
+  const dice = clampInt(state.effects.aura.dice ?? 2, 0, 20);
+  const expr = `${dice}d6 + @attributes.Arcano.quarter`;
+  const res = evalExpr(expr, ctx);
+  log(`Aura Defensiva: ${res.detail}`);
+  render();
+}
+
+function endAura(){
+  if(!state.effects.aura){
+    log('Aura Defensiva não está ativa.');
+    return;
+  }
+  state.effects.aura = null;
+  log('Aura Defensiva encerrada.');
+  render();
+}
+
+function renderEssenceUi(){
+  const e = getEssence();
+  // inputs
+  const evEl = document.getElementById('essEV');
+  const offEl = document.getElementById('essOFF');
+  const defEl = document.getElementById('essDEF');
+  const aptEl = document.getElementById('essAPT');
+  const dmgEl = document.getElementById('globalDamageDice');
+  const modeEl = document.getElementById('essenceStackMode');
+  const recEl = document.getElementById('essenceRecommendedDice');
+
+  if(evEl) evEl.value = String(e.ev);
+  if(offEl) offEl.value = String(e.off);
+  if(defEl) defEl.value = String(e.def);
+  if(aptEl) aptEl.value = String(e.apt);
+  if(dmgEl) dmgEl.value = String(clampInt(state.globalDamageBonusDice, 0, 10));
+  if(modeEl) modeEl.value = e.stackMode;
+
+  // hints
+  const evH = document.getElementById('essEVHint');
+  const offH = document.getElementById('essOFFHint');
+  const defH = document.getElementById('essDEFHint');
+  const aptH = document.getElementById('essAPTHint');
+  if(evH) evH.textContent = essenceHintEV(e.ev);
+  if(offH) offH.textContent = essenceHintOFF(e.off);
+  if(defH) defH.textContent = essenceHintDEF(e.def);
+  if(aptH) aptH.textContent = essenceHintAPT(e.apt);
+
+  // recommended
+  const r = computeEssenceDamageDice();
+  if(recEl) recEl.textContent = String(r.recommended);
+
+  // sync auto magic adv
+  const autoEl = document.getElementById('essenceAutoMagicAdv');
+  if(autoEl) autoEl.checked = !!state.ui.autoMagicAdv;
+
+  // DEF passive
+  const resEl = document.getElementById('defPassiveRes');
+  if(resEl){
+    resEl.value = String(state.essence?.defPassiveRes || '');
+    resEl.disabled = e.def < 3;
+  }
+
+  // Aura status
+  const statusEl = document.getElementById('auraStatus');
+  if(statusEl){
+    const p = auraParams();
+    const active = state.effects.aura;
+    const formula = `${p.dice}d6 + 1/4 Arcano`;
+    if(!active){
+      statusEl.textContent = `Fórmula: ${formula} | Duração: ${p.durExpr}`;
+    }else{
+      statusEl.textContent = `ATIVA: ${active.rounds} rodada(s) | Fórmula: ${active.dice}d6 + 1/4 Arcano`;
+    }
+  }
+}
+
+async function loadEssenceBook(){
+  const el = document.getElementById('essenceBook');
+  if(!el) return;
+  try{
+    const txt = await fetch('data/essence_book.txt').then(r => r.text());
+    el.textContent = String(txt || '').trim();
+  }catch(_){
+    el.textContent = 'Não consegui carregar o texto (arquivo ausente).';
+  }
+}
+
+function initEssenceUi(){
+  // steppers
+  document.querySelectorAll('[data-stepper][data-ess]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const dir = btn.getAttribute('data-stepper');
+      const key = btn.getAttribute('data-ess');
+
+      const bump = (v) => (dir === 'inc' ? (v + 1) : (v - 1));
+
+      if(key === 'dmg'){
+        state.globalDamageBonusDice = clampInt(bump(Number(state.globalDamageBonusDice || 0)), 0, 10);
+        log(`Bônus global de dano: ${state.globalDamageBonusDice} dado(s).`);
+        render();
+        return;
+      }
+
+      const e = getEssence();
+      if(key === 'ev') state.essence.ev = clampInt(bump(e.ev), 0, 5);
+      if(key === 'off') state.essence.off = clampInt(bump(e.off), 0, 5);
+      if(key === 'def') state.essence.def = clampInt(bump(e.def), 0, 5);
+      if(key === 'apt') state.essence.apt = clampInt(bump(e.apt), 0, 5);
+      saveState();
+      renderEssenceUi();
+    });
+  });
+
+  const evEl = document.getElementById('essEV');
+  const offEl = document.getElementById('essOFF');
+  const defEl = document.getElementById('essDEF');
+  const aptEl = document.getElementById('essAPT');
+  const dmgEl = document.getElementById('globalDamageDice');
+  const modeEl = document.getElementById('essenceStackMode');
+
+  if(evEl) evEl.addEventListener('input', () => { state.essence.ev = clampInt(evEl.value, 0, 5); saveState(); renderEssenceUi(); });
+  if(offEl) offEl.addEventListener('input', () => { state.essence.off = clampInt(offEl.value, 0, 5); saveState(); renderEssenceUi(); });
+  if(defEl) defEl.addEventListener('input', () => { state.essence.def = clampInt(defEl.value, 0, 5); saveState(); renderEssenceUi(); });
+  if(aptEl) aptEl.addEventListener('input', () => { state.essence.apt = clampInt(aptEl.value, 0, 5); saveState(); renderEssenceUi(); });
+  if(dmgEl) dmgEl.addEventListener('input', () => {
+    state.globalDamageBonusDice = clampInt(dmgEl.value, 0, 10);
+    saveState();
+    renderEssenceUi();
+  });
+  if(modeEl) modeEl.addEventListener('change', () => {
+    state.essence.stackMode = (modeEl.value === 'literal') ? 'literal' : 'conservative';
+    saveState();
+    renderEssenceUi();
+  });
+
+  const applyBtn = document.getElementById('essenceApplyRecommended');
+  if(applyBtn) applyBtn.addEventListener('click', () => applyRecommendedDamageDice());
+
+  const autoEl = document.getElementById('essenceAutoMagicAdv');
+  if(autoEl) autoEl.addEventListener('change', () => { setAutoMagicAdv(autoEl.checked); });
+
+  const defResEl = document.getElementById('defPassiveRes');
+  if(defResEl) defResEl.addEventListener('input', () => {
+    state.essence.defPassiveRes = String(defResEl.value || '');
+    saveState();
+  });
+
+  const auraAct = document.getElementById('auraActivate');
+  if(auraAct) auraAct.addEventListener('click', () => activateAura());
+  const auraRoll = document.getElementById('auraRoll');
+  if(auraRoll) auraRoll.addEventListener('click', () => rollAuraDefense());
+  const auraEnd = document.getElementById('auraEnd');
+  if(auraEnd) auraEnd.addEventListener('click', () => endAura());
+
+  renderEssenceUi();
 }
 
 // ------------------------------
@@ -1027,6 +1328,14 @@ function nextRound(){
       state.effects.sanguenta = null;
     }
   }
+
+  if(state.effects.aura){
+    state.effects.aura.rounds--;
+    if(state.effects.aura.rounds <= 0){
+      log("Aura Defensiva expirou.");
+      state.effects.aura = null;
+    }
+  }
   render();
   log("Nova rodada: PVO/PVD restaurados.");
 }
@@ -1084,21 +1393,59 @@ function renderTracks(){
 
 function renderEffects(){
   const ul = document.getElementById("effects");
+  if(!ul) return;
   ul.innerHTML = "";
 
-  const add = (txt) => {
+  const add = (txt, actions = []) => {
     const li = document.createElement("li");
-    li.textContent = txt;
+    li.className = "effectItem";
+
+    const main = document.createElement("div");
+    main.className = "effectMain";
+    main.textContent = txt;
+    li.appendChild(main);
+
+    if(actions.length){
+      const row = document.createElement("div");
+      row.className = "effectActions";
+      actions.forEach(a => {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-ghost btn-xs";
+        btn.textContent = a.label;
+        if(a.title) btn.title = a.title;
+        btn.onclick = a.onClick;
+        row.appendChild(btn);
+      });
+      li.appendChild(row);
+    }
+
     ul.appendChild(li);
   };
 
+  let any = false;
+
+  if(state.effects.aura){
+    any = true;
+    add(`Aura Defensiva (${state.effects.aura.rounds} rodadas)`, [
+      { label: "Defesa", title: "Rolar defesa da aura", onClick: () => rollAuraDefense() },
+      { label: "Encerrar", title: "Encerrar aura", onClick: () => endAura() }
+    ]);
+  }
+
   if(state.effects.sanguenta){
-    add(`Sanguenta em ${state.effects.sanguenta.target} (${state.effects.sanguenta.rounds} rodadas)`);
+    any = true;
+    add(`Sanguenta em ${state.effects.sanguenta.target} (${state.effects.sanguenta.rounds} rodadas)`, [
+      { label: "Encerrar", title: "Remover efeito", onClick: () => { state.effects.sanguenta = null; log("Arma Sanguenta encerrada."); render(); } }
+    ]);
   }
   if(state.effects.plasma){
-    add(`Plasma em ${state.effects.plasma.target} (∞)`);
+    any = true;
+    add(`Plasma em ${state.effects.plasma.target} (∞)`, [
+      { label: "Encerrar", title: "Desligar plasma", onClick: () => { state.effects.plasma = null; log("Plasma desligado."); render(); } }
+    ]);
   }
-  if(!state.effects.sanguenta && !state.effects.plasma){
+
+  if(!any){
     add("—");
   }
 }
@@ -1203,6 +1550,7 @@ function renderCombatActions(){
 function render(){
   renderTracks();
   renderEffects();
+  renderEssenceUi();
   saveState();
 }
 
@@ -1250,14 +1598,14 @@ async function init(){
     state.round = 1;
     state.pvo = MAX.pvo;
     state.pvd = MAX.pvd;
-    state.effects = { sanguenta: null, plasma: null };
+    state.effects = { sanguenta: null, plasma: null, aura: null };
     log("Novo combate.");
     render();
   };
   document.getElementById("resetAll").onclick = () => {
     resetTracks();
     state.round = 1;
-    state.effects = { sanguenta: null, plasma: null };
+    state.effects = { sanguenta: null, plasma: null, aura: null };
     state.logLines = [];
     log("Reset total.");
     render();
@@ -1286,6 +1634,14 @@ async function init(){
 
   // Etapa 8 — UI de Perícias
   initSkillsUi();
+
+  // Etapa 10 — Essência
+  initEssenceUi();
+  loadEssenceBook();
+
+  // Etapa 10 — UI de Essência
+  initEssenceUi();
+  loadEssenceBook();
 
   renderCombatActions();
   render();

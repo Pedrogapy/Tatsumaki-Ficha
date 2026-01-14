@@ -353,6 +353,25 @@
     noiseBurst(0.05, 0.06, 1200, 8200, 0.05);
   }
 
+  function s_aura(){
+    const p = String(settings.pack);
+    if(p === 'subtle'){
+      tone(160, 220, 0.10, 'triangle', 0.14, 0.06);
+      tone(320, 420, 0.06, 'sine', 0.16, 0.08);
+      return;
+    }
+    if(p === 'aggressive'){
+      tone(140, 240, 0.16, 'triangle', 0.18, 0.08);
+      tone(280, 560, 0.10, 'sine', 0.20, 0.10);
+      noiseBurst(0.05, 0.08, 1000, 4200, 0.06);
+      return;
+    }
+    // shadowheart
+    tone(150, 230, 0.13, 'triangle', 0.17, 0.07);
+    tone(300, 520, 0.08, 'sine', 0.20, 0.10);
+    noiseBurst(0.04, 0.07, 800, 5200, 0.05);
+  }
+
   function s_turn(){
     const p = String(settings.pack);
     tone(240, 320, p === 'subtle' ? 0.08 : 0.10, 'triangle', 0.09, 0.03);
@@ -388,6 +407,7 @@
       case 'error': return s_error();
       case 'blood': return s_blood();
       case 'plasma': return s_plasma();
+      case 'aura': return s_aura();
       case 'turn': return s_turn();
       case 'round': return s_round();
       case 'reset': return s_reset();
