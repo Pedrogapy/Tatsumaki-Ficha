@@ -8,12 +8,16 @@
 </head>
 <body>
 <header>
-  <h1>Tatsumaki ShadowHeart Gojo</h1>
+  <h1 id="charName">Carregando...</h1>
   <div class="tracks">
     <div>PS: <span id="ps"></span></div>
     <div>PVO: <span id="pvo"></span></div>
     <div>PVD: <span id="pvd"></span></div>
     <div>PF: <span id="pf"></span></div>
+  </div>
+  <div class="meta-row">
+    <div>Sorte: <span id="luck"></span></div>
+    <button id="roll_luck" class="small">Rolar Sorte</button>
   </div>
   <div class="controls">
     <button id="newRound">Nova rodada</button>
@@ -25,20 +29,8 @@
 <main>
 <section class="card">
 <h2>Combate</h2>
-<div class="row">
-  <button id="atk_melee">Atacar (Corpo a corpo)</button>
-  <button id="dmg_melee">Dano (Corpo a corpo)</button>
-</div>
-<div class="row">
-  <button id="atk_sword">Atacar (Espada Tatsumaki)</button>
-  <button id="dmg_sword">Dano (Espada Tatsumaki)</button>
-</div>
-<div class="row">
-  <label>Dano Arma Pesada:</label>
-  <input id="heavy_base" value="2d6"/>
-  <button id="atk_heavy">Atacar (Arma Pesada)</button>
-  <button id="dmg_heavy">Dano (Arma Pesada)</button>
-</div>
+
+<div id="combatActions" class="actions"></div>
 </section>
 
 <section class="card">
