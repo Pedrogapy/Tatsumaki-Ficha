@@ -1,67 +1,13 @@
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0f1220;
-  color: #eee;
-}
-
-header {
-  background: #171a2e;
-  padding: 15px;
-}
-
-h1 {
-  margin: 0 0 10px 0;
-}
-
-.resources {
-  display: flex;
-  gap: 15px;
-}
-
-main {
-  padding: 15px;
-  display: grid;
-  gap: 15px;
-}
-
-.card {
-  background: #171a2e;
-  padding: 15px;
-  border-radius: 10px;
-}
-
-button {
-  background: #5b6cff;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  margin: 5px 0;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-button:hover {
-  filter: brightness(1.1);
-}
-
-select, input {
-  background: #0f1220;
-  color: white;
-  border: 1px solid #333;
-  padding: 6px;
-  border-radius: 6px;
-}
-
-.row {
-  display: flex;
-  gap: 10px;
-}
-
-ul {
-  padding-left: 20px;
-}
-
-#initiative li {
-  cursor: pointer;
-}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui;background:#0f1220;color:#e8ebff}
+header{padding:16px;background:#171a2e;display:grid;gap:8px}
+h1{margin:0}
+.tracks{display:flex;gap:16px}
+.controls button{margin-right:8px}
+main{padding:16px;display:grid;gap:16px}
+.card{background:#171a2e;border-radius:12px;padding:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{background:#5b6cff;color:#fff;border:none;border-radius:10px;padding:8px 12px;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+input,select{background:#0f1220;color:#fff;border:1px solid #2a2f55;border-radius:8px;padding:6px}
+pre{white-space:pre-wrap}
