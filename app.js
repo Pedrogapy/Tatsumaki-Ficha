@@ -216,6 +216,11 @@ function log(msg){
   state.logLines.unshift(`[${stamp}] ${msg}`);
   if(state.logLines.length > 200) state.logLines = state.logLines.slice(0, 200);
   renderLog();
+
+  // Expose minimal hooks for UX layer (ui enhancements without mixing with game logic)
+  window.__tats = { state, MAX, character, saveState, renderLog, render, log };
+  document.dispatchEvent(new CustomEvent("tats-ready"));
+
   saveState();
 }
 
@@ -321,6 +326,9 @@ function renderTracks(){
   document.getElementById("pvo").textContent = `${state.pvo}/${MAX.pvo}`;
   document.getElementById("pvd").textContent = `${state.pvd}/${MAX.pvd}`;
   document.getElementById("pf").textContent = `${state.pf}/${MAX.pf}`;
+  const roundEl = document.getElementById("round");
+  if(roundEl) roundEl.textContent = `R${state.round}`;
+
 }
 
 function renderEffects(){
@@ -519,6 +527,11 @@ async function init(){
   renderCombatActions();
   render();
   renderLog();
+
+  // Expose minimal hooks for UX layer (ui enhancements without mixing with game logic)
+  window.__tats = { state, MAX, character, saveState, renderLog, render, log };
+  document.dispatchEvent(new CustomEvent("tats-ready"));
+
 }
 
 init();

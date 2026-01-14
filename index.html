@@ -20,6 +20,10 @@
               <span id="luck" class="value">—</span>
               <button id="roll_luck" class="btn btn-ghost btn-sm">Rolar</button>
             </div>
+            <div class="metaItem">
+              <span class="label">Rodada</span>
+              <span id="round" class="value">—</span>
+            </div>
           </div>
         </div>
       </div>
@@ -118,14 +122,23 @@
 
       <section id="tab-log" class="panel" role="tabpanel">
         <section class="card">
-          <h2>Log</h2>
+          <div class="cardHeaderRow">
+            <h2>Log</h2>
+            <div class="logTools">
+              <button id="copyLog" class="btn btn-ghost btn-sm">Copiar</button>
+              <button id="clearLog" class="btn btn-ghost btn-sm">Limpar</button>
+            </div>
+          </div>
           <pre id="log" class="log"></pre>
         </section>
       </section>
     </main>
   </div>
 
+  <div id="toastHost" class="toastHost" aria-live="polite" aria-atomic="true"></div>
+
   <script src="ui.js"></script>
   <script src="app.js"></script>
+  <script src="ux.js"></script>
 </body>
 </html>

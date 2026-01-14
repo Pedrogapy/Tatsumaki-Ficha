@@ -99,9 +99,10 @@ a{color:inherit}
   width:46px; height:46px;
   border-radius:14px;
   border: 1px solid rgba(255,77,77,.22);
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255,77,77,.25), transparent 55%),
-    linear-gradient(135deg, rgba(208,42,42,.22), rgba(42,47,85,.30));
+  background-color: rgba(16,18,32,.62);
+  background-image: url("assets/tatsumaki.png");
+  background-size: cover;
+  background-position: center;
   box-shadow:
     0 10px 30px var(--shadow),
     0 0 0 1px rgba(255,77,77,.10) inset,
@@ -122,16 +123,16 @@ a{color:inherit}
 }
 
 .portrait::after{
-  content:"T";
+  content:"";
   position:absolute;
   inset:0;
-  display:grid;
-  place-items:center;
-  font-weight:950;
-  letter-spacing:.5px;
-  color: rgba(238,240,255,.85);
-  text-shadow: 0 0 16px rgba(208,42,42,.35);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,77,77,.16), transparent 55%),
+    linear-gradient(135deg, rgba(0,0,0,.08), rgba(0,0,0,.55));
+  mix-blend-mode: overlay;
+  opacity:.65;
 }
+
 
 .brandText h1{margin:0; font-size:1.05rem; letter-spacing:.2px}
 
@@ -395,4 +396,103 @@ select,input{
 
 @media (prefers-reduced-motion: reduce){
   .tab, .btn{transition:none}
+}
+
+/* ----------
+   Etapa 3 — UX/polimento
+---------- */
+
+.content{max-width: 1180px; margin: 0 auto}
+
+.cardHeaderRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom: 12px;
+}
+.cardHeaderRow h2{margin:0}
+
+.logTools{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+
+/* Log com caixa e scroll */
+.log{
+  margin:0;
+  white-space:pre-wrap;
+  line-height:1.35;
+  color: var(--muted);
+  background: rgba(16,18,32,.52);
+  border: 1px solid rgba(92,98,140,.26);
+  border-radius: 16px;
+  padding: 12px;
+  max-height: 58vh;
+  overflow:auto;
+}
+
+/* Flash em alterações de HUD */
+.track.flash-down{animation: flashDown .55s ease}
+.track.flash-up{animation: flashUp .55s ease}
+
+@keyframes flashDown{
+  0%{ box-shadow: 0 22px 52px var(--shadow), 0 0 0 1px rgba(255,77,77,.06) inset; border-color: rgba(255,77,77,.30) }
+  40%{ box-shadow: 0 22px 52px var(--shadow), 0 0 22px rgba(255,77,77,.28), 0 0 0 1px rgba(255,77,77,.14) inset; border-color: rgba(255,77,77,.65) }
+  100%{ box-shadow: 0 22px 52px var(--shadow), 0 0 0 1px rgba(255,77,77,.06) inset; border-color: rgba(92,98,140,.38) }
+}
+
+@keyframes flashUp{
+  0%{ box-shadow: 0 22px 52px var(--shadow), 0 0 0 1px rgba(255,77,77,.06) inset; border-color: rgba(92,98,140,.38) }
+  40%{ box-shadow: 0 22px 52px var(--shadow), 0 0 22px rgba(80, 255, 170, .16), 0 0 0 1px rgba(80, 255, 170, .10) inset; border-color: rgba(80, 255, 170, .38) }
+  100%{ box-shadow: 0 22px 52px var(--shadow), 0 0 0 1px rgba(255,77,77,.06) inset; border-color: rgba(92,98,140,.38) }
+}
+
+/* Toasts */
+.toastHost{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+  width: min(420px, calc(100vw - 32px));
+}
+
+.toast{
+  pointer-events:none;
+  background: rgba(19,21,33,.86);
+  border: 1px solid rgba(92,98,140,.34);
+  border-left: 3px solid rgba(255,77,77,.62);
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: 0 22px 50px var(--shadow), 0 0 0 1px rgba(255,77,77,.06) inset;
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: .1px;
+  animation: toastIn .18s ease-out;
+}
+
+.toast small{display:block; color: var(--muted); font-weight: 700; margin-top: 4px}
+
+.toast.good{border-left-color: rgba(80,255,170,.62)}
+.toast.bad{border-left-color: rgba(255,77,77,.72)}
+
+@keyframes toastIn{
+  from{ transform: translateY(8px); opacity: 0 }
+  to{ transform: translateY(0); opacity: 1 }
+}
+
+/* Melhor responsividade do topo */
+@media (max-width: 760px){
+  .topbar{padding: 12px}
+  .brand{min-width: 100%; flex: 1 1 100%}
+  .hud{min-width: 100%; grid-template-columns: repeat(2, minmax(140px, 1fr)); flex: 1 1 100%}
+  .topActions{flex: 1 1 100%; justify-content:stretch}
+  .topActions .btn{flex: 1 1 30%}
+}
+
+@media (max-width: 420px){
+  .hud{grid-template-columns: 1fr 1fr}
+  .topActions{gap:8px}
+  .topActions .btn{height: 40px; padding: 10px 10px; font-size: .95rem}
+  .brandText h1{font-size: 1rem}
 }
