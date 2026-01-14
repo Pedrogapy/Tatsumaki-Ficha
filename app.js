@@ -4,9 +4,13 @@
 // =========
 
 // ------------------------------
-// Dice + expression evaluator
-// Supports: "1d20 + 2d8 + 6" and references like "@attributes.Força.quarter"
+// Dice + expression evaluator (Etapa 7)
+// - Aceita: + - * / parênteses
+// - Aceita: d20 (sem número -> 1d20)
+// - Aceita: referências @attributes.* / @skills.*
+// - Sem eval()
 // ------------------------------
+
 function rollDice(n, sides){
   let rolls = [];
   let sum = 0;
@@ -16,6 +20,49 @@ function rollDice(n, sides){
     sum += r;
   }
   return { sum, rolls };
+}
+
+function clampInt(n, min, max){
+  const v = Math.trunc(Number(n));
+  if(!Number.isFinite(v)) return min;
+  return Math.min(max, Math.max(min, v));
+}
+
+function fmtNumber(n){
+  if(!Number.isFinite(n)) return String(n);
+  // Evita “.0000000004”
+  const rounded = Math.round(n * 100) / 100;
+  if(Number.isInteger(rounded)) return String(rounded);
+  return String(rounded);
+}
+
+function deaccent(str){
+  try{
+    return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }catch(_){
+    return String(str || '');
+  }
+}
+
+function addKeyAliases(map, rawKey, value){
+  const k = String(rawKey || '').trim();
+  if(!k) return;
+  const kUnd = k.replace(/\s+/g, '_');
+  const kPlain = deaccent(k);
+  const kPlainUnd = kPlain.replace(/\s+/g, '_');
+
+  // original
+  map[k] = value;
+  // espaço -> _
+  map[kUnd] = value;
+  // sem acento
+  map[kPlain] = value;
+  map[kPlainUnd] = value;
+  // lowercase para facilitar
+  map[k.toLowerCase()] = value;
+  map[kUnd.toLowerCase()] = value;
+  map[kPlain.toLowerCase()] = value;
+  map[kPlainUnd.toLowerCase()] = value;
 }
 
 function getAtPath(obj, parts){
@@ -37,62 +84,256 @@ function resolveRefs(expr, ctx){
   });
 }
 
-function evalExpr(expr, ctx){
-  const resolved = resolveRefs(expr, ctx).replace(/\s+/g, "");
-  if(!resolved) return { total: 0, detail: "(sem rolagem)" };
+function normalizeExpr(expr){
+  return String(expr || '')
+    .replace(/\s+/g, '')
+    .replace(/,/g, '.')
+    .replace(/×/g, '*')
+    .replace(/÷/g, '/')
+    .replace(/[–—]/g, '-')
+    .replace(/\u00BC/g, '1/4') // ¼
+    .replace(/\u00BD/g, '1/2') // ½
+    .replace(/\u00BE/g, '3/4'); // ¾
+}
 
-  // Split by +/-, keeping sign with term
-  const terms = resolved.match(/[+-]?[^+-]+/g) || [];
-  let total = 0;
-  let pieces = [];
+function tokenizeExpression(expr){
+  const tokens = [];
+  const s = normalizeExpr(expr);
+  let i = 0;
 
-  for(const raw of terms){
-    const sign = raw.startsWith("-") ? -1 : 1;
-    const term = raw.replace(/^[+-]/, "");
-    if(!term) continue;
+  const isDigit = (c) => c >= '0' && c <= '9';
+  const isOp = (c) => c === '+' || c === '-' || c === '*' || c === '/';
 
-    // Dice term: NdM
-    const dm = term.match(/^(\d+)d(\d+)$/i);
-    if(dm){
-      const n = Number(dm[1]);
-      const s = Number(dm[2]);
-      const r = rollDice(n, s);
-      total += sign * r.sum;
-      pieces.push(`${sign<0? "-": "+"}${n}d${s}=[${r.rolls.join(",")}]→${r.sum}`);
+  while(i < s.length){
+    const c = s[i];
+
+    if(c === '(' || c === ')'){
+      tokens.push({ type: 'paren', value: c });
+      i++; continue;
+    }
+
+    if(isOp(c)){
+      tokens.push({ type: 'op', value: c });
+      i++; continue;
+    }
+
+    // Dice sem número: d20
+    if(c === 'd' || c === 'D'){
+      i++;
+      let sidesStr = '';
+      while(i < s.length && isDigit(s[i])){ sidesStr += s[i]; i++; }
+      const sides = Number(sidesStr);
+      if(!Number.isFinite(sides) || sides <= 0){
+        return { ok: false, error: `Dado inválido: d${sidesStr || '?'}` };
+      }
+      tokens.push({ type: 'dice', n: 1, sides: clampInt(sides, 2, 100000) });
       continue;
     }
 
-    // Number
-    const num = Number(term);
-    if(!Number.isNaN(num)){
-      total += sign * num;
-      pieces.push(`${sign<0? "-": "+"}${num}`);
+    // Número ou NdM
+    if(isDigit(c) || c === '.'){
+      let numStr = '';
+      while(i < s.length && (isDigit(s[i]) || s[i] === '.')){
+        numStr += s[i]; i++;
+      }
+
+      // Dice: <num>d<sides>
+      if(i < s.length && (s[i] === 'd' || s[i] === 'D')){
+        i++;
+        let sidesStr = '';
+        while(i < s.length && isDigit(s[i])){ sidesStr += s[i]; i++; }
+        const n = Number(numStr);
+        const sides = Number(sidesStr);
+        if(!Number.isFinite(n) || !Number.isFinite(sides) || n <= 0 || sides <= 0){
+          return { ok: false, error: `Dado inválido: ${numStr}d${sidesStr || '?'}` };
+        }
+        const dn = clampInt(n, 1, 500); // evita explosão
+        const ds = clampInt(sides, 2, 100000);
+        tokens.push({ type: 'dice', n: dn, sides: ds });
+        continue;
+      }
+
+      const v = Number(numStr);
+      if(!Number.isFinite(v)){
+        return { ok: false, error: `Número inválido: ${numStr}` };
+      }
+      tokens.push({ type: 'number', value: v });
       continue;
     }
 
-    // Unknown garbage -> ignore but show
-    pieces.push(`${sign<0? "-": "+"}${term}(?)`);
+    // Qualquer outro caractere: erro explícito
+    return { ok: false, error: `Caractere inválido: "${c}"` };
   }
 
-  const detail = `${expr} => ${pieces.join(" ")} = ${total}`;
-  return { total, detail };
+  return { ok: true, tokens };
+}
+
+function toRPN(tokens){
+  const out = [];
+  const stack = [];
+  const prec = { 'u-': 3, '*': 2, '/': 2, '+': 1, '-': 1 };
+  const rightAssoc = { 'u-': true };
+
+  let prev = null;
+  const isValue = (t) => t && (t.type === 'number' || t.type === 'dice' || (t.type === 'paren' && t.value === ')'));
+
+  for(const t of tokens){
+    if(t.type === 'number' || t.type === 'dice'){
+      out.push(t);
+      prev = t;
+      continue;
+    }
+    if(t.type === 'paren'){
+      if(t.value === '('){
+        stack.push(t);
+        prev = t;
+      }else{
+        while(stack.length && stack[stack.length-1].type !== 'paren'){
+          out.push(stack.pop());
+        }
+        if(!stack.length) return { ok: false, error: 'Parênteses desbalanceados.' };
+        stack.pop(); // remove '('
+        prev = t;
+      }
+      continue;
+    }
+    if(t.type === 'op'){
+      let op = t.value;
+
+      // Unário: -x
+      if(op === '-' && (!prev || (prev.type === 'op') || (prev.type === 'paren' && prev.value === '('))){
+        op = 'u-';
+      }
+
+      while(stack.length){
+        const top = stack[stack.length-1];
+        if(top.type !== 'op') break;
+        const p1 = prec[op] ?? 0;
+        const p2 = prec[top.value] ?? 0;
+        const shouldPop = rightAssoc[op] ? (p1 < p2) : (p1 <= p2);
+        if(!shouldPop) break;
+        out.push(stack.pop());
+      }
+
+      stack.push({ type: 'op', value: op });
+      prev = { type: 'op', value: op };
+      continue;
+    }
+  }
+
+  while(stack.length){
+    const t = stack.pop();
+    if(t.type === 'paren') return { ok: false, error: 'Parênteses desbalanceados.' };
+    out.push(t);
+  }
+
+  return { ok: true, rpn: out };
+}
+
+function evalRPN(rpn, options){
+  const st = [];
+  const opts = options || {};
+
+  const rollDiceTerm = (n, sides) => {
+    // Modo d20 só faz sentido com 1d20
+    if(sides === 20 && n === 1 && (opts.d20Mode === 'adv' || opts.d20Mode === 'dis')){
+      const a = rollDice(1, 20).rolls[0];
+      const b = rollDice(1, 20).rolls[0];
+      const chosen = (opts.d20Mode === 'adv') ? Math.max(a,b) : Math.min(a,b);
+      const modeTxt = opts.d20Mode === 'adv' ? 'vantagem' : 'desvantagem';
+      return { sum: chosen, rolls: [a,b], chosen, detail: `1d20(${modeTxt}:[${a},${b}]→${chosen})` };
+    }
+    const r = rollDice(n, sides);
+    return { sum: r.sum, rolls: r.rolls, detail: `${n}d${sides}=[${r.rolls.join(',')}]→${r.sum}` };
+  };
+
+  for(const t of rpn){
+    if(t.type === 'number'){
+      st.push({ value: t.value, repr: fmtNumber(t.value) });
+      continue;
+    }
+    if(t.type === 'dice'){
+      const n = clampInt(t.n, 1, 500);
+      const sides = clampInt(t.sides, 2, 100000);
+      const r = rollDiceTerm(n, sides);
+      st.push({ value: r.sum, repr: r.detail });
+      continue;
+    }
+    if(t.type === 'op'){
+      const op = t.value;
+      if(op === 'u-'){
+        const a = st.pop();
+        if(!a) return { ok: false, error: 'Expressão inválida (unário).' };
+        st.push({ value: -a.value, repr: `(-${a.repr})` });
+        continue;
+      }
+      const b = st.pop();
+      const a = st.pop();
+      if(!a || !b) return { ok: false, error: 'Expressão inválida.' };
+
+      let v = 0;
+      if(op === '+') v = a.value + b.value;
+      else if(op === '-') v = a.value - b.value;
+      else if(op === '*') v = a.value * b.value;
+      else if(op === '/') v = (b.value === 0) ? NaN : (a.value / b.value);
+      else return { ok: false, error: `Operador desconhecido: ${op}` };
+
+      st.push({ value: v, repr: `(${a.repr} ${op} ${b.repr})` });
+      continue;
+    }
+  }
+
+  if(st.length !== 1) return { ok: false, error: 'Expressão inválida (pilha).' };
+  return { ok: true, value: st[0].value, repr: st[0].repr };
+}
+
+function stripOuterParens(s){
+  let t = String(s || '').trim();
+  // remove um nível de parênteses externos se existir
+  if(t.startsWith('(') && t.endsWith(')')){
+    // verifica balanceamento simples
+    let depth = 0;
+    let ok = true;
+    for(let i=0;i<t.length;i++){
+      const c = t[i];
+      if(c === '(') depth++;
+      if(c === ')') depth--;
+      if(depth === 0 && i < t.length-1){ ok = false; break; }
+    }
+    if(ok) t = t.slice(1,-1);
+  }
+  return t;
+}
+
+function evalExpr(expr, ctx, options){
+  const resolved = normalizeExpr(resolveRefs(expr, ctx));
+  if(!resolved) return { total: 0, detail: "(sem rolagem)" };
+
+  const tok = tokenizeExpression(resolved);
+  if(!tok.ok){
+    return { total: 0, detail: `${expr} => ERRO: ${tok.error}` };
+  }
+  const rpn = toRPN(tok.tokens);
+  if(!rpn.ok){
+    return { total: 0, detail: `${expr} => ERRO: ${rpn.error}` };
+  }
+  const ev = evalRPN(rpn.rpn, options);
+  if(!ev.ok){
+    return { total: 0, detail: `${expr} => ERRO: ${ev.error}` };
+  }
+
+  const total = ev.value;
+  const repr = stripOuterParens(ev.repr);
+  const detail = `${expr} => ${repr} = ${fmtNumber(total)}`;
+  return { total, detail, resolved, repr };
 }
 
 // Advantage/Disadvantage for d20 checks (used for "Sorte" and future skill checks)
 function rollD20WithMode(mod = 0, mode = "normal"){ // mode: normal|adv|dis
-  const a = 1 + Math.floor(Math.random()*20);
-  const b = 1 + Math.floor(Math.random()*20);
-  let chosen = a;
-  let extra = "";
-  if(mode === "adv"){
-    chosen = Math.max(a,b);
-    extra = ` (vantagem: ${a},${b} -> ${chosen})`;
-  } else if(mode === "dis"){
-    chosen = Math.min(a,b);
-    extra = ` (desvantagem: ${a},${b} -> ${chosen})`;
-  }
-  const total = chosen + mod;
-  return { total, detail: `1d20${mod? (mod>0?"+":"")+mod:""} => ${chosen}${extra}${mod? ` ${(mod>0?"+":"")}${mod}`:""} = ${total}` };
+  const m = Number(mod || 0);
+  const expr = `1d20${m ? (m > 0 ? "+" : "") + m : ""}`;
+  const res = evalExpr(expr, ctx || {}, { d20Mode: mode });
+  return { total: res.total, detail: res.detail };
 }
 
 // ------------------------------
@@ -101,10 +342,290 @@ function rollD20WithMode(mod = 0, mode = "normal"){ // mode: normal|adv|dis
 let character = null;
 let ctx = null;
 
+// ------------------------------
+// Etapa 8 — Perícias (catálogo + UI + rolagem)
+// ------------------------------
+let skillsCatalog = null;
+let skillIndex = null;
+
+const ATTR_LABEL = {
+  FOR: "Força",
+  ARC: "Arcano",
+  DES: "Destreza",
+  FORT: "Fortitude",
+  INT: "Inteligência",
+  SAB: "Sabedoria"
+};
+
+function normKey(s){
+  return deaccent(String(s || "")).toLowerCase().trim().replace(/[^a-z0-9]+/g, "_");
+}
+
+async function loadSkillsCatalog(){
+  try{
+    skillsCatalog = await fetch("data/skills_catalog.json").then(r => r.json());
+    return true;
+  }catch(e){
+    console.warn("Falha ao carregar skills_catalog.json", e);
+    skillsCatalog = null;
+    return false;
+  }
+}
+
+function buildSkillIndexFromCharacter(c){
+  const idx = {};
+  const groups = c?.skills || {};
+  Object.values(groups).forEach(arr => {
+    (arr || []).forEach(s => {
+      const attr = String(s.attribute || "").toUpperCase();
+      if(!attr) return;
+      if(!idx[attr]) idx[attr] = {};
+      addKeyAliases(idx[attr], s.name, s);
+    });
+  });
+  return idx;
+}
+
+function lookupSkill(attrCode, name, aliases){
+  const a = String(attrCode || "").toUpperCase();
+  const map = (skillIndex && skillIndex[a]) ? skillIndex[a] : null;
+  if(!map) return null;
+
+  const tries = [name].concat(Array.isArray(aliases) ? aliases : []).filter(Boolean);
+  for(const t of tries){
+    if(map[t]) return map[t];
+    const n = normKey(t);
+    if(map[n]) return map[n];
+    const l = String(t).toLowerCase();
+    if(map[l]) return map[l];
+    const d = deaccent(l);
+    if(map[d]) return map[d];
+  }
+  return null;
+}
+
+function getAttrObjByCode(code){
+  const name = ATTR_LABEL[String(code || "").toUpperCase()] || String(code || "");
+  return (ctx?.attributes?.[name] || ctx?.attributes?.[name.toLowerCase()] || ctx?.attributes?.[deaccent(name)] || null);
+}
+
+function skillMatchesQuery(skill, q){
+  if(!q) return true;
+  const n = normKey(skill?.name || "");
+  const d = normKey(skill?.desc || "");
+  return n.includes(q) || d.includes(q);
+}
+
+function applySkillUiToState(){
+  const modeEl = document.getElementById("skillMode");
+  const autoEl = document.getElementById("autoMagicAdv");
+  if(modeEl) state.ui.skillMode = String(modeEl.value || "normal");
+  if(autoEl) state.ui.autoMagicAdv = !!autoEl.checked;
+}
+
+function applyStateToSkillUi(){
+  const modeEl = document.getElementById("skillMode");
+  const autoEl = document.getElementById("autoMagicAdv");
+  if(modeEl) modeEl.value = state?.ui?.skillMode || "normal";
+  if(autoEl) autoEl.checked = !!state?.ui?.autoMagicAdv;
+}
+
+function rollSkillCheck(entry, modeOverride){
+  const autoMagic = !!document.getElementById("autoMagicAdv")?.checked;
+  const uiMode = String(document.getElementById("skillMode")?.value || "normal");
+  let mode = String(modeOverride || uiMode);
+
+  if(autoMagic && entry?.magic && mode === "normal"){
+    mode = "adv";
+  }
+
+  const mod = Number(entry?.total ?? 0);
+  const res = rollD20WithMode(mod, mode);
+
+  const modeTxt = (mode === "adv") ? " (vantagem)" : (mode === "dis") ? " (desvantagem)" : "";
+  const tagTxt = entry?.magic && autoMagic ? " [auto]" : "";
+
+  log(`Perícia ${entry.name} [${entry.attr}]${modeTxt}${tagTxt}: ${res.detail}`);
+  try{ window.__sfx?.play?.("roll"); }catch(_){/* ignore */}
+  render();
+}
+
+function renderSkillsTab(){
+  const root = document.getElementById("skillsRoot");
+  if(!root) return;
+
+  if(!skillsCatalog || !skillIndex){
+    root.innerHTML = '<div class="skillEmpty">Catálogo de perícias indisponível.</div>';
+    return;
+  }
+
+  const q = normKey(document.getElementById("skillSearch")?.value || "");
+  root.innerHTML = "";
+
+  let any = false;
+
+  (skillsCatalog.groups || []).forEach(group => {
+    const gCode = String(group.code || "").toUpperCase();
+    const gName = String(group.name || gCode);
+
+    const attrObj = getAttrObjByCode(gCode);
+    const attrMeta = attrObj ? `Atributo ${attrObj.value} (¼=${attrObj.quarter})` : "";
+
+    const rawSkills = Array.isArray(group.skills) ? group.skills : [];
+    const filtered = rawSkills.filter(s => skillMatchesQuery(s, q));
+
+    // Se houver busca ativa, não mostra grupo vazio
+    if(q && filtered.length === 0) return;
+
+    any = true;
+
+    const gEl = document.createElement("div");
+    gEl.className = "skillGroup";
+
+    const header = document.createElement("div");
+    header.className = "skillGroupHeader";
+    header.innerHTML = `<h3>${gName}</h3><div class="skillAttrMeta"><span>${gCode}</span>${attrMeta ? `<span>•</span><span>${attrMeta}</span>` : ""}</div>`;
+    gEl.appendChild(header);
+
+    const grid = document.createElement("div");
+    grid.className = "skillGrid";
+
+    if(filtered.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "skillEmpty";
+      empty.textContent = "Nenhuma perícia encontrada.";
+      grid.appendChild(empty);
+    }else{
+      filtered.forEach(s => {
+        const skillData = lookupSkill(gCode, s.name, s.aliases) || { total: 0, level: 0, proficient: false };
+        const total = Number(skillData.total ?? 0);
+        const lvl = Number(skillData.level ?? 0);
+        const prof = !!skillData.proficient;
+        const magic = !!s.magic;
+
+        const card = document.createElement("div");
+        card.className = "skillCard";
+
+        const top = document.createElement("div");
+        top.className = "skillTop";
+
+        const left = document.createElement("div");
+        left.innerHTML = `
+          <div class="skillName">${s.name}</div>
+          <div class="skillMetaLine">
+            <span>${gCode}</span>
+            <span>•</span>
+            <span>Nível ${lvl}</span>
+          </div>
+        `;
+
+        const badges = document.createElement("div");
+        badges.className = "skillBadges";
+
+        const bTotal = document.createElement("span");
+        bTotal.className = "badge total";
+        bTotal.textContent = `Total ${total >= 0 ? "+" : ""}${total}`;
+        badges.appendChild(bTotal);
+
+        if(prof){
+          const bProf = document.createElement("span");
+          bProf.className = "badge prof";
+          bProf.textContent = "Prof.";
+          badges.appendChild(bProf);
+        }
+
+        if(magic){
+          const bMagic = document.createElement("span");
+          bMagic.className = "badge magic";
+          bMagic.textContent = "Magia";
+          badges.appendChild(bMagic);
+        }
+
+        top.appendChild(left);
+        top.appendChild(badges);
+        card.appendChild(top);
+
+        const actions = document.createElement("div");
+        actions.className = "skillActions";
+
+        const btnRoll = document.createElement("button");
+        btnRoll.className = "btn btn-sm";
+        btnRoll.textContent = "Rolar";
+        btnRoll.onclick = () => rollSkillCheck({ name: s.name, attr: gCode, total, magic }, null);
+
+        const btnAdv = document.createElement("button");
+        btnAdv.className = "btn btn-ghost btn-sm";
+        btnAdv.textContent = "Adv";
+        btnAdv.onclick = () => rollSkillCheck({ name: s.name, attr: gCode, total, magic }, "adv");
+
+        const btnDis = document.createElement("button");
+        btnDis.className = "btn btn-ghost btn-sm";
+        btnDis.textContent = "Dis";
+        btnDis.onclick = () => rollSkillCheck({ name: s.name, attr: gCode, total, magic }, "dis");
+
+        actions.appendChild(btnRoll);
+        actions.appendChild(btnAdv);
+        actions.appendChild(btnDis);
+        card.appendChild(actions);
+
+        if(s.desc){
+          const desc = document.createElement("div");
+          desc.className = "skillDesc";
+          desc.textContent = String(s.desc);
+          card.appendChild(desc);
+        }
+
+        grid.appendChild(card);
+      });
+    }
+
+    gEl.appendChild(grid);
+    root.appendChild(gEl);
+  });
+
+  if(!any){
+    root.innerHTML = '<div class="skillEmpty">Nenhuma perícia encontrada.</div>';
+  }
+}
+
+function initSkillsUi(){
+  const root = document.getElementById("skillsRoot");
+  if(!root) return;
+
+  applyStateToSkillUi();
+
+  const searchEl = document.getElementById("skillSearch");
+  const modeEl = document.getElementById("skillMode");
+  const autoEl = document.getElementById("autoMagicAdv");
+
+  if(searchEl){
+    searchEl.addEventListener("input", () => renderSkillsTab());
+  }
+  if(modeEl){
+    modeEl.addEventListener("change", () => {
+      applySkillUiToState();
+      saveState();
+      renderSkillsTab();
+    });
+  }
+  if(autoEl){
+    autoEl.addEventListener("change", () => {
+      applySkillUiToState();
+      saveState();
+      renderSkillsTab();
+    });
+  }
+
+  renderSkillsTab();
+}
+
+
 function buildContextFromCharacter(c){
   // Attributes: by display name
   const attributes = {};
-  (c.attributes || []).forEach(a => { attributes[a.name] = a; });
+  (c.attributes || []).forEach(a => {
+    addKeyAliases(attributes, a.name, a);
+  });
 
   // Skills: by attribute code and skill name key (spaces -> _)
   const skills = {};
@@ -113,10 +634,8 @@ function buildContextFromCharacter(c){
     (arr || []).forEach(s => {
       const attr = s.attribute;
       if(!skills[attr]) skills[attr] = {};
-      const key = (s.name || "").replace(/\s+/g, "_");
-      skills[attr][key] = s;
-      // also store original name (rarely needed)
-      skills[attr][s.name] = s;
+      // guarda várias versões da chave (com/sem acento, espaço->_, lowercase)
+      addKeyAliases(skills[attr], s.name, s);
     });
   });
 
@@ -148,7 +667,12 @@ let state = {
     plasma: null     // {target}
   },
 
-  logLines: []
+  logLines: [],
+
+  ui: {
+    skillMode: "normal",
+    autoMagicAdv: true
+  }
 };
 
 function saveKey(){
@@ -164,7 +688,8 @@ function saveState(){
       tracks: { ps: state.ps, pf: state.pf, pvo: state.pvo, pvd: state.pvd },
       effects: state.effects,
       globalDamageBonusDice: state.globalDamageBonusDice,
-      logLines: state.logLines
+      logLines: state.logLines,
+      ui: state.ui
     };
     localStorage.setItem(saveKey(), JSON.stringify(payload));
   }catch(_){}
@@ -470,6 +995,10 @@ async function init(){
   character = await fetch("data/character.json").then(r => r.json());
   ctx = buildContextFromCharacter(character);
 
+  // Etapa 8 — Perícias
+  await loadSkillsCatalog();
+  skillIndex = buildSkillIndexFromCharacter(character);
+
   // Set name + luck
   document.getElementById("charName").textContent = character?.meta?.name || "Personagem";
   document.title = character?.meta?.name || document.title;
@@ -536,6 +1065,9 @@ async function init(){
     togglePlasma(t);
     render();
   };
+
+  // Etapa 8 — UI de Perícias
+  initSkillsUi();
 
   renderCombatActions();
   render();

@@ -120,10 +120,26 @@
         </div>
       </section>
 
-      <section id="tab-skills" class="panel" role="tabpanel">
+            <section id="tab-skills" class="panel" role="tabpanel">
         <section class="card">
-          <h2>Perícias</h2>
-          <p class="muted">Esta aba entra na Etapa 12: lista completa com busca e rolagem (Normal/Vantagem/Desvantagem).</p>
+          <div class="cardHeaderRow">
+            <h2>Perícias</h2>
+            <div class="skillTools">
+              <input id="skillSearch" class="input input-sm" placeholder="Buscar perícia…" />
+              <select id="skillMode" class="select select-sm" aria-label="Modo de rolagem">
+                <option value="normal">Normal</option>
+                <option value="adv">Vantagem</option>
+                <option value="dis">Desvantagem</option>
+              </select>
+              <label class="check">
+                <input id="autoMagicAdv" type="checkbox" />
+                <span>Auto vantagem (magia)</span>
+              </label>
+            </div>
+          </div>
+          <p class="muted">Teste padrão: <b>d20 + total</b>. Você pode usar o modo acima, ou clicar em <b>Adv</b>/<b>Dis</b> na perícia. “Auto vantagem (magia)” aplica vantagem quando a perícia estiver marcada como mágica.</p>
+
+          <div id="skillsRoot" class="skillsRoot" aria-live="polite"></div>
         </section>
       </section>
 

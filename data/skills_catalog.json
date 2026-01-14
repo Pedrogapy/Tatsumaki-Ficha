@@ -1,0 +1,295 @@
+{
+  "version": 1,
+  "attributes": [
+    {
+      "code": "FOR",
+      "name": "Força"
+    },
+    {
+      "code": "ARC",
+      "name": "Arcano"
+    },
+    {
+      "code": "DES",
+      "name": "Destreza"
+    },
+    {
+      "code": "FORT",
+      "name": "Fortitude"
+    },
+    {
+      "code": "INT",
+      "name": "Inteligência"
+    },
+    {
+      "code": "SAB",
+      "name": "Sabedoria"
+    }
+  ],
+  "groups": [
+    {
+      "code": "FOR",
+      "name": "Força",
+      "skills": [
+        {
+          "name": "Lutar",
+          "desc": "Lutar sem armas, técnicas de luta."
+        },
+        {
+          "name": "Agarrar",
+          "desc": "Segurar algo ou imobilizar alvos com firmeza física."
+        },
+        {
+          "name": "Quebrar",
+          "desc": "Romper objetos ou estruturas pela força bruta."
+        },
+        {
+          "name": "Arrancar",
+          "desc": "Puxar com violência algo preso ou incrustado."
+        },
+        {
+          "name": "Arremesso",
+          "aliases": [
+            "Arremeso"
+          ],
+          "desc": "Lançar objetos ou inimigos com potência."
+        },
+        {
+          "name": "Destravar",
+          "desc": "Forçar trancas, correntes ou mecanismos travados."
+        },
+        {
+          "name": "Desprender",
+          "desc": "Soltar-se de amarras, garras ou contenções físicas."
+        },
+        {
+          "name": "Levantamento",
+          "desc": "Erguer grandes pesos ou levantar obstáculos."
+        },
+        {
+          "name": "Armas Pesadas",
+          "desc": "Manusear com eficácia armamentos de grande porte/pesados."
+        }
+      ]
+    },
+    {
+      "code": "ARC",
+      "name": "Arcano",
+      "skills": [
+        {
+          "name": "Arcanismo",
+          "magic": true,
+          "desc": "Entendimento sobre magia, runas e planos místicos."
+        },
+        {
+          "name": "Ocultismo",
+          "magic": true,
+          "desc": "Saber sobre maldições, entidades e segredos proibidos."
+        },
+        {
+          "name": "Intimidação",
+          "desc": "Ameaçar ou forçar alguém ao medo."
+        },
+        {
+          "name": "Empatia",
+          "desc": "Ler emoções e intenções das pessoas."
+        },
+        {
+          "name": "Intuição",
+          "desc": "Saber algo sem explicação lógica — pura sensação."
+        },
+        {
+          "name": "Invocação",
+          "magic": true,
+          "desc": "Chamar criaturas, armas ou espíritos para auxiliá-lo."
+        },
+        {
+          "name": "Canalização",
+          "magic": true,
+          "desc": "Focar energias mágicas em feitiços ou habilidades."
+        },
+        {
+          "name": "Conjuração",
+          "magic": true,
+          "desc": "Utilizar runas como forma de feitiçaria."
+        },
+        {
+          "name": "Presença",
+          "magic": true,
+          "desc": "Imposição mágica/espiritual que afeta seres e ambientes."
+        }
+      ]
+    },
+    {
+      "code": "DES",
+      "name": "Destreza",
+      "skills": [
+        {
+          "name": "Furtividade",
+          "desc": "Mover-se em silêncio e escondido."
+        },
+        {
+          "name": "Espionagem",
+          "desc": "Observar e colher informações sem levantar suspeitas."
+        },
+        {
+          "name": "Acrobacia",
+          "desc": "Manobras ágeis, cambalhotas, equilíbrio."
+        },
+        {
+          "name": "Reflexos",
+          "aliases": [
+            "Reflexo"
+          ],
+          "desc": "Esquivas rápidas, ação surpresa ou emergências."
+        },
+        {
+          "name": "Defletir",
+          "desc": "Desviar projéteis ou ataques com reflexos rápidos."
+        },
+        {
+          "name": "Pontaria",
+          "desc": "Acertar alvos com precisão usando armas à distância."
+        },
+        {
+          "name": "Manuseio",
+          "desc": "Controlar objetos delicados ou perigosos com agilidade."
+        },
+        {
+          "name": "Prestidigitação",
+          "desc": "Truques rápidos com as mãos, roubo ou mágica."
+        },
+        {
+          "name": "Armas Avançadas",
+          "desc": "Operar armamentos complexos com destreza técnica."
+        }
+      ]
+    },
+    {
+      "code": "FORT",
+      "name": "Fortitude",
+      "skills": [
+        {
+          "name": "Atletismo",
+          "desc": "Corridas, saltos, escaladas, natação."
+        },
+        {
+          "name": "Resistência",
+          "desc": "Suportar fadiga, frio, veneno ou dor."
+        },
+        {
+          "name": "Manobra",
+          "desc": "Golpes especiais como agarrar, derrubar, desarmar."
+        },
+        {
+          "name": "Saúde",
+          "desc": "Resistência física a doenças, venenos e exaustão."
+        },
+        {
+          "name": "Firmeza",
+          "desc": "Manter-se estável diante de impactos ou tentações."
+        },
+        {
+          "name": "Defender",
+          "desc": "Proteger-se ou a outros de ataques diretos."
+        },
+        {
+          "name": "Tolerar a Dor",
+          "desc": "Suportar ferimentos sem perder desempenho."
+        },
+        {
+          "name": "Determinação",
+          "desc": "Persistir mesmo sob pressão ou desvantagem."
+        },
+        {
+          "name": "Contra-Ataque",
+          "desc": "Responder a um ataque com reação imediata e precisa."
+        }
+      ]
+    },
+    {
+      "code": "INT",
+      "name": "Inteligência",
+      "skills": [
+        {
+          "name": "Investigação",
+          "desc": "Raciocínio lógico/dedutivo para encontrar pistas e segredos."
+        },
+        {
+          "name": "Cartografia",
+          "desc": "Leitura e criação de mapas."
+        },
+        {
+          "name": "Tática",
+          "desc": "Planejamento estratégico de combate e movimentação."
+        },
+        {
+          "name": "Persuasão",
+          "desc": "Convencer, inspirar ou acalmar."
+        },
+        {
+          "name": "Negociação",
+          "desc": "Trocar bens ou ideias com vantagem."
+        },
+        {
+          "name": "Pilotagem",
+          "desc": "Conduzir veículos mágicos, criaturas voadoras ou máquinas."
+        },
+        {
+          "name": "Falsificação",
+          "desc": "Criar documentos, selos ou objetos falsos."
+        },
+        {
+          "name": "Tecnologia",
+          "desc": "Compreensão e uso de máquinas, circuitos e dispositivos modernos."
+        },
+        {
+          "name": "Criptografia",
+          "desc": "Decifrar, codificar ou reconhecer padrões secretos em mensagens."
+        }
+      ]
+    },
+    {
+      "code": "SAB",
+      "name": "Sabedoria",
+      "skills": [
+        {
+          "name": "Religião",
+          "desc": "Conhecimento sobre deuses, cultos e rituais."
+        },
+        {
+          "name": "História",
+          "desc": "Saber sobre eventos antigos, reinos caídos e linhagens."
+        },
+        {
+          "name": "Medicina",
+          "desc": "Diagnóstico, primeiros socorros e tratamento."
+        },
+        {
+          "name": "Natureza",
+          "desc": "Saber sobre plantas, criaturas e fenômenos naturais."
+        },
+        {
+          "name": "Sobrevivência",
+          "desc": "Navegar em ambientes hostis, caçar e achar abrigo."
+        },
+        {
+          "name": "Liderança",
+          "desc": "Inspirar e comandar aliados em combate ou fora dele."
+        },
+        {
+          "name": "Domar",
+          "desc": "Treinar e manter controle sobre animais ou monstros."
+        },
+        {
+          "name": "Ofício",
+          "desc": "Criar, consertar ou aprimorar itens por técnicas manuais."
+        },
+        {
+          "name": "Percepção",
+          "desc": "Notar detalhes sutis no ambiente ou mudanças ao redor."
+        }
+      ]
+    }
+  ]
+}
