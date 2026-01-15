@@ -1273,7 +1273,16 @@ function toastQuick(title, detail){
 
     const el = document.createElement('div');
     el.className = 'toast';
-    if(String(title||'').toLowerCase().includes('sobrescrito')){ el.className = 'toast warn'; }
+    const lower = String(title||'').toLowerCase();
+    if(
+      lower.includes('sobrescrito') ||
+      lower.includes('falha') ||
+      lower.includes('erro') ||
+      lower.includes('inválido') ||
+      lower.includes('invalido')
+    ){
+      el.className = 'toast warn';
+    }
 
 
     const strong = document.createElement('div');
@@ -1924,6 +1933,203 @@ function renderDupSelect(sel, titles, selfIndex){
   }catch(_){/* ignore */}
 }
 
+// ------------------------------
+// Etapa 15 — Export/Import com versão + validação + migração
+// - Arquivos exportados ganham schema_version
+// - Import valida e migra formatos antigos (v1/v2)
+// ------------------------------
+
+const FILE_SCHEMAS = {
+  builds: 3,
+  session: 2
+};
+
+function isPlainObject(v){
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+function safeText(v, fallback = ''){
+  const s = String(v ?? fallback);
+  // remove controles estranhos
+  return s.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+}
+
+function safeTitle(v, fallback){
+  const s = safeText(v, fallback);
+  const t = s.length ? s : String(fallback || '');
+  return t.slice(0, 80);
+}
+
+function isIsoDate(s){
+  if(!s) return false;
+  const d = new Date(s);
+  return !!d && !isNaN(d.getTime());
+}
+
+function pickSchemaVersion(j){
+  const raw = (j && (j.schema_version ?? j.schemaVersion ?? j.v ?? j.version)) ?? 0;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function normalizePreset(p){
+  if(!isPlainObject(p)) return null;
+
+  // clonesafe
+  const out = JSON.parse(JSON.stringify(p));
+
+  // aliases
+  if(!out.captured_at && out.capturedAt) out.captured_at = out.capturedAt;
+  if(!out.v) out.v = 1;
+
+  // migra ui antiga (se existia fora de ui)
+  if(!out.ui || !isPlainObject(out.ui)) out.ui = out.ui && isPlainObject(out.ui) ? out.ui : {};
+  if('autoMagicAdv' in out && !('autoMagicAdv' in out.ui)) out.ui.autoMagicAdv = !!out.autoMagicAdv;
+  if('skillMode' in out && !('skillMode' in out.ui)) out.ui.skillMode = String(out.skillMode || 'normal');
+
+  // migra nomes possíveis da essência
+  if(out.essence && isPlainObject(out.essence)){
+    const e = out.essence;
+    if(e.of != null && e.off == null) e.off = e.of;
+    if(e.defense != null && e.def == null) e.def = e.defense;
+    if(e.magic != null && e.apt == null) e.apt = e.magic;
+    if(e.true != null && e.ev == null) e.ev = e.true;
+  }
+
+  return out;
+}
+
+function normalizeBuildSlot(s, i){
+  const fallbackTitle = `Build ${i+1}`;
+  if(!isPlainObject(s)) return { title: fallbackTitle, preset: null, savedAt: null, userNamed: false };
+
+  const title = safeTitle(s.title, fallbackTitle);
+  const userNamed = !!(s.userNamed ?? s.user_named);
+  const preset = normalizePreset(s.preset ?? s.data ?? null);
+
+  // savedAt pode vir como ISO, timestamp numérico ou ausente
+  let savedAt = s.savedAt ?? s.saved_at ?? s.saved ?? null;
+  if(!savedAt && preset?.captured_at) savedAt = preset.captured_at;
+  if(typeof savedAt === 'number') savedAt = new Date(savedAt).toISOString();
+  savedAt = safeText(savedAt, '');
+  if(!isIsoDate(savedAt)) savedAt = null;
+
+  return { title, preset, savedAt, userNamed };
+}
+
+function normalizeBuildsImport(j){
+  if(!isPlainObject(j)) return { ok: false, error: 'JSON inválido.' };
+
+  const ver = pickSchemaVersion(j);
+  const kind = safeText(j.kind ?? j.type ?? '').toLowerCase();
+
+  // slots
+  let slots = null;
+  if(Array.isArray(j.slots)) slots = j.slots;
+  else if(Array.isArray(j.builds)) slots = j.builds;
+  else if(Array.isArray(j.presets)) slots = j.presets;
+
+  if(!slots) return { ok: false, error: 'Arquivo não parece ser de builds (slots ausentes).' };
+
+  if(kind && kind !== 'builds' && kind !== 'presets'){
+    // ainda pode funcionar, mas avisa de forma clara
+    // (não bloqueia se slots estão presentes)
+  }
+
+  if(ver && ver > FILE_SCHEMAS.builds){
+    return { ok: false, error: `Versão de builds (${ver}) é mais nova que o site (${FILE_SCHEMAS.builds}).` };
+  }
+
+  const outSlots = [];
+  for(let i=0;i<3;i++) outSlots.push(normalizeBuildSlot(slots[i], i));
+
+  return {
+    ok: true,
+    data: {
+      schema_version: FILE_SCHEMAS.builds,
+      v: FILE_SCHEMAS.builds,
+      kind: 'builds',
+      character: safeText(j.character ?? j.char ?? (character?.meta?.name || 'character')),
+      imported_at: new Date().toISOString(),
+      slots: outSlots
+    }
+  };
+}
+
+function normalizeSessionImport(j){
+  if(!isPlainObject(j)) return { ok: false, error: 'JSON inválido.' };
+
+  const ver = pickSchemaVersion(j);
+  const kind = safeText(j.kind ?? j.type ?? '').toLowerCase();
+
+  if(ver && ver > FILE_SCHEMAS.session){
+    return { ok: false, error: `Versão de sessão (${ver}) é mais nova que o site (${FILE_SCHEMAS.session}).` };
+  }
+
+  // aceita session / session_snapshot / snapshot
+  if(kind && !['session','session_snapshot','snapshot','sessao','sessão'].includes(kind)){
+    // não bloqueia se conseguimos achar estado
+  }
+
+  // estado pode estar em j.state ou ser um formato antigo “achatado”
+  let st = null;
+  if(isPlainObject(j.state)){
+    st = j.state;
+  }else{
+    // tentativa de compatibilidade com export antigo “flat”
+    st = {
+      round: j.round ?? j.rodada ?? 1,
+      tracks: j.tracks ?? {
+        ps: j.ps,
+        pf: j.pf,
+        pvo: j.pvo,
+        pvd: j.pvd
+      },
+      effects: j.effects,
+      essence: j.essence,
+      globalDamageBonusDice: j.globalDamageBonusDice,
+      logLines: j.logLines,
+      ui: j.ui
+    };
+  }
+
+  if(!isPlainObject(st)) return { ok: false, error: 'Arquivo não parece conter estado de sessão.' };
+
+  // sanitiza o mínimo (sem “corrigir demais”)
+  const tracks = isPlainObject(st.tracks) ? st.tracks : {};
+  const out = {
+    schema_version: FILE_SCHEMAS.session,
+    v: FILE_SCHEMAS.session,
+    kind: 'session',
+    imported_at: new Date().toISOString(),
+    captured_at: safeText(j.captured_at ?? st.captured_at ?? j.capturedAt ?? ''),
+    character: safeText(j.character ?? j.char ?? (character?.meta?.name || 'character')),
+    state: {
+      round: clampInt(st.round ?? 1, 1, 9999),
+      tracks: {
+        ps: Number(tracks.ps ?? tracks.PS ?? tracks.hp ?? st.ps ?? st.PS ?? state.ps),
+        pf: Number(tracks.pf ?? tracks.PF ?? st.pf ?? st.PF ?? state.pf),
+        pvo: Number(tracks.pvo ?? tracks.PVO ?? st.pvo ?? st.PVO ?? state.pvo),
+        pvd: Number(tracks.pvd ?? tracks.PVD ?? st.pvd ?? st.PVD ?? state.pvd)
+      },
+      effects: isPlainObject(st.effects) ? st.effects : st.effects || {},
+      essence: isPlainObject(st.essence) ? st.essence : st.essence || {},
+      globalDamageBonusDice: (typeof st.globalDamageBonusDice === 'number') ? st.globalDamageBonusDice : state.globalDamageBonusDice,
+      logLines: Array.isArray(st.logLines) ? st.logLines.slice(0, 200) : state.logLines,
+      ui: isPlainObject(st.ui) ? st.ui : st.ui || {}
+    },
+    sfx: isPlainObject(j.sfx) ? j.sfx : (isPlainObject(st.sfx) ? st.sfx : null)
+  };
+
+  // se não veio captured_at, tenta puxar de exported_at
+  if(!out.captured_at){
+    const maybe = safeText(j.exported_at ?? j.saved_at ?? '');
+    if(isIsoDate(maybe)) out.captured_at = maybe;
+  }
+
+  return { ok: true, data: out };
+}
+
 
 function initBuildsUi(){
   loadBuilds();
@@ -1999,10 +2205,12 @@ if(dupBtn && dupSel){
   const exportBuildsBtn = document.getElementById('exportBuilds');
   if(exportBuildsBtn) exportBuildsBtn.addEventListener('click', () => {
     const payload = {
-      v: 2,
+      schema_version: FILE_SCHEMAS.builds,
+      v: FILE_SCHEMAS.builds,
       kind: 'builds',
       character: character?.meta?.name || 'character',
       exported_at: new Date().toISOString(),
+      app: { name: 'Tatsumaki-Ficha', stage: 15 },
       slots: builds
     };
     downloadJson('builds_tatsumaki.json', payload);
@@ -2019,10 +2227,13 @@ if(dupBtn && dupSel){
       if(!file) return;
       try{
         const j = JSON.parse(await file.text());
-        if(!j || !Array.isArray(j.slots) || (j.v !== 1 && j.v !== 2)) throw new Error('inválido');
+
+        const norm = normalizeBuildsImport(j);
+        if(!norm.ok) throw new Error(norm.error || 'inválido');
+        const jj = norm.data;
 
         builds = builds.map((b, i) => {
-          const s = j.slots[i];
+          const s = jj.slots[i];
           if(!s) return b;
           return {
             title: String(s.title || b.title || `Build ${i+1}`),
@@ -2034,10 +2245,11 @@ if(dupBtn && dupSel){
 
         saveBuilds();
         renderBuildsUi();
-        toastQuick('Builds importadas.');
-        log('Builds importadas (JSON).');
+        toastQuick('Builds importadas.', `v${jj.schema_version || jj.v || '?'}`);
+        log(`Builds importadas (JSON) — v${jj.schema_version || jj.v || '?'}.`);
       }catch(_){
-        toastQuick('Falha ao importar.', 'JSON inválido.');
+        const msg = (String(_?.message || '').trim()) || 'JSON inválido.';
+        toastQuick('Falha ao importar.', msg);
       }
     });
   }
@@ -2113,7 +2325,10 @@ if(dupBtn && dupSel){
   if(exportSessionBtn) exportSessionBtn.addEventListener('click', () => {
     const payload = captureSessionSnapshot();
     payload.kind = 'session';
+    payload.schema_version = FILE_SCHEMAS.session;
+    payload.v = FILE_SCHEMAS.session;
     payload.exported_at = new Date().toISOString();
+    payload.app = { name: 'Tatsumaki-Ficha', stage: 15 };
     downloadJson('sessao_tatsumaki.json', payload);
     toastQuick('Sessão exportada.');
   });
@@ -2128,14 +2343,17 @@ if(dupBtn && dupSel){
       if(!file) return;
       try{
         const j = JSON.parse(await file.text());
-        if(!j || j.v !== 1) throw new Error('inválido');
-        applySessionSnapshot(j);
+        const norm = normalizeSessionImport(j);
+        if(!norm.ok) throw new Error(norm.error || 'Arquivo inválido.');
+        const jj = norm.data;
+        applySessionSnapshot(jj);
         renderBuildsUi();
         renderSessionsUi();
-        toastQuick('Sessão importada.');
-        log('Sessão importada (JSON).');
+        toastQuick('Sessão importada.', `v${jj.schema_version || jj.v || '?'}`);
+        log(`Sessão importada (JSON) — v${jj.schema_version || jj.v || '?'}.`);
       }catch(_){
-        toastQuick('Falha ao importar.', 'Arquivo inválido.');
+        const msg = (String(_?.message || '').trim()) || 'Arquivo inválido.';
+        toastQuick('Falha ao importar.', msg);
       }
     });
   }
