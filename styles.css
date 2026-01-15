@@ -1441,3 +1441,79 @@ select,input{
   box-shadow: 0 24px 70px rgba(0,0,0,.55);
 }
 .modalCard .row{ margin-top: 10px; }
+
+/* ===== ETAPA 17 — QUICKBAR ===== */
+.quickbar {
+  background: #0f0f16;
+  border: 1px solid #2a0f18;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.quickbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: #e6b0b8;
+}
+
+.quickbar-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.qcard {
+  background: #15151f;
+  border: 1px solid #3a1520;
+  border-radius: 6px;
+  padding: 6px;
+  min-width: 180px;
+}
+
+.qcard-title {
+  font-size: 0.85rem;
+  color: #f2c4cc;
+  margin-bottom: 4px;
+}
+
+.qcard-rolls button {
+  margin: 2px 2px 0 0;
+}
+
+/* ===== RESULTADO DE COMBATE ===== */
+.combat-result {
+  background: linear-gradient(135deg, #1a0f14, #0f0f16);
+  border: 1px solid #8b1d2c;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  animation: cr-pop 0.25s ease-out;
+}
+
+.combat-result .cr-title {
+  font-weight: 600;
+  color: #ffccd5;
+}
+
+.combat-result .cr-total {
+  font-size: 1.6rem;
+  color: #ff4d6d;
+}
+
+.combat-result .cr-detail {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.hidden {
+  display: none;
+}
+
+@keyframes cr-pop {
+  from { transform: translateY(-4px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}

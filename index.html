@@ -110,6 +110,23 @@
         <div class="grid2">
           <section class="card">
             <h2>Combate</h2>
+            <!-- Quickbar de Favoritos -->
+            <div id="quickbar" class="quickbar">
+              <div class="quickbar-header">
+                <span>Favoritos</span>
+                <button id="manageFavs" class="btn btn-ghost btn-sm">Gerenciar</button>
+              </div>
+              <div id="quickbarList" class="quickbar-list">
+                <span class="muted">Nenhuma habilidade fixada ⭐</span>
+              </div>
+            </div>
+
+            <!-- Resultado destacado de combate -->
+            <div id="combatResult" class="combat-result hidden">
+              <div class="cr-title"></div>
+              <div class="cr-total"></div>
+              <div class="cr-detail"></div>
+            </div>
             <div id="combatActions" class="actions"></div>
           </section>
 

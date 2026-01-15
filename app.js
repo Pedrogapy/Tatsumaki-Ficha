@@ -342,6 +342,9 @@ function rollD20WithMode(mod = 0, mode = "normal"){ // mode: normal|adv|dis
 let character = null;
 let ctx = null;
 
+// Etapa 17 — lista normalizada de habilidades (para Quickbar/Favoritos)
+let abilities = [];
+
 // ------------------------------
 // Etapa 8 — Perícias (catálogo + UI + rolagem)
 // ------------------------------
@@ -1482,12 +1485,41 @@ function renderEquipment(){
   });
 }
 
+
+// Etapa 17 — helpers de habilidades (ids estáveis + favoritos)
+function abilityStableId(ab){
+  // prefere id fornecido no JSON
+  const raw = (ab && (ab.id || ab.key || ab.slug)) ? String(ab.id || ab.key || ab.slug) : String(ab?.name || 'ability');
+  return normKey(raw);
+}
+function getAbilitiesFromCharacter(ch){
+  const raw = Array.isArray(ch?.abilities?.exclusive?.abilities) ? ch.abilities.exclusive.abilities : [];
+  // Garante id estável em cada habilidade, sem mutar o objeto original (evita efeitos colaterais)
+  return raw.map(a => ({ ...a, id: abilityStableId(a) }));
+}
+function isAbilityFav(abilityId){
+  state.ui = state.ui || {};
+  state.ui.favAbilities = state.ui.favAbilities || [];
+  return state.ui.favAbilities.includes(abilityId);
+}
+function toggleAbilityFav(abilityId){
+  state.ui = state.ui || {};
+  state.ui.favAbilities = state.ui.favAbilities || [];
+  if(state.ui.favAbilities.includes(abilityId)){
+    state.ui.favAbilities = state.ui.favAbilities.filter(x => x !== abilityId);
+  }else{
+    state.ui.favAbilities.push(abilityId);
+  }
+  saveState();
+}
+
 function renderAbilitiesLibrary(){
   const root = document.getElementById('abilitiesList');
   if(!root) return;
   root.innerHTML = '';
 
-  const list = Array.isArray(character?.abilities?.exclusive?.abilities) ? character.abilities.exclusive.abilities : [];
+  abilities = getAbilitiesFromCharacter(character);
+  const list = abilities;
   if(!list.length){
     root.innerHTML = `<div class="muted">Sem habilidades exclusivas cadastradas.</div>`;
     return;
@@ -1538,6 +1570,25 @@ function renderAbilitiesLibrary(){
     }
 
     header.appendChild(left);
+
+    // ⭐ Favorito (Etapa 17) — aparece na Quickbar do Combate
+    const right = document.createElement('div');
+    right.className = 'abilityHeaderRight';
+
+    const favBtn = document.createElement('button');
+    favBtn.className = 'btn btn-ghost btn-sm favBtn';
+    favBtn.title = 'Fixar na barra rápida (Combate)';
+    favBtn.textContent = isAbilityFav(ab.id) ? '⭐' : '☆';
+    favBtn.onclick = () => {
+      toggleAbilityFav(ab.id);
+      // Atualiza visuais
+      favBtn.textContent = isAbilityFav(ab.id) ? '⭐' : '☆';
+      renderQuickbar();
+    };
+
+    right.appendChild(favBtn);
+    header.appendChild(right);
+
     card.appendChild(header);
 
     const body = document.createElement('div');
@@ -3119,6 +3170,9 @@ async function init(){
   character = await fetch("data/character.json").then(r => r.json());
   ctx = buildContextFromCharacter(character);
 
+  // Etapa 17 — cache de habilidades (Quickbar/Favoritos)
+  abilities = getAbilitiesFromCharacter(character);
+
   // Etapa 8 — Perícias
   await loadSkillsCatalog();
   skillIndex = buildSkillIndexFromCharacter(character);
@@ -3212,5 +3266,79 @@ async function init(){
   document.dispatchEvent(new CustomEvent("tats-ready"));
 
 }
+
+// ===== ETAPA 17 — QUICKBAR =====
+state.ui = state.ui || {};
+state.ui.favAbilities = state.ui.favAbilities || [];
+
+const quickbarList = document.getElementById("quickbarList");
+const combatResult = document.getElementById("combatResult");
+
+function renderQuickbar() {
+  if(!quickbarList) return;
+  quickbarList.innerHTML = "";
+  if (!state.ui.favAbilities.length) {
+    quickbarList.innerHTML = "<span class='muted'>Nenhuma habilidade fixada ⭐</span>";
+    return;
+  }
+
+  state.ui.favAbilities.forEach(id => {
+    const ab = abilities.find(a => a.id === id);
+    if (!ab) return;
+
+    const card = document.createElement("div");
+    card.className = "qcard";
+
+    const title = document.createElement("div");
+    title.className = "qcard-title";
+    title.textContent = ab.name;
+    card.appendChild(title);
+
+    const rolls = document.createElement("div");
+    rolls.className = "qcard-rolls";
+
+    (ab.rolls || []).forEach(r => {
+      const b = document.createElement("button");
+      b.className = "btn btn-sm";
+      b.textContent = r.label || "Rolar";
+      b.onclick = () => {
+        const res = rollExpression(r.expr);
+        showCombatResult(ab.name, r.label, res);
+      };
+      rolls.appendChild(b);
+    });
+
+    card.appendChild(rolls);
+    quickbarList.appendChild(card);
+  });
+
+  saveState();
+}
+
+function showCombatResult(title, label, result) {
+  if(!combatResult) return;
+  combatResult.querySelector(".cr-title").textContent = `${title} — ${label}`;
+  combatResult.querySelector(".cr-total").textContent = result.total;
+  combatResult.querySelector(".cr-detail").textContent = result.detail;
+  combatResult.classList.remove("hidden");
+  setTimeout(() => combatResult.classList.add("hidden"), 4000);
+}
+
+// Atalhos 1–9
+document.addEventListener("keydown", e => {
+  if (document.activeElement.tagName === "INPUT") return;
+  if (currentTab !== "combat") return;
+  const idx = parseInt(e.key) - 1;
+  if (idx >= 0 && idx < state.ui.favAbilities.length) {
+    const ab = abilities.find(a => a.id === state.ui.favAbilities[idx]);
+    if (!ab || !ab.rolls?.length) return;
+    const r = ab.rolls[0];
+    const res = rollExpression(r.expr);
+    showCombatResult(ab.name, r.label, res);
+  }
+});
+
+renderQuickbar();
+
 
 init();
