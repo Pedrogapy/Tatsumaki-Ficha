@@ -26,11 +26,7 @@
 
 *{box-sizing:border-box}
 
-/* Regra de segurança: pseudo-elementos decorativos nunca devem capturar cliques */
-*::before,
-*::after{
-  pointer-events:none;
-}
+*::before,*::after{pointer-events:none}
 
 html,body{height:100%}
 
@@ -95,7 +91,6 @@ a{color:inherit}
   position:absolute;
   left:16px; right:16px; bottom:-1px;
   height:2px;
-  pointer-events:none;
   background: linear-gradient(90deg, transparent, rgba(208,42,42,.55), rgba(255,77,77,.30), transparent);
   opacity:.55;
 }
@@ -122,7 +117,6 @@ a{color:inherit}
   content:"";
   position:absolute;
   inset:-20px;
-  pointer-events:none;
   background:
     radial-gradient(circle at 50% 40%, rgba(255,77,77,.22), transparent 55%),
     conic-gradient(from 210deg, rgba(255,77,77,.00), rgba(255,77,77,.18), rgba(255,77,77,.00));
@@ -134,7 +128,6 @@ a{color:inherit}
   content:"";
   position:absolute;
   inset:0;
-  pointer-events:none;
   background:
     radial-gradient(circle at 30% 20%, rgba(255,77,77,.16), transparent 55%),
     linear-gradient(135deg, rgba(0,0,0,.08), rgba(0,0,0,.55));
@@ -366,7 +359,6 @@ input[type="range"].range::-moz-range-thumb{
   inset:-1px;
   border-radius: 18px;
   padding:1px;
-  pointer-events:none;
   background: linear-gradient(180deg, rgba(255,77,77,.22), rgba(92,98,140,.14));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
@@ -1451,3 +1443,199 @@ select,input{
   box-shadow: 0 24px 70px rgba(0,0,0,.55);
 }
 .modalCard .row{ margin-top: 10px; }
+
+
+/* Etapa 17 — Favoritos + Quickbar */
+.combatResult{
+  margin: 8px 0 12px;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,77,77,.20);
+  background: linear-gradient(180deg, rgba(208,42,42,.12), rgba(16,18,32,.40));
+  box-shadow: 0 16px 40px rgba(0,0,0,.35), 0 0 0 1px rgba(255,77,77,.06) inset;
+  transform: translateY(-4px);
+  opacity: 0;
+  transition: transform .18s ease, opacity .18s ease;
+}
+.combatResult.show{
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.crTitle{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.crName{
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+.crTag{
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(92,98,140,.38);
+  background: rgba(19,21,33,.55);
+  color: rgba(238,240,255,.92);
+}
+.crValue{
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 900;
+}
+.crDetail{
+  margin-top: 6px;
+  color: rgba(185,192,230,.95);
+  font-size: 13px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.quickbar{
+  margin: 10px 0 14px;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(92,98,140,.34);
+  background: rgba(16,18,32,.48);
+  box-shadow: 0 14px 36px rgba(0,0,0,.32), 0 0 0 1px rgba(255,77,77,.04) inset;
+}
+.quickbarHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.quickbarTitle{
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+.quickbarTools{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.quickbarList{
+  display:grid;
+  gap: 10px;
+}
+.quickSlot{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(19,21,33,.55);
+  padding: 10px;
+}
+.quickSlotHeader{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap:wrap;
+  margin-bottom: 8px;
+}
+.quickSlotKey{
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border: 1px solid rgba(255,77,77,.22);
+  background: rgba(208,42,42,.10);
+  font-size: 12px;
+  font-weight: 900;
+}
+.quickSlotName{
+  font-weight: 850;
+}
+.quickSlotBadges{
+  display:flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.quickSlotBody{
+  display:grid;
+  gap: 10px;
+}
+.quickSlotRolls{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  align-items:center;
+}
+.quickSlotRolls input{
+  width:100%;
+  max-width: 240px;
+}
+
+.title .spacer{ flex: 1; }
+
+.favBtn{
+  margin-left: auto;
+  min-width: 44px;
+  height: 32px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,77,77,.18);
+  background: rgba(10,11,18,.45);
+  color: rgba(238,240,255,.92);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 6px;
+  user-select:none;
+}
+.favBtn:hover{
+  border-color: rgba(255,77,77,.32);
+  box-shadow: 0 0 0 1px rgba(255,77,77,.06) inset, 0 12px 28px rgba(0,0,0,.35);
+}
+.favBtn.is-on{
+  background: rgba(208,42,42,.12);
+  border-color: rgba(255,77,77,.30);
+}
+.favBtn .star{
+  font-size: 16px;
+  line-height: 1;
+}
+
+.favModalList{
+  display:grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.favRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(16,18,32,.55);
+}
+.favRowMain{
+  display:flex;
+  flex-direction:column;
+  gap: 2px;
+}
+.favRowName{
+  font-weight: 850;
+}
+.favRowSub{
+  color: rgba(185,192,230,.92);
+  font-size: 12px;
+}
+.favRowActions{
+  display:flex;
+  align-items:center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Garante que overlays não capturem clique */
+.modalBackdrop, .toastHost{ pointer-events: auto; }
+.quickbar, .quickSlot, .actions, .btn, button, input, select{ pointer-events: auto; }

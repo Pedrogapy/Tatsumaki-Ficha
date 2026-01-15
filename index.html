@@ -110,6 +110,19 @@
         <div class="grid2">
           <section class="card">
             <h2>Combate</h2>
+            <div id="combatResult" class="combatResult" aria-live="polite" aria-atomic="true" hidden></div>
+
+            <div class="quickbar">
+              <div class="quickbarHeader">
+                <div class="quickbarTitle">Favoritos <span class="muted">(atalhos 1–9)</span></div>
+                <div class="quickbarTools">
+                  <button id="openFavManager" class="btn btn-ghost btn-sm" title="Gerenciar favoritos">Gerenciar</button>
+                </div>
+              </div>
+              <div id="quickbarList" class="quickbarList"></div>
+              <div class="quickbarHint muted">Dica: clique na <b>☆</b> nas ações de combate ou habilidades para fixar aqui.</div>
+            </div>
+
             <div id="combatActions" class="actions"></div>
           </section>
 
@@ -551,7 +564,22 @@
     </div>
   </div>
 
-  <div id="toastHost" class="toastHost" aria-live="polite" aria-atomic="true"></div>
+    <!-- Modal: gerenciar Favoritos (Etapa 17) -->
+  <div id="favModal" class="modal" hidden>
+    <div class="modalBackdrop" data-close="true"></div>
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="favModalTitle">
+      <h3 id="favModalTitle">Favoritos</h3>
+      <p class="muted">Ordem = atalhos <b>1–9</b>. Você pode mover pra cima/baixo e remover. Para adicionar, use a <b>☆</b> nas ações e habilidades.</p>
+
+      <div id="favModalList" class="favModalList"></div>
+
+      <div class="row">
+        <button id="favClose" class="btn">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+<div id="toastHost" class="toastHost" aria-live="polite" aria-atomic="true"></div>
 
   <script src="ui.js"></script>
   <script src="app.js"></script>

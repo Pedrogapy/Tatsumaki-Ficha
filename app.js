@@ -434,6 +434,7 @@ function applyStateToSkillUi(){
 
 // Etapa 9 — helpers de UI (resultado destacado + animação + atalhos)
 let skillResultTimer = null;
+let combatResultTimer = null;
 let skillsHotkeysBound = false;
 
 function skillKey(attrCode, skillName){
@@ -478,6 +479,37 @@ function showSkillResultBanner(payload){
     el.classList.remove('show');
     el.hidden = true;
   }, 9000);
+}
+
+
+function showCombatResultBanner(payload){
+  const el = document.getElementById('combatResult');
+  if(!el) return;
+
+  const title = String(payload?.title || payload?.name || "Ação");
+  const label = String(payload?.label || "");
+  const total = payload?.total;
+  const detail = String(payload?.detail || payload?.exprDetail || "");
+
+  el.hidden = false;
+  el.classList.remove('show');
+
+  el.innerHTML = `
+    <div class="crTitle">
+      <div class="crName">${title}${label ? ` <span class="muted">— ${label}</span>` : ""}</div>
+      <div class="crHot">Atalhos: 1-9</div>
+    </div>
+    <div class="crValue">Resultado: ${Number.isFinite(Number(total)) ? fmtNumber(Number(total)) : "—"}</div>
+    <div class="crDetail">${detail || ""}</div>
+  `;
+
+  requestAnimationFrame(() => el.classList.add('show'));
+
+  if(combatResultTimer) clearTimeout(combatResultTimer);
+  combatResultTimer = setTimeout(() => {
+    el.classList.remove('show');
+    el.hidden = true;
+  }, 11000);
 }
 
 function animateSkillCard(cardEl){
@@ -959,6 +991,9 @@ function loadState(){
       if(!state.ui.lastSkillRolls || typeof state.ui.lastSkillRolls !== 'object') state.ui.lastSkillRolls = {};
       if(!state.ui.pvCostMap || typeof state.ui.pvCostMap !== 'object') state.ui.pvCostMap = {};
       if(!state.ui.abilityRollOverrides || typeof state.ui.abilityRollOverrides !== 'object') state.ui.abilityRollOverrides = {};
+      if(!Array.isArray(state.ui.favorites)) state.ui.favorites = [];
+      if(!state.ui.weaponBases || typeof state.ui.weaponBases !== 'object') state.ui.weaponBases = {};
+      if(typeof state.ui._favSeeded !== 'boolean') state.ui._favSeeded = false;
     }
     return true;
   }catch(_){
@@ -1455,6 +1490,489 @@ function getAbilitySfx(ability){
   return 'click';
 }
 
+// ------------------------------
+// Etapa 17 — Favoritos (Ações + Habilidades)
+// ------------------------------
+function tokenForCombatAction(action){
+  return `ac:${normKey(action?.name||'')}`;
+}
+
+function tokenForAbility(ab){
+  return `ab:${normKey(ab?.name||'')}`;
+}
+
+function ensureFavoritesShape(){
+  state.ui = state.ui || {};
+  if(!Array.isArray(state.ui.favorites)) state.ui.favorites = [];
+  if(!state.ui.weaponBases || typeof state.ui.weaponBases !== 'object') state.ui.weaponBases = {};
+}
+
+
+
+function seedDefaultFavoritesIfNeeded(){
+  // Só semear uma vez e apenas se o usuário ainda não configurou favoritos.
+  // Isso deixa o site "pronto pra uso" (já vem com ações básicas na Quickbar).
+  ensureFavoritesShape();
+  if(state.ui._favSeeded) return;
+  if(state.ui.favorites.length){
+    state.ui._favSeeded = true;
+    saveState();
+    return;
+  }
+
+  const actions = Array.isArray(character?.abilities?.combat_tree) ? character.abilities.combat_tree : [];
+  const defaults = [];
+  // Preferir "Corpo a corpo" para testar soco logo de cara.
+  const prefer = ['Corpo a corpo', 'Espada', 'Arma Pesada'];
+  for(const key of prefer){
+    const a = actions.find(x => String(x?.name||'').toLowerCase().includes(key.toLowerCase()));
+    if(a) defaults.push(tokenForCombatAction(a));
+  }
+  if(!defaults.length && actions.length) defaults.push(...actions.slice(0,3).map(tokenForCombatAction));
+
+  state.ui.favorites = defaults.slice(0, 6);
+  state.ui._favSeeded = true;
+  saveState();
+}
+
+function isFavoriteToken(token){
+  ensureFavoritesShape();
+  return state.ui.favorites.includes(String(token));
+}
+
+function toggleFavoriteToken(token){
+  ensureFavoritesShape();
+  const t = String(token);
+  const idx = state.ui.favorites.indexOf(t);
+  if(idx >= 0){
+    state.ui.favorites.splice(idx, 1);
+    try{ window.__sfx?.play?.('click'); }catch(_){ }
+    toastQuick('Removido dos favoritos', t.startsWith('ac:') ? 'Ação de combate' : 'Habilidade');
+  }else{
+    // limita soft (evita UI explodir)
+    if(state.ui.favorites.length >= 12){
+      toastQuick('Limite de favoritos', 'Máximo recomendado: 12');
+    }
+    state.ui.favorites.push(t);
+    try{ window.__sfx?.play?.('click'); }catch(_){ }
+    toastQuick('Adicionado aos favoritos', t.startsWith('ac:') ? 'Ação de combate' : 'Habilidade');
+  }
+  saveState();
+  renderQuickbar();
+  updateFavoriteButtons();
+  renderFavoritesManagerList();
+}
+
+function updateFavoriteButtons(){
+  document.querySelectorAll('.favBtn[data-fav-token]').forEach(btn => {
+    const token = btn.getAttribute('data-fav-token');
+    const on = isFavoriteToken(token);
+    btn.textContent = on ? '★' : '☆';
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.classList.toggle('is-on', on);
+    btn.title = on ? 'Remover dos favoritos (Quickbar)' : 'Fixar nos favoritos (Quickbar)';
+  });
+}
+
+function findCombatActionByToken(token){
+  const slug = String(token||'').replace(/^ac:/,'');
+  const list = Array.isArray(character?.abilities?.combat_tree) ? character.abilities.combat_tree : [];
+  return list.find(a => normKey(a?.name||'') === slug) || null;
+}
+
+function findAbilityByToken(token){
+  const slug = String(token||'').replace(/^ab:/,'');
+  const list = Array.isArray(character?.abilities?.exclusive?.abilities) ? character.abilities.exclusive.abilities : [];
+  return list.find(a => normKey(a?.name||'') === slug) || null;
+}
+
+function favoriteDisplayName(token){
+  if(String(token).startsWith('ac:')){
+    const a = findCombatActionByToken(token);
+    return a?.name || 'Ação (não encontrada)';
+  }
+  if(String(token).startsWith('ab:')){
+    const ab = findAbilityByToken(token);
+    return ab?.name || 'Habilidade (não encontrada)';
+  }
+  return 'Item';
+}
+
+function seedDefaultFavoritesIfEmpty(){
+  ensureFavoritesShape();
+  if(state.ui._favSeeded) return;
+  if(state.ui.favorites.length) { state.ui._favSeeded = true; saveState(); return; }
+  const list = Array.isArray(character?.abilities?.combat_tree) ? character.abilities.combat_tree : [];
+  // Por padrão, fixa as 3 primeiras ações de combate (pra você já conseguir testar o soco).
+  state.ui.favorites = list.slice(0,3).map(tokenForCombatAction).filter(t => t !== 'ac:');
+  state.ui._favSeeded = true;
+  saveState();
+}
+
+function renderQuickbar(){
+  const box = document.getElementById('quickbarList');
+  if(!box) return;
+  ensureFavoritesShape();
+  box.innerHTML = '';
+
+  const favs = Array.isArray(state.ui.favorites) ? state.ui.favorites.slice() : [];
+  if(!favs.length){
+    const empty = document.createElement('div');
+    empty.className = 'quickbarEmpty';
+    empty.innerHTML = `<div><strong>Sem favoritos ainda.</strong></div><div class="muted">Use a estrela ☆ nas ações de combate ou nas habilidades para fixar aqui.</div>`;
+    box.appendChild(empty);
+    return;
+  }
+
+  favs.forEach((token, idx) => {
+    const isCombat = String(token).startsWith('ac:');
+    const isAbility = String(token).startsWith('ab:');
+
+    const item = document.createElement('div');
+    item.className = 'quickbarItem';
+    item.setAttribute('data-fav-token', token);
+
+    const head = document.createElement('div');
+    head.className = 'quickbarHead';
+
+    const title = document.createElement('div');
+    title.className = 'quickbarName';
+
+    // Hotkey label
+    const hk = document.createElement('span');
+    hk.className = 'quickbarHotkey';
+    hk.textContent = (idx < 9) ? String(idx+1) : '—';
+
+    // Unpin
+    const unpin = document.createElement('button');
+    unpin.className = 'btn btn-ghost btn-sm quickbarUnpin';
+    unpin.textContent = '✕';
+    unpin.title = 'Remover dos favoritos';
+    unpin.addEventListener('click', () => toggleFavoriteToken(token));
+
+    const nameText = document.createElement('span');
+    nameText.textContent = favoriteDisplayName(token);
+    title.appendChild(nameText);
+
+    const right = document.createElement('div');
+    right.className = 'quickbarHeadRight';
+    right.appendChild(hk);
+    right.appendChild(unpin);
+
+    head.appendChild(title);
+    head.appendChild(right);
+    item.appendChild(head);
+
+    const rollsBox = document.createElement('div');
+    rollsBox.className = 'quickbarRolls';
+
+    if(isCombat){
+      const action = findCombatActionByToken(token);
+      if(!action){
+        const missing = document.createElement('div');
+        missing.className = 'muted';
+        missing.textContent = 'Ação não encontrada no personagem.';
+        rollsBox.appendChild(missing);
+      }else{
+        // Input de dano base (quando existir) — opção 1: sempre mostrar aqui também
+        const damageInputCfg = action?.ui?.weapon_damage_input;
+        let dmgInput = null;
+        if(damageInputCfg){
+          dmgInput = document.createElement('input');
+          dmgInput.type = 'text';
+          dmgInput.placeholder = String(damageInputCfg.placeholder || 'Ex: 2d10');
+          const saved = String(state.ui.weaponBases[token] || '').trim();
+          dmgInput.value = saved || String(damageInputCfg.default || '').trim();
+          dmgInput.addEventListener('change', () => {
+            ensureFavoritesShape();
+            state.ui.weaponBases[token] = String(dmgInput.value || '').trim();
+            saveState();
+            toastQuick('Dano base salvo', state.ui.weaponBases[token] || '');
+          });
+          rollsBox.appendChild(dmgInput);
+        }
+
+        (action.rolls || []).forEach(r => {
+          const b = document.createElement('button');
+          b.className = 'btn btn-sm';
+          b.textContent = r.label;
+          b.addEventListener('click', () => {
+            // custo
+            const cost = action?.auto_cost && typeof action.auto_cost === 'object' ? action.auto_cost : null;
+            if(cost){
+              for(const [k,v] of Object.entries(cost)) if(!spend(k, v)){ try{ window.__sfx?.play?.('error'); }catch(_){}; render(); return; }
+              log(`Custo pago (${action.name}): ${Object.entries(cost).map(([k,v])=>`${k} -${v}`).join(' • ')}`);
+            }
+
+            const label = String(r.label||'');
+            if(label.toLowerCase().includes('dano')){
+              // se existir input especial e o dano padrão for o da arma, preferir o input
+              const targetKey = normKey(action?.name || 'combat');
+              // se o roll já tem expr, usa ele
+              const out = damageFor(targetKey, r.expr);
+              showCombatResultBanner({ name: action.name, label: r.label, total: out?.total, detail: out?.detail });
+              try{ window.__sfx?.play?.('hit'); }catch(_){ }
+              render();
+              return;
+            }
+
+            const res = evalExpr(r.expr, ctx);
+            log(`Ação ${action.name} — ${r.label}: ${res.detail}`);
+            showCombatResultBanner({ name: action.name, label: r.label, total: res.total, detail: res.detail });
+            try{ window.__sfx?.play?.('roll'); }catch(_){ }
+            render();
+          });
+          rollsBox.appendChild(b);
+        });
+
+        // Dano por input (se existir) — botão extra
+        if(action?.ui?.weapon_damage_input){
+          const b = document.createElement('button');
+          b.className = 'btn btn-sm';
+          b.textContent = 'Dano (base arma)';
+          b.addEventListener('click', () => {
+            const cost = action?.auto_cost && typeof action.auto_cost === 'object' ? action.auto_cost : null;
+            if(cost){
+              for(const [k,v] of Object.entries(cost)) if(!spend(k, v)){ try{ window.__sfx?.play?.('error'); }catch(_){}; render(); return; }
+              log(`Custo pago (${action.name}): ${Object.entries(cost).map(([k,v])=>`${k} -${v}`).join(' • ')}`);
+            }
+            const cfg = action.ui.weapon_damage_input;
+            const base = String(state.ui.weaponBases[token] || '').trim() || String(cfg.default||'').trim();
+            const extra = base ? `${base} + @attributes.Força.quarter` : `@attributes.Força.quarter`;
+            const targetKey = normKey(action?.name || 'combat');
+            const out = damageFor(targetKey, extra);
+            showCombatResultBanner({ name: action.name, label: 'Dano', total: out?.total, detail: out?.detail });
+            try{ window.__sfx?.play?.('hit'); }catch(_){ }
+            render();
+          });
+          rollsBox.appendChild(b);
+        }
+      }
+    }else if(isAbility){
+      const ab = findAbilityByToken(token);
+      if(!ab){
+        const missing = document.createElement('div');
+        missing.className = 'muted';
+        missing.textContent = 'Habilidade não encontrada no personagem.';
+        rollsBox.appendChild(missing);
+      }else{
+        const rolls = Array.isArray(ab?.rolls) ? ab.rolls : [];
+        if(!rolls.length){
+          const m = document.createElement('div');
+          m.className = 'muted';
+          m.textContent = 'Sem rolagens cadastradas (habilidade passiva).';
+          rollsBox.appendChild(m);
+        }else{
+          rolls.forEach(r => {
+            const label = String(r?.label || 'Rolagem');
+            let expr = String(r?.expr || '').trim();
+            // permite override salvo
+            const saved = state.ui.abilityRollOverrides?.[ab.name]?.[label];
+            if(saved) expr = String(saved).trim();
+
+            let exprInput = null;
+            if(!expr){
+              exprInput = document.createElement('input');
+              exprInput.type = 'text';
+              exprInput.placeholder = 'Ex: 1d20 + 8';
+              exprInput.value = String(saved || '').trim();
+              exprInput.addEventListener('change', () => {
+                state.ui.abilityRollOverrides = state.ui.abilityRollOverrides || {};
+                state.ui.abilityRollOverrides[ab.name] = state.ui.abilityRollOverrides[ab.name] || {};
+                state.ui.abilityRollOverrides[ab.name][label] = String(exprInput.value || '').trim();
+                saveState();
+                toastQuick('Rolagem salva', `${ab.name} • ${label}`);
+              });
+              rollsBox.appendChild(exprInput);
+            }
+
+            const b = document.createElement('button');
+            b.className = 'btn btn-sm';
+            b.textContent = label;
+
+            const doRoll = () => {
+              // pega expressão (do input ou do cadastro/override)
+              let e = expr;
+              if(!e && exprInput) e = String(exprInput.value || '').trim();
+              if(!e){
+                toastQuick('Sem expressão', `Defina a rolagem de “${label}”.`);
+                return;
+              }
+
+              const isDamage = label.toLowerCase().includes('dano');
+              if(isDamage){
+                const target = String(state.ui.abilityDamageTarget || 'generic');
+                const out = damageFor(target, e);
+                log(`Habilidade ${ab.name} — ${label}: ${out?.detail || ''}`);
+                showCombatResultBanner({ name: ab.name, label, total: out?.total, detail: out?.detail });
+                try{ window.__sfx?.play?.('hit'); }catch(_){ }
+                render();
+                return;
+              }
+
+              const res = evalExpr(e, ctx);
+              log(`Habilidade ${ab.name} — ${label}: ${res.detail}`);
+              showCombatResultBanner({ name: ab.name, label, total: res.total, detail: res.detail });
+              try{ window.__sfx?.play?.(getAbilitySfx(ab)); }catch(_){ }
+              render();
+            };
+
+            b.addEventListener('click', () => {
+              const shouldSpend = !!state.ui.abilityAutoSpend && String(ab?.type) === 'Ativa' && (ab?.cost?.length || ab?.auto_cost);
+              if(shouldSpend){
+                spendAbilityCosts(ab, (ok) => { if(ok) doRoll(); });
+                return;
+              }
+              doRoll();
+            });
+
+            rollsBox.appendChild(b);
+          });
+        }
+      }
+    }else{
+      const bad = document.createElement('div');
+      bad.className = 'muted';
+      bad.textContent = 'Token inválido.';
+      rollsBox.appendChild(bad);
+    }
+
+    item.appendChild(rollsBox);
+    box.appendChild(item);
+  });
+}
+
+function openFavoritesManager(){
+  const modal = document.getElementById('favModal');
+  if(!modal) return;
+  renderFavoritesManagerList();
+  modal.hidden = false;
+  try{ document.getElementById('favClose')?.focus?.(); }catch(_){ }
+}
+
+function closeFavoritesManager(){
+  const modal = document.getElementById('favModal');
+  if(modal) modal.hidden = true;
+}
+
+function moveFavorite(fromIdx, toIdx){
+  ensureFavoritesShape();
+  const arr = state.ui.favorites;
+  if(fromIdx < 0 || fromIdx >= arr.length) return;
+  if(toIdx < 0 || toIdx >= arr.length) return;
+  const [it] = arr.splice(fromIdx, 1);
+  arr.splice(toIdx, 0, it);
+  saveState();
+  renderQuickbar();
+  renderFavoritesManagerList();
+}
+
+function renderFavoritesManagerList(){
+  const listEl = document.getElementById('favModalList');
+  if(!listEl) return;
+  ensureFavoritesShape();
+  listEl.innerHTML = '';
+
+  const favs = state.ui.favorites || [];
+  if(!favs.length){
+    listEl.innerHTML = `<div class="muted">Sem favoritos.</div>`;
+    return;
+  }
+
+  favs.forEach((token, i) => {
+    const row = document.createElement('div');
+    row.className = 'favRow';
+
+    const name = document.createElement('div');
+    name.className = 'favRowName';
+    name.textContent = favoriteDisplayName(token);
+
+    const tools = document.createElement('div');
+    tools.className = 'favRowTools';
+
+    const up = document.createElement('button');
+    up.className = 'btn btn-ghost btn-sm';
+    up.textContent = '↑';
+    up.disabled = i == 0;
+    up.addEventListener('click', () => moveFavorite(i, i-1));
+
+    const down = document.createElement('button');
+    down.className = 'btn btn-ghost btn-sm';
+    down.textContent = '↓';
+    down.disabled = i == favs.length-1;
+    down.addEventListener('click', () => moveFavorite(i, i+1));
+
+    const rm = document.createElement('button');
+    rm.className = 'btn btn-ghost btn-sm';
+    rm.textContent = 'Remover';
+    rm.addEventListener('click', () => toggleFavoriteToken(token));
+
+    tools.appendChild(up);
+    tools.appendChild(down);
+    tools.appendChild(rm);
+
+    row.appendChild(name);
+    row.appendChild(tools);
+    listEl.appendChild(row);
+  });
+}
+
+function initFavoritesUi(){
+  ensureFavoritesShape();
+
+  // botão de gerenciar
+  const openBtn = document.getElementById('openFavManager');
+  if(openBtn){
+    openBtn.addEventListener('click', () => openFavoritesManager());
+  }
+
+  // modal
+  const modal = document.getElementById('favModal');
+  if(modal){
+    modal.querySelector('.modalBackdrop')?.addEventListener('click', (e) => {
+      if(e.target && e.target.getAttribute('data-close')) closeFavoritesManager();
+    });
+  }
+  document.getElementById('favClose')?.addEventListener('click', () => closeFavoritesManager());
+
+  // ESC
+  // Render inicial
+  renderQuickbar();
+  updateFavoriteButtons();
+
+  window.addEventListener('keydown', (e) => {
+    const m = document.getElementById('favModal');
+    if(e.key === 'Escape' && m && !m.hidden) closeFavoritesManager();
+  });
+
+  // Hotkeys 1-9: roda o primeiro botão do favorito
+  window.addEventListener('keydown', (e) => {
+    // não rouba teclas quando digitando
+    const tag = String(document.activeElement?.tagName || '').toLowerCase();
+    if(tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+    const k = e.key;
+    if(!/^[1-9]$/.test(k)) return;
+
+    const idx = Number(k) - 1;
+    ensureFavoritesShape();
+    const token = state.ui.favorites?.[idx];
+    if(!token) return;
+
+    const item = document.querySelector(`.quickbarItem[data-fav-token="${CSS.escape(token)}"]`);
+    if(!item) return;
+
+    // preferência: "Teste" para combate, senão 1º botão
+    const buttons = Array.from(item.querySelectorAll('button.btn')).filter(b => !b.classList.contains('quickbarUnpin'));
+    if(!buttons.length) return;
+    let chosen = buttons[0];
+    const testBtn = buttons.find(b => String(b.textContent||'').toLowerCase().includes('teste'));
+    if(testBtn) chosen = testBtn;
+    chosen.click();
+  });
+}
+
+
 function renderEquipment(){
   const box = document.getElementById('equipmentBox');
   if(!box) return;
@@ -1538,6 +2056,30 @@ function renderAbilitiesLibrary(){
     }
 
     header.appendChild(left);
+
+    const right = document.createElement('div');
+    right.className = 'abilityHeaderRight';
+
+    const favToken = tokenForAbility(ab);
+    const favBtn = document.createElement('button');
+    favBtn.className = 'favBtn';
+    favBtn.setAttribute('data-fav-token', favToken);
+    favBtn.title = 'Fixar nos Favoritos (atalhos 1-9)';
+    const paintFav = () => {
+      const on = isFavorite(favToken);
+      favBtn.textContent = on ? '★' : '☆';
+      favBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    };
+    paintFav();
+    favBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleFavorite(favToken);
+      paintFav();
+    });
+
+    right.appendChild(favBtn);
+    header.appendChild(right);
     card.appendChild(header);
 
     const body = document.createElement('div');
@@ -2042,6 +2584,9 @@ function applySessionSnapshot(j){
   if(s.ui && typeof s.ui === 'object'){
     state.ui = { ...state.ui, ...s.ui };
     if(!state.ui.lastSkillRolls || typeof state.ui.lastSkillRolls !== 'object') state.ui.lastSkillRolls = {};
+    if(!Array.isArray(state.ui.favorites)) state.ui.favorites = [];
+    if(!state.ui.weaponBases || typeof state.ui.weaponBases !== 'object') state.ui.weaponBases = {};
+    if(typeof state.ui._favSeeded !== 'boolean') state.ui._favSeeded = false;
   }
 
   if(j.sfx) applySfxSettings(j.sfx);
@@ -2932,7 +3477,9 @@ function damageFor(target, baseExpr){
   }
 
   const res = evalExpr(totalExpr, ctx);
-  log(`${res.detail}${notes.length ? " | " + notes.join(", ") : ""}`);
+  const line = `${res.detail}${notes.length ? " | " + notes.join(", ") : ""}`;
+  log(line);
+  return { expr: totalExpr, total: res.total, detail: line, notes };
 }
 
 // ------------------------------
@@ -3045,6 +3592,30 @@ function renderCombatActions(){
       title.appendChild(badge);
     }
 
+    // Favoritos (Etapa 17)
+    const favToken = tokenForCombatAction(action);
+    const spacer = document.createElement('span');
+    spacer.className = 'spacer';
+    title.appendChild(spacer);
+
+    const favBtn = document.createElement('button');
+    favBtn.className = 'favBtn';
+    favBtn.setAttribute('data-fav-token', favToken);
+    favBtn.title = 'Fixar nos Favoritos (atalhos 1-9)';
+    const paintFav = () => {
+      const on = isFavorite(favToken);
+      favBtn.textContent = on ? '★' : '☆';
+      favBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    };
+    paintFav();
+    favBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleFavorite(favToken);
+      paintFav();
+    });
+    title.appendChild(favBtn);
+
     wrap.appendChild(title);
 
     const rollsRow = document.createElement("div");
@@ -3055,8 +3626,17 @@ function renderCombatActions(){
     if(action.ui && action.ui.weapon_damage_input){
       weaponInput = document.createElement("input");
       weaponInput.type = "text";
-      weaponInput.value = action.ui.weapon_damage_default || "2d6";
+      const defBase = String(action.ui.weapon_damage_default || action.ui.weapon_damage_input?.default || "2d6");
+      const saved = String(state.ui.weaponBases?.[favToken] || '').trim();
+      weaponInput.value = saved || defBase;
+      weaponInput.placeholder = defBase;
       weaponInput.title = "Dano base da arma (ex: 2d6)";
+      weaponInput.addEventListener('change', () => {
+        const v = String(weaponInput.value || '').trim();
+        state.ui.weaponBases = state.ui.weaponBases || {};
+        state.ui.weaponBases[favToken] = v;
+        saveState();
+      });
       rollsRow.appendChild(weaponInput);
     }
 
@@ -3072,15 +3652,22 @@ function renderCombatActions(){
         // Spend cost only when rolling "Teste" (ação principal)
         if((r.label || "").toLowerCase().includes("teste")){
           for(const [k,v] of Object.entries(cost)){
-            if(!spend(k, v)) { render(); return; }
+            if(!spend(k, v)) { window.__sfx?.play?.('error'); render(); return; }
           }
         }
+
+        const label = String(r.label || 'Rolar');
+
         // For damage, apply modifiers
-        if((r.label || "").toLowerCase().includes("dano")){
-          damageFor(targetKey, r.expr);
+        if(label.toLowerCase().includes("dano")){
+          const out = damageFor(targetKey, r.expr);
+          showCombatResultBanner({ name: action.name, label, total: out?.total, detail: out?.detail });
+          try{ window.__sfx?.play?.('hit'); }catch(_){ }
         } else {
           const res = evalExpr(r.expr, ctx);
-          log(`${action.name} — ${r.label}: ${res.detail}`);
+          log(`${action.name} — ${label}: ${res.detail}`);
+          showCombatResultBanner({ name: action.name, label, total: res.total, detail: res.detail });
+          try{ window.__sfx?.play?.('roll'); }catch(_){ }
         }
         render();
       };
@@ -3094,7 +3681,9 @@ function renderCombatActions(){
       dmgBtn.onclick = () => {
         const base = (weaponInput?.value || "2d6").trim() || "2d6";
         const expr = `${base} + @attributes.Força.quarter`;
-        damageFor(targetKey, expr);
+        const out = damageFor(targetKey, expr);
+        showCombatResultBanner({ name: action.name, label: 'Dano', total: out?.total, detail: out?.detail });
+        try{ window.__sfx?.play?.('hit'); }catch(_){ }
         render();
       };
       rollsRow.appendChild(dmgBtn);
@@ -3145,6 +3734,9 @@ async function init(){
 
   // Restore save if exists
   loadState();
+
+  // Etapa 17 — Favoritos
+  seedDefaultFavoritesIfNeeded();
 
   // Hook controls
   const startTurnBtn = document.getElementById("startTurn");
@@ -3202,6 +3794,9 @@ async function init(){
 
   // Etapa 16 — Habilidades exclusivas + Equipamentos
   initAbilitiesLibraryUi();
+
+  // Etapa 17 — Favoritos (Quickbar + Hotkeys)
+  initFavoritesUi();
 
   renderCombatActions();
   render();
