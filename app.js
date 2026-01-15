@@ -1631,7 +1631,9 @@ function renderBuildsUi(){
     const slot = builds[i] || { title: `Build ${i+1}`, preset: null, savedAt: null };
     const has = !!slot.preset;
 
-    if(titleEl) titleEl.textContent = slot.title || `Build ${i+1}`;
+    const editEl = document.getElementById(`buildTitleEdit${i}`);
+    const editing = !!(editEl && !editEl.hidden);
+    if(titleEl && !editing) titleEl.textContent = slot.title || `Build ${i+1}`;
     if(badgeEl){
       if(has){
         const t = formatStampShort(slot.savedAt || slot.preset?.captured_at);
@@ -1647,6 +1649,14 @@ function renderBuildsUi(){
     if(sumEl) sumEl.textContent = has ? presetSummary(slot.preset) : '—';
     if(loadBtn) loadBtn.disabled = !has;
     if(clearBtn) clearBtn.disabled = !has;
+
+    const dupSel = document.getElementById(`buildDupTo${i}`);
+    const dupBtn = document.getElementById(`buildDup${i}`);
+    if(dupSel){
+      renderDupSelect(dupSel, builds.map((b, idx) => (idx===i? "": (b?.title || `Build ${idx+1}`))), i);
+      dupSel.disabled = !has;
+    }
+    if(dupBtn) dupBtn.disabled = !has;
 
     if(slotEl) slotEl.classList.toggle('hasData', has);
   }
@@ -1664,7 +1674,9 @@ function renderSessionsUi(){
     const slot = sessions[i] || { title: `Sessão ${i+1}`, snap: null, savedAt: null };
     const has = !!slot.snap;
 
-    if(titleEl) titleEl.textContent = slot.title || `Sessão ${i+1}`;
+    const editEl = document.getElementById(`sessionTitleEdit${i}`);
+    const editing = !!(editEl && !editEl.hidden);
+    if(titleEl && !editing) titleEl.textContent = slot.title || `Sessão ${i+1}`;
     if(badgeEl){
       if(has){
         const t = formatStampShort(slot.savedAt || slot.snap?.captured_at);
@@ -1681,6 +1693,14 @@ function renderSessionsUi(){
     if(loadBtn) loadBtn.disabled = !has;
     if(clearBtn) clearBtn.disabled = !has;
 
+    const dupSel = document.getElementById(`sessionDupTo${i}`);
+    const dupBtn = document.getElementById(`sessionDup${i}`);
+    if(dupSel){
+      renderDupSelect(dupSel, sessions.map((s, idx) => (idx===i? "": (s?.title || `Sessão ${idx+1}`))), i);
+      dupSel.disabled = !has;
+    }
+    if(dupBtn) dupBtn.disabled = !has;
+
     if(slotEl) slotEl.classList.toggle('hasData', has);
   }
 }
@@ -1693,6 +1713,169 @@ function ensureAutoTitle(slot, base){
     slot.title = `${base} — ${formatStampShort(new Date())}`;
   }catch(_){/* ignore */}
 }
+
+
+function deepClone(obj){
+  try{ return JSON.parse(JSON.stringify(obj)); }catch(_){ return null; }
+}
+
+function beginInlineRename(kind, i){
+  const isBuild = (kind === 'build');
+  const arr = isBuild ? builds : sessions;
+  const base = isBuild ? `Build ${i+1}` : `Sessão ${i+1}`;
+  const titleId = isBuild ? `buildTitle${i}` : `sessionTitle${i}`;
+  const inputId = isBuild ? `buildTitleEdit${i}` : `sessionTitleEdit${i}`;
+
+  const titleEl = document.getElementById(titleId);
+  let inputEl = document.getElementById(inputId);
+  if(!titleEl) return;
+
+  if(!inputEl){
+    inputEl = document.createElement('input');
+    inputEl.id = inputId;
+    inputEl.className = 'input input-sm titleEdit';
+    inputEl.type = 'text';
+    inputEl.maxLength = 40;
+    inputEl.hidden = true;
+    titleEl.insertAdjacentElement('afterend', inputEl);
+  }
+
+  // já está editando?
+  if(!inputEl.hidden) return;
+
+  const cur = String((arr[i]?.title) || titleEl.textContent || base);
+  inputEl.value = cur;
+
+  titleEl.style.display = 'none';
+  inputEl.hidden = false;
+
+  // bind (uma vez)
+  if(!inputEl.dataset.bound){
+    inputEl.dataset.bound = '1';
+    inputEl.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        commitInlineRename(kind, i);
+      }else if(e.key === 'Escape'){
+        e.preventDefault();
+        cancelInlineRename(kind, i);
+      }
+    });
+    inputEl.addEventListener('blur', () => {
+      // se foi cancelado via ESC, ignora
+      if(inputEl.dataset.cancelled === '1'){
+        inputEl.dataset.cancelled = '0';
+        return;
+      }
+      commitInlineRename(kind, i);
+    });
+  }
+
+  setTimeout(() => {
+    try{ inputEl.focus(); inputEl.select(); }catch(_){}
+  }, 0);
+}
+
+function commitInlineRename(kind, i){
+  const isBuild = (kind === 'build');
+  const arr = isBuild ? builds : sessions;
+  const base = isBuild ? `Build ${i+1}` : `Sessão ${i+1}`;
+  const titleEl = document.getElementById(isBuild ? `buildTitle${i}` : `sessionTitle${i}`);
+  const inputEl = document.getElementById(isBuild ? `buildTitleEdit${i}` : `sessionTitleEdit${i}`);
+  const saveFn = isBuild ? saveBuilds : saveSessions;
+  const renderFn = isBuild ? renderBuildsUi : renderSessionsUi;
+
+  if(!titleEl || !inputEl) return;
+
+  const trimmed = String(inputEl.value || '').trim().slice(0, 40);
+  if(trimmed){
+    if(isBuild){
+      arr[i] = arr[i] || { title: base, preset: null, savedAt: null, userNamed: false };
+    }else{
+      arr[i] = arr[i] || { title: base, snap: null, savedAt: null, userNamed: false };
+    }
+    arr[i].title = trimmed;
+    arr[i].userNamed = true;
+    saveFn();
+    renderFn();
+    toastQuick('Nome atualizado.', trimmed);
+  }
+
+  inputEl.hidden = true;
+  titleEl.style.display = '';
+}
+
+function cancelInlineRename(kind, i){
+  const isBuild = (kind === 'build');
+  const titleEl = document.getElementById(isBuild ? `buildTitle${i}` : `sessionTitle${i}`);
+  const inputEl = document.getElementById(isBuild ? `buildTitleEdit${i}` : `sessionTitleEdit${i}`);
+  if(!titleEl || !inputEl) return;
+
+  inputEl.dataset.cancelled = '1';
+  inputEl.hidden = true;
+  titleEl.style.display = '';
+}
+
+function duplicateBuildSlot(src, dst){
+  try{
+    if(src === dst) return;
+    const sp = builds[src]?.preset;
+    if(!sp) return;
+
+    builds[dst] = builds[dst] || { title: `Build ${dst+1}`, preset: null, savedAt: null, userNamed: false };
+    ensureAutoTitle(builds[dst], `Build ${dst+1}`);
+    const cloned = deepClone(sp);
+    builds[dst].preset = cloned || sp;
+    builds[dst].savedAt = new Date().toISOString();
+    saveBuilds();
+    renderBuildsUi();
+
+    const dstEl = document.querySelector(`.buildSlot[data-slot="${dst}"]`);
+    flashSlot(dstEl);
+    toastQuick('Duplicado', `→ ${builds[dst].title}`);
+    log(`Build duplicada do slot ${src+1} para ${dst+1}.`);
+  }catch(_){/* ignore */}
+}
+
+function duplicateSessionSlot(src, dst){
+  try{
+    if(src === dst) return;
+    const sn = sessions[src]?.snap;
+    if(!sn) return;
+
+    sessions[dst] = sessions[dst] || { title: `Sessão ${dst+1}`, snap: null, savedAt: null, userNamed: false };
+    ensureAutoTitle(sessions[dst], `Sessão ${dst+1}`);
+    const cloned = deepClone(sn);
+    sessions[dst].snap = cloned || sn;
+    sessions[dst].savedAt = new Date().toISOString();
+    saveSessions();
+    renderSessionsUi();
+
+    const dstEl = document.querySelector(`.sessionSlot[data-sslot="${dst}"]`);
+    flashSlot(dstEl);
+    toastQuick('Duplicado', `→ ${sessions[dst].title}`);
+    log(`Snapshot duplicado do slot ${src+1} para ${dst+1}.`);
+  }catch(_){/* ignore */}
+}
+
+function renderDupSelect(sel, titles, selfIndex){
+  try{
+    if(!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '';
+    for(let j=0;j<3;j++){
+      if(j === selfIndex) continue;
+      const opt = document.createElement('option');
+      opt.value = String(j);
+      opt.textContent = String(titles[j] || (j+1));
+      sel.appendChild(opt);
+    }
+    if(prev && Array.from(sel.options).some(o => o.value === prev)){
+      sel.value = prev;
+    }
+  }catch(_){/* ignore */}
+}
+
 
 function initBuildsUi(){
   loadBuilds();
@@ -1730,20 +1913,27 @@ function initBuildsUi(){
       log(`Build carregada do slot ${i+1}.`);
     });
 
-    if(renBtn) renBtn.addEventListener('click', () => {
-      const cur = builds[i]?.title || `Build ${i+1}`;
-      const name = prompt('Nome da build:', cur);
-      if(name == null) return;
-      const trimmed = String(name).trim();
-      if(!trimmed) return;
+    const titleEl = document.getElementById(`buildTitle${i}`);
+const dupSel = document.getElementById(`buildDupTo${i}`);
+const dupBtn = document.getElementById(`buildDup${i}`);
 
-      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null, savedAt: null, userNamed: false };
-      builds[i].title = trimmed.slice(0, 40);
-      builds[i].userNamed = true;
-      saveBuilds();
-      renderBuildsUi();
-      toastQuick('Nome atualizado.', builds[i].title);
-    });
+if(renBtn) renBtn.addEventListener('click', () => beginInlineRename('build', i));
+if(titleEl){
+  titleEl.addEventListener('dblclick', () => beginInlineRename('build', i));
+  titleEl.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      beginInlineRename('build', i);
+    }
+  });
+}
+
+if(dupBtn && dupSel){
+  dupBtn.addEventListener('click', () => {
+    const dst = Number(dupSel.value);
+    if(Number.isFinite(dst)) duplicateBuildSlot(i, dst);
+  });
+}
 
     if(clrBtn) clrBtn.addEventListener('click', () => {
       builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null, savedAt: null, userNamed: false };
@@ -1836,20 +2026,27 @@ function initBuildsUi(){
       log(`Snapshot de sessão carregado do slot ${i+1}.`);
     });
 
-    if(renBtn) renBtn.addEventListener('click', () => {
-      const cur = sessions[i]?.title || `Sessão ${i+1}`;
-      const name = prompt('Nome da sessão:', cur);
-      if(name == null) return;
-      const trimmed = String(name).trim();
-      if(!trimmed) return;
+    const titleEl = document.getElementById(`sessionTitle${i}`);
+const dupSel = document.getElementById(`sessionDupTo${i}`);
+const dupBtn = document.getElementById(`sessionDup${i}`);
 
-      sessions[i] = sessions[i] || { title: `Sessão ${i+1}`, snap: null, savedAt: null, userNamed: false };
-      sessions[i].title = trimmed.slice(0, 40);
-      sessions[i].userNamed = true;
-      saveSessions();
-      renderSessionsUi();
-      toastQuick('Nome atualizado.', sessions[i].title);
-    });
+if(renBtn) renBtn.addEventListener('click', () => beginInlineRename('session', i));
+if(titleEl){
+  titleEl.addEventListener('dblclick', () => beginInlineRename('session', i));
+  titleEl.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      beginInlineRename('session', i);
+    }
+  });
+}
+
+if(dupBtn && dupSel){
+  dupBtn.addEventListener('click', () => {
+    const dst = Number(dupSel.value);
+    if(Number.isFinite(dst)) duplicateSessionSlot(i, dst);
+  });
+}
 
     if(clrBtn) clrBtn.addEventListener('click', () => {
       sessions[i] = sessions[i] || { title: `Sessão ${i+1}`, snap: null, savedAt: null, userNamed: false };

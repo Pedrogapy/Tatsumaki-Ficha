@@ -1248,3 +1248,44 @@ select,input{
   25%{ opacity: 1; filter: blur(0px); }
   100%{ opacity: 0; filter: blur(3px); }
 }
+
+
+/* Etapa 13 — Renomear inline + Duplicar slots */
+.slotTitle{
+  cursor: pointer;
+  user-select: none;
+}
+.slotTitle:hover{
+  text-decoration: underline dotted rgba(255,255,255,.35);
+  text-underline-offset: 3px;
+}
+.slotTitle:focus{
+  outline: 2px solid rgba(255,77,77,.35);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.titleEdit{
+  width: min(240px, 100%);
+  margin-right: 6px;
+}
+
+.dupRow{
+  margin-top: 10px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dupRow .inline{
+  flex: 1 1 220px;
+  align-items:center;
+}
+.dupRow .inline span{
+  min-width: 84px;
+}
+.dupRow .select{
+  min-width: 160px;
+}
+

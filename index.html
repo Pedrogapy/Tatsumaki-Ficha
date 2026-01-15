@@ -290,7 +290,8 @@
           <div id="buildGrid" class="buildGrid" aria-label="Slots de builds">
             <div class="buildSlot" data-slot="0">
               <div class="buildHeader">
-                <strong id="buildTitle0">Build 1</strong>
+                <strong id="buildTitle0" class="slotTitle" tabindex="0">Build 1</strong>
+                <input id="buildTitleEdit0" class="input input-sm titleEdit" type="text" maxlength="40" hidden />
                 <span id="buildBadge0" class="badge">Vazio</span>
               </div>
               <div id="buildSummary0" class="buildSummary muted">—</div>
@@ -300,11 +301,19 @@
                 <button id="buildRename0" class="btn btn-ghost btn-sm">Renomear</button>
                 <button id="buildClear0" class="btn btn-danger btn-sm" disabled>Limpar</button>
               </div>
+<div class="dupRow">
+  <label class="inline small">
+    <span>Duplicar →</span>
+    <select id="buildDupTo0" class="select select-sm" aria-label="Duplicar build para"></select>
+  </label>
+  <button id="buildDup0" class="btn btn-ghost btn-sm" disabled>Duplicar</button>
+</div>
             </div>
 
             <div class="buildSlot" data-slot="1">
               <div class="buildHeader">
-                <strong id="buildTitle1">Build 2</strong>
+                <strong id="buildTitle1" class="slotTitle" tabindex="0">Build 2</strong>
+                <input id="buildTitleEdit1" class="input input-sm titleEdit" type="text" maxlength="40" hidden />
                 <span id="buildBadge1" class="badge">Vazio</span>
               </div>
               <div id="buildSummary1" class="buildSummary muted">—</div>
@@ -314,11 +323,19 @@
                 <button id="buildRename1" class="btn btn-ghost btn-sm">Renomear</button>
                 <button id="buildClear1" class="btn btn-danger btn-sm" disabled>Limpar</button>
               </div>
+<div class="dupRow">
+  <label class="inline small">
+    <span>Duplicar →</span>
+    <select id="buildDupTo1" class="select select-sm" aria-label="Duplicar build para"></select>
+  </label>
+  <button id="buildDup1" class="btn btn-ghost btn-sm" disabled>Duplicar</button>
+</div>
             </div>
 
             <div class="buildSlot" data-slot="2">
               <div class="buildHeader">
-                <strong id="buildTitle2">Build 3</strong>
+                <strong id="buildTitle2" class="slotTitle" tabindex="0">Build 3</strong>
+                <input id="buildTitleEdit2" class="input input-sm titleEdit" type="text" maxlength="40" hidden />
                 <span id="buildBadge2" class="badge">Vazio</span>
               </div>
               <div id="buildSummary2" class="buildSummary muted">—</div>
@@ -328,6 +345,13 @@
                 <button id="buildRename2" class="btn btn-ghost btn-sm">Renomear</button>
                 <button id="buildClear2" class="btn btn-danger btn-sm" disabled>Limpar</button>
               </div>
+<div class="dupRow">
+  <label class="inline small">
+    <span>Duplicar →</span>
+    <select id="buildDupTo2" class="select select-sm" aria-label="Duplicar build para"></select>
+  </label>
+  <button id="buildDup2" class="btn btn-ghost btn-sm" disabled>Duplicar</button>
+</div>
             </div>
           </div>
 
@@ -349,7 +373,8 @@
           <div id="sessionGrid" class="buildGrid sessionGrid" aria-label="Slots de sessão">
             <div class="buildSlot sessionSlot" data-sslot="0">
               <div class="buildHeader">
-                <strong id="sessionTitle0">Sessão 1</strong>
+                <strong id="sessionTitle0" class="slotTitle" tabindex="0">Sessão 1</strong>
+                <input id="sessionTitleEdit0" class="input input-sm titleEdit" type="text" maxlength="40" hidden />
                 <span id="sessionBadge0" class="badge">Vazio</span>
               </div>
               <div id="sessionSummary0" class="buildSummary muted">—</div>
@@ -359,11 +384,19 @@
                 <button id="sessionRename0" class="btn btn-ghost btn-sm">Renomear</button>
                 <button id="sessionClear0" class="btn btn-danger btn-sm" disabled>Limpar</button>
               </div>
+<div class="dupRow">
+  <label class="inline small">
+    <span>Duplicar →</span>
+    <select id="sessionDupTo0" class="select select-sm" aria-label="Duplicar sessão para"></select>
+  </label>
+  <button id="sessionDup0" class="btn btn-ghost btn-sm" disabled>Duplicar</button>
+</div>
             </div>
 
             <div class="buildSlot sessionSlot" data-sslot="1">
               <div class="buildHeader">
-                <strong id="sessionTitle1">Sessão 2</strong>
+                <strong id="sessionTitle1" class="slotTitle" tabindex="0">Sessão 2</strong>
+                <input id="sessionTitleEdit1" class="input input-sm titleEdit" type="text" maxlength="40" hidden />
                 <span id="sessionBadge1" class="badge">Vazio</span>
               </div>
               <div id="sessionSummary1" class="buildSummary muted">—</div>
@@ -373,11 +406,19 @@
                 <button id="sessionRename1" class="btn btn-ghost btn-sm">Renomear</button>
                 <button id="sessionClear1" class="btn btn-danger btn-sm" disabled>Limpar</button>
               </div>
+<div class="dupRow">
+  <label class="inline small">
+    <span>Duplicar →</span>
+    <select id="sessionDupTo1" class="select select-sm" aria-label="Duplicar sessão para"></select>
+  </label>
+  <button id="sessionDup1" class="btn btn-ghost btn-sm" disabled>Duplicar</button>
+</div>
             </div>
 
             <div class="buildSlot sessionSlot" data-sslot="2">
               <div class="buildHeader">
-                <strong id="sessionTitle2">Sessão 3</strong>
+                <strong id="sessionTitle2" class="slotTitle" tabindex="0">Sessão 3</strong>
+                <input id="sessionTitleEdit2" class="input input-sm titleEdit" type="text" maxlength="40" hidden />
                 <span id="sessionBadge2" class="badge">Vazio</span>
               </div>
               <div id="sessionSummary2" class="buildSummary muted">—</div>
@@ -387,6 +428,13 @@
                 <button id="sessionRename2" class="btn btn-ghost btn-sm">Renomear</button>
                 <button id="sessionClear2" class="btn btn-danger btn-sm" disabled>Limpar</button>
               </div>
+<div class="dupRow">
+  <label class="inline small">
+    <span>Duplicar →</span>
+    <select id="sessionDupTo2" class="select select-sm" aria-label="Duplicar sessão para"></select>
+  </label>
+  <button id="sessionDup2" class="btn btn-ghost btn-sm" disabled>Duplicar</button>
+</div>
             </div>
           </div>
         </section>
