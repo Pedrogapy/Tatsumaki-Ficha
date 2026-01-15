@@ -1289,3 +1289,6 @@ select,input{
   min-width: 160px;
 }
 
+
+/* Etapa 14: small emphasis for overwrite events */
+.toast.warn{ border-color: rgba(255,80,80,.45); }

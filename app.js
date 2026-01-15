@@ -1273,6 +1273,8 @@ function toastQuick(title, detail){
 
     const el = document.createElement('div');
     el.className = 'toast';
+    if(String(title||'').toLowerCase().includes('sobrescrito')){ el.className = 'toast warn'; }
+
 
     const strong = document.createElement('div');
     strong.textContent = String(title || 'OK');
@@ -1816,46 +1818,92 @@ function cancelInlineRename(kind, i){
   titleEl.style.display = '';
 }
 
+
+function makeCopyTitle(srcTitle){
+  try{
+    const t = String(srcTitle || '').trim() || 'Cópia';
+    // If it already looks like a copy, add a small index
+    if(/cópia\s*\d*\s*$/i.test(t)){
+      return t.replace(/\s*$/,'') + ' 2';
+    }
+    return t + ' — cópia';
+  }catch(_){
+    return 'Cópia';
+  }
+}
+
 function duplicateBuildSlot(src, dst){
   try{
     if(src === dst) return;
-    const sp = builds[src]?.preset;
+    const srcObj = builds[src] || { title: `Build ${src+1}`, preset: null, savedAt: null, userNamed: false };
+    const sp = srcObj?.preset;
     if(!sp) return;
 
+    const dstHad = Boolean(builds[dst]?.preset);
     builds[dst] = builds[dst] || { title: `Build ${dst+1}`, preset: null, savedAt: null, userNamed: false };
     ensureAutoTitle(builds[dst], `Build ${dst+1}`);
+
     const cloned = deepClone(sp);
     builds[dst].preset = cloned || sp;
     builds[dst].savedAt = new Date().toISOString();
+
+    // Auto-name the destination as a copy of the source (only if the user didn't manually name it)
+    if(!builds[dst].userNamed){
+      const baseTitle = String(srcObj.title || `Build ${src+1}`).trim() || `Build ${src+1}`;
+      builds[dst].title = makeCopyTitle(baseTitle);
+    }
+
     saveBuilds();
     renderBuildsUi();
 
     const dstEl = document.querySelector(`.buildSlot[data-slot="${dst}"]`);
     flashSlot(dstEl);
-    toastQuick('Duplicado', `→ ${builds[dst].title}`);
-    log(`Build duplicada do slot ${src+1} para ${dst+1}.`);
-  }catch(_){/* ignore */}
+
+    if(dstHad){
+      toastQuick('Destino sobrescrito', `Build ${src+1} → ${dst+1}`);
+      log(`Build duplicado: slot ${src+1} → ${dst+1} (sobrescrito).`);
+    }else{
+      toastQuick('Duplicado', `Build ${src+1} → ${dst+1}`);
+      log(`Build duplicado: slot ${src+1} → ${dst+1}.`);
+    }
+  }catch(_ ){/* ignore */}
 }
 
 function duplicateSessionSlot(src, dst){
   try{
     if(src === dst) return;
-    const sn = sessions[src]?.snap;
-    if(!sn) return;
+    const srcObj = sessions[src] || { title: `Sessão ${src+1}`, snap: null, savedAt: null, userNamed: false };
+    const sp = srcObj?.snap;
+    if(!sp) return;
 
+    const dstHad = Boolean(sessions[dst]?.snap);
     sessions[dst] = sessions[dst] || { title: `Sessão ${dst+1}`, snap: null, savedAt: null, userNamed: false };
     ensureAutoTitle(sessions[dst], `Sessão ${dst+1}`);
-    const cloned = deepClone(sn);
-    sessions[dst].snap = cloned || sn;
+
+    const cloned = deepClone(sp);
+    sessions[dst].snap = cloned || sp;
     sessions[dst].savedAt = new Date().toISOString();
+
+    // Auto-name the destination as a copy of the source (only if the user didn't manually name it)
+    if(!sessions[dst].userNamed){
+      const baseTitle = String(srcObj.title || `Sessão ${src+1}`).trim() || `Sessão ${src+1}`;
+      sessions[dst].title = makeCopyTitle(baseTitle);
+    }
+
     saveSessions();
     renderSessionsUi();
 
     const dstEl = document.querySelector(`.sessionSlot[data-sslot="${dst}"]`);
     flashSlot(dstEl);
-    toastQuick('Duplicado', `→ ${sessions[dst].title}`);
-    log(`Snapshot duplicado do slot ${src+1} para ${dst+1}.`);
-  }catch(_){/* ignore */}
+
+    if(dstHad){
+      toastQuick('Destino sobrescrito', `Sessão ${src+1} → ${dst+1}`);
+      log(`Snapshot duplicado: slot ${src+1} → ${dst+1} (sobrescrito).`);
+    }else{
+      toastQuick('Duplicado', `Sessão ${src+1} → ${dst+1}`);
+      log(`Snapshot duplicado: slot ${src+1} → ${dst+1}.`);
+    }
+  }catch(_ ){/* ignore */}
 }
 
 function renderDupSelect(sel, titles, selfIndex){
