@@ -26,6 +26,12 @@
 
 *{box-sizing:border-box}
 
+/* Regra de segurança: pseudo-elementos decorativos nunca devem capturar cliques */
+*::before,
+*::after{
+  pointer-events:none;
+}
+
 html,body{height:100%}
 
 body{
@@ -89,6 +95,7 @@ a{color:inherit}
   position:absolute;
   left:16px; right:16px; bottom:-1px;
   height:2px;
+  pointer-events:none;
   background: linear-gradient(90deg, transparent, rgba(208,42,42,.55), rgba(255,77,77,.30), transparent);
   opacity:.55;
 }
@@ -115,6 +122,7 @@ a{color:inherit}
   content:"";
   position:absolute;
   inset:-20px;
+  pointer-events:none;
   background:
     radial-gradient(circle at 50% 40%, rgba(255,77,77,.22), transparent 55%),
     conic-gradient(from 210deg, rgba(255,77,77,.00), rgba(255,77,77,.18), rgba(255,77,77,.00));
@@ -126,6 +134,7 @@ a{color:inherit}
   content:"";
   position:absolute;
   inset:0;
+  pointer-events:none;
   background:
     radial-gradient(circle at 30% 20%, rgba(255,77,77,.16), transparent 55%),
     linear-gradient(135deg, rgba(0,0,0,.08), rgba(0,0,0,.55));
@@ -357,6 +366,7 @@ input[type="range"].range::-moz-range-thumb{
   inset:-1px;
   border-radius: 18px;
   padding:1px;
+  pointer-events:none;
   background: linear-gradient(180deg, rgba(255,77,77,.22), rgba(92,98,140,.14));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
@@ -1441,79 +1451,3 @@ select,input{
   box-shadow: 0 24px 70px rgba(0,0,0,.55);
 }
 .modalCard .row{ margin-top: 10px; }
-
-/* ===== ETAPA 17 — QUICKBAR ===== */
-.quickbar {
-  background: #0f0f16;
-  border: 1px solid #2a0f18;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 12px;
-}
-
-.quickbar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  color: #e6b0b8;
-}
-
-.quickbar-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.qcard {
-  background: #15151f;
-  border: 1px solid #3a1520;
-  border-radius: 6px;
-  padding: 6px;
-  min-width: 180px;
-}
-
-.qcard-title {
-  font-size: 0.85rem;
-  color: #f2c4cc;
-  margin-bottom: 4px;
-}
-
-.qcard-rolls button {
-  margin: 2px 2px 0 0;
-}
-
-/* ===== RESULTADO DE COMBATE ===== */
-.combat-result {
-  background: linear-gradient(135deg, #1a0f14, #0f0f16);
-  border: 1px solid #8b1d2c;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
-  animation: cr-pop 0.25s ease-out;
-}
-
-.combat-result .cr-title {
-  font-weight: 600;
-  color: #ffccd5;
-}
-
-.combat-result .cr-total {
-  font-size: 1.6rem;
-  color: #ff4d6d;
-}
-
-.combat-result .cr-detail {
-  font-size: 0.8rem;
-  opacity: 0.85;
-}
-
-.hidden {
-  display: none;
-}
-
-@keyframes cr-pop {
-  from { transform: translateY(-4px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
-}
