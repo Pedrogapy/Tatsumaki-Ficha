@@ -1292,3 +1292,152 @@ select,input{
 
 /* Etapa 14: small emphasis for overwrite events */
 .toast.warn{ border-color: rgba(255,80,80,.45); }
+
+/* Etapa 16 — Biblioteca de habilidades + modal PV */
+.abilityTools{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.abilitiesList{
+  margin-top: 12px;
+  display:grid;
+  gap: 12px;
+}
+
+.abilityCard{
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(16,18,32,.55);
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+}
+
+.abilityHeader{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.abilityTitleRow{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+
+.abilityName{
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+
+.abilityTypeBadge{
+  border: 1px solid rgba(255,77,77,.22);
+  background: rgba(255,77,77,.08);
+  color: rgba(255,214,214,.96);
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.abilityCostBadge{
+  border: 1px solid rgba(92, 98, 140, .40);
+  background: rgba(19,21,33,.55);
+  color: rgba(238,240,255,.92);
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.abilityBody{
+  margin-top: 10px;
+  color: rgba(238,240,255,.92);
+}
+
+.abilityBody p{ margin: 8px 0; }
+
+.abilityKv{
+  margin-top: 10px;
+  display:grid;
+  gap: 6px;
+}
+
+.abilityKvRow{
+  display:flex;
+  gap: 8px;
+  align-items:flex-start;
+  flex-wrap: wrap;
+}
+
+.abilityKvKey{
+  min-width: 110px;
+  color: rgba(185,192,230,.95);
+  font-weight: 650;
+}
+
+.abilityKvVal{
+  color: rgba(238,240,255,.90);
+}
+
+.abilityActions{
+  margin-top: 12px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items:center;
+}
+
+.rollMini{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items:center;
+}
+
+.rollMini .input{
+  width: 240px;
+  max-width: 100%;
+}
+
+.equipmentBox{
+  display:grid;
+  gap: 10px;
+}
+
+.equipSection{
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(16,18,32,.44);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.equipTitle{ font-weight: 800; margin-bottom: 6px; }
+
+.modal{
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.modal[hidden]{ display:none; }
+.modalBackdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,.68);
+  backdrop-filter: blur(6px);
+}
+.modalCard{
+  position: relative;
+  width: min(560px, calc(100% - 24px));
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,77,77,.22);
+  background: rgba(10, 11, 18, .86);
+  box-shadow: 0 24px 70px rgba(0,0,0,.55);
+}
+.modalCard .row{ margin-top: 10px; }

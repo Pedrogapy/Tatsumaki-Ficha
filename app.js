@@ -895,6 +895,13 @@ let state = {
   ui: {
     skillMode: "normal",
     autoMagicAdv: true,
+    // Etapa 16 — Biblioteca de habilidades
+    abilitySearch: "",
+    abilityTypeFilter: "all", // all | Ativa | Passiva
+    abilityAutoSpend: true,
+    abilityDamageTarget: "sword", // generic | melee | sword | heavy
+    pvCostMap: {}, // { [abilityName]: 'PVO'|'PVD' }
+    abilityRollOverrides: {}, // { [abilityName]: { [rollLabel]: expr } }
     // Etapa 9 — guarda últimos resultados (por perícia) e último destaque
     lastSkillRolls: {},
     lastSkillResult: null,
@@ -950,6 +957,8 @@ function loadState(){
       state.ui = { ...state.ui, ...s.ui };
       // garante forma
       if(!state.ui.lastSkillRolls || typeof state.ui.lastSkillRolls !== 'object') state.ui.lastSkillRolls = {};
+      if(!state.ui.pvCostMap || typeof state.ui.pvCostMap !== 'object') state.ui.pvCostMap = {};
+      if(!state.ui.abilityRollOverrides || typeof state.ui.abilityRollOverrides !== 'object') state.ui.abilityRollOverrides = {};
     }
     return true;
   }catch(_){
@@ -1250,6 +1259,448 @@ function initEssenceUi(){
   if(auraEnd) auraEnd.addEventListener('click', () => endAura());
 
   renderEssenceUi();
+}
+
+// ------------------------------
+// Etapa 16 — Biblioteca de habilidades (Exclusivas) + Equipamentos
+// - Busca/filtro
+// - Rolagem por habilidade
+// - (Opcional) gastar custos ao rolar
+// - Modal para decidir PV -> PVO/PVD quando a habilidade não especifica
+// ------------------------------
+
+let __pvModalPending = null; // { abilityName, amount, resolve }
+
+function normRes(k){
+  return String(k || '').replace(/\./g,'').trim().toUpperCase();
+}
+
+function parseExtraCostsFromContext(contextStr){
+  const s = String(contextStr || '').trim();
+  if(!s) return [];
+  const low = s.toLowerCase();
+  // Só tenta automatizar casos simples, tipo "e 8 P.F".
+  // Se tiver alternativa/variável, deixa apenas como texto.
+  if(!/^e\s+\d+/.test(low)) return [];
+  if(low.includes('ou') || low.includes('por') || low.includes('todos') || low.includes('quantidade') || low.includes('consider')) return [];
+  const out = [];
+  const pushAll = (rx, res) => {
+    let m;
+    while((m = rx.exec(s)) !== null){
+      const n = Number(m[1]);
+      if(Number.isFinite(n) && n > 0) out.push({ resource: res, amount: n });
+    }
+  };
+  pushAll(/(\d+)\s*P\.?\s*S/gi, 'PS');
+  pushAll(/(\d+)\s*P\.?\s*F/gi, 'PF');
+  pushAll(/(\d+)\s*P\.?\s*V/gi, 'PV');
+  return out;
+}
+
+function formatAbilityCost(ability){
+  const parts = [];
+  const add = (res, amt, ctx) => {
+    if(!res || !amt) return;
+    const base = `${res} ${amt}`;
+    const extra = ctx ? ` (${String(ctx).trim()})` : '';
+    parts.push(base + extra);
+  };
+  (ability?.cost || []).forEach(c => {
+    add(normRes(c.resource), Number(c.amount||0), c.context);
+    // extras fixos do contexto (ex: "e 8 P.F")
+    parseExtraCostsFromContext(c.context).forEach(e => add(normRes(e.resource), Number(e.amount||0), null));
+  });
+  if(ability?.auto_cost && typeof ability.auto_cost === 'object'){
+    Object.entries(ability.auto_cost).forEach(([k,v]) => {
+      const amt = Number(v||0);
+      if(amt>0) parts.push(`${normRes(k)} ${amt}`);
+    });
+  }
+  // remove duplicados simples (mantém ordem)
+  const seen = new Set();
+  const uniq = [];
+  for(const p of parts){
+    if(seen.has(p)) continue;
+    seen.add(p);
+    uniq.push(p);
+  }
+  return uniq.join(' • ');
+}
+
+function openPvModal(abilityName, amount, resolve){
+  const modal = document.getElementById('pvModal');
+  if(!modal) return;
+  const text = document.getElementById('pvModalText');
+  const remember = document.getElementById('pvRememberChoice');
+  if(text) text.textContent = `Habilidade: ${abilityName} — custo: ${amount} PV. Escolha PVO (ataque) ou PVD (defesa).`;
+  if(remember) remember.checked = true;
+  __pvModalPending = { abilityName, amount, resolve };
+  modal.hidden = false;
+  try{ document.getElementById('pvChoosePVO')?.focus?.(); }catch(_){ }
+}
+
+function closePvModal(){
+  const modal = document.getElementById('pvModal');
+  if(modal) modal.hidden = true;
+  __pvModalPending = null;
+}
+
+function wirePvModal(){
+  const modal = document.getElementById('pvModal');
+  if(!modal) return;
+  const bPVO = document.getElementById('pvChoosePVO');
+  const bPVD = document.getElementById('pvChoosePVD');
+  const bCancel = document.getElementById('pvCancel');
+  const remember = document.getElementById('pvRememberChoice');
+
+  const resolve = (choice) => {
+    const pending = __pvModalPending;
+    if(!pending) return;
+    const wantRemember = !!(remember && remember.checked);
+    if(wantRemember){
+      state.ui.pvCostMap = state.ui.pvCostMap || {};
+      state.ui.pvCostMap[pending.abilityName] = choice;
+      saveState();
+    }
+    try{ pending.resolve(choice); }catch(_){ }
+    closePvModal();
+  };
+
+  bPVO?.addEventListener('click', () => resolve('PVO'));
+  bPVD?.addEventListener('click', () => resolve('PVD'));
+  bCancel?.addEventListener('click', () => { closePvModal(); });
+  modal.querySelector('.modalBackdrop')?.addEventListener('click', (e) => {
+    if(e.target && e.target.getAttribute('data-close')) closePvModal();
+  });
+
+  // ESC fecha
+  window.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && !modal.hidden) closePvModal();
+  });
+}
+
+function spendAbilityCosts(ability, after){
+  const name = String(ability?.name || 'Habilidade');
+  const todo = [];
+  const push = (res, amt, origin) => {
+    const a = Number(amt||0);
+    if(!res || !Number.isFinite(a) || a <= 0) return;
+    todo.push({ res: normRes(res), amt: a, origin });
+  };
+
+  (ability?.cost || []).forEach(c => {
+    push(c.resource, c.amount, 'cost');
+    parseExtraCostsFromContext(c.context).forEach(e => push(e.resource, e.amount, 'context'));
+  });
+  if(ability?.auto_cost && typeof ability.auto_cost === 'object'){
+    Object.entries(ability.auto_cost).forEach(([k,v]) => push(k, v, 'auto_cost'));
+  }
+
+  const spentLog = [];
+  const step = (i) => {
+    if(i >= todo.length){
+      if(spentLog.length) log(`Custos pagos (${name}): ${spentLog.join(' • ')}`);
+      saveState();
+      after?.(true);
+      return;
+    }
+
+    const it = todo[i];
+    if(it.res === 'PV'){
+      const pref = state.ui.pvCostMap?.[name];
+      if(pref === 'PVO' || pref === 'PVD'){
+        if(!spend(pref, it.amt)){
+          window.__sfx?.play?.('error');
+          render();
+          after?.(false);
+          return;
+        }
+        spentLog.push(`${pref} -${it.amt}`);
+        step(i+1);
+        return;
+      }
+
+      openPvModal(name, it.amt, (choice) => {
+        const picked = (choice === 'PVD') ? 'PVD' : 'PVO';
+        if(!spend(picked, it.amt)){
+          window.__sfx?.play?.('error');
+          render();
+          after?.(false);
+          return;
+        }
+        spentLog.push(`${picked} -${it.amt}`);
+        step(i+1);
+      });
+      return;
+    }
+
+    if(!spend(it.res, it.amt)){
+      window.__sfx?.play?.('error');
+      render();
+      after?.(false);
+      return;
+    }
+    spentLog.push(`${it.res} -${it.amt}`);
+    step(i+1);
+  };
+
+  step(0);
+}
+
+function getAbilitySfx(ability){
+  const n = String(ability?.name || '').toLowerCase();
+  if(n.includes('sang')) return 'blood';
+  if(n.includes('plasma')) return 'plasma';
+  if(n.includes('aura')) return 'aura';
+  return 'click';
+}
+
+function renderEquipment(){
+  const box = document.getElementById('equipmentBox');
+  if(!box) return;
+  box.innerHTML = '';
+  const eq = character?.abilities?.exclusive?.equipment;
+  const sections = Array.isArray(eq?.sections) ? eq.sections : [];
+  if(!sections.length){
+    box.innerHTML = `<div class="muted">Sem equipamentos cadastrados.</div>`;
+    return;
+  }
+
+  sections.forEach(sec => {
+    const el = document.createElement('div');
+    el.className = 'equipSection';
+    const title = document.createElement('div');
+    title.className = 'equipTitle';
+    title.textContent = String(sec?.title || 'Item');
+    const text = document.createElement('div');
+    text.className = 'muted';
+    const raw = String(sec?.text || '').trim();
+    text.textContent = raw || '—';
+    el.appendChild(title);
+    el.appendChild(text);
+    box.appendChild(el);
+  });
+}
+
+function renderAbilitiesLibrary(){
+  const root = document.getElementById('abilitiesList');
+  if(!root) return;
+  root.innerHTML = '';
+
+  const list = Array.isArray(character?.abilities?.exclusive?.abilities) ? character.abilities.exclusive.abilities : [];
+  if(!list.length){
+    root.innerHTML = `<div class="muted">Sem habilidades exclusivas cadastradas.</div>`;
+    return;
+  }
+
+  const q = String(state.ui.abilitySearch || '').trim().toLowerCase();
+  const typeFilter = String(state.ui.abilityTypeFilter || 'all');
+
+  const filtered = list.filter(ab => {
+    if(typeFilter !== 'all' && String(ab?.type||'') !== typeFilter) return false;
+    if(!q) return true;
+    const blob = `${ab?.name||''}\n${ab?.text||''}`.toLowerCase();
+    return blob.includes(q);
+  });
+
+  if(!filtered.length){
+    root.innerHTML = `<div class="muted">Nada encontrado com esse filtro.</div>`;
+    return;
+  }
+
+  filtered.forEach(ab => {
+    const card = document.createElement('div');
+    card.className = 'abilityCard';
+
+    const header = document.createElement('div');
+    header.className = 'abilityHeader';
+
+    const left = document.createElement('div');
+    left.className = 'abilityTitleRow';
+
+    const name = document.createElement('div');
+    name.className = 'abilityName';
+    name.textContent = String(ab?.name || 'Habilidade');
+    left.appendChild(name);
+
+    const tBadge = document.createElement('span');
+    tBadge.className = 'abilityTypeBadge';
+    tBadge.textContent = String(ab?.type || '—');
+    left.appendChild(tBadge);
+
+    const costStr = formatAbilityCost(ab);
+    if(costStr){
+      const cBadge = document.createElement('span');
+      cBadge.className = 'abilityCostBadge';
+      cBadge.title = costStr;
+      cBadge.textContent = `Custo: ${costStr}`;
+      left.appendChild(cBadge);
+    }
+
+    header.appendChild(left);
+    card.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'abilityBody';
+    const text = String(ab?.text || '').trim();
+    if(text){
+      text.split(/\n+/).forEach(par => {
+        const p = document.createElement('p');
+        p.textContent = String(par).trim();
+        if(p.textContent) body.appendChild(p);
+      });
+    }
+
+    const kv = Array.isArray(ab?.kv) ? ab.kv : [];
+    if(kv.length){
+      const kvBox = document.createElement('div');
+      kvBox.className = 'abilityKv';
+      kv.forEach(row => {
+        const r = document.createElement('div');
+        r.className = 'abilityKvRow';
+        const k = document.createElement('div');
+        k.className = 'abilityKvKey';
+        k.textContent = String(row?.k || '').trim();
+        const v = document.createElement('div');
+        v.className = 'abilityKvVal';
+        v.textContent = String(row?.v || '').trim();
+        r.appendChild(k);
+        r.appendChild(v);
+        kvBox.appendChild(r);
+      });
+      body.appendChild(kvBox);
+    }
+
+    card.appendChild(body);
+
+    const actions = document.createElement('div');
+    actions.className = 'abilityActions';
+
+    if(String(ab?.type) === 'Ativa'){
+      const use = document.createElement('button');
+      use.className = 'btn btn-sm';
+      use.textContent = 'Usar (gastar custo)';
+      use.addEventListener('click', () => {
+        window.__sfx?.play?.(getAbilitySfx(ab));
+        spendAbilityCosts(ab, (ok) => {
+          if(!ok) return;
+          log(`Habilidade usada: ${ab.name}`);
+          render();
+        });
+      });
+      actions.appendChild(use);
+    }
+
+    const rolls = Array.isArray(ab?.rolls) ? ab.rolls : [];
+    if(rolls.length){
+      rolls.forEach(r => {
+        const label = String(r?.label || 'Rolagem');
+        const expr = String(r?.expr || '').trim();
+        const row = document.createElement('div');
+        row.className = 'rollMini';
+
+        let exprInput = null;
+        if(!expr){
+          exprInput = document.createElement('input');
+          exprInput.className = 'input input-sm';
+          exprInput.placeholder = 'Expr (ex: 2d8 + @attributes.Arcano.quarter)';
+          const saved = state.ui.abilityRollOverrides?.[ab.name]?.[label];
+          if(saved) exprInput.value = String(saved);
+          exprInput.addEventListener('change', () => {
+            state.ui.abilityRollOverrides = state.ui.abilityRollOverrides || {};
+            state.ui.abilityRollOverrides[ab.name] = state.ui.abilityRollOverrides[ab.name] || {};
+            state.ui.abilityRollOverrides[ab.name][label] = String(exprInput.value || '').trim();
+            saveState();
+          });
+          row.appendChild(exprInput);
+        }
+
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-ghost btn-sm';
+        btn.textContent = `Rolar: ${label}`;
+        btn.addEventListener('click', () => {
+          const doRoll = () => {
+            const effectiveExpr = expr || String(exprInput?.value || '').trim();
+            if(!effectiveExpr){
+              toastQuick('Sem expressão', `Defina uma expressão de rolagem para “${label}”.`);
+              window.__sfx?.play?.('error');
+              return;
+            }
+
+            window.__sfx?.play?.('roll');
+            const isDamage = /dano/i.test(label);
+            if(isDamage){
+              const target = String(state.ui.abilityDamageTarget || 'generic');
+              const out = damageFor(target, effectiveExpr);
+              log(`Rolagem (${ab.name} / ${label}): ${out.text}`);
+            }else{
+              const out = evalExpr(effectiveExpr);
+              log(`Rolagem (${ab.name} / ${label}): ${out.text}`);
+            }
+            render();
+          };
+
+          const shouldSpend = !!state.ui.abilityAutoSpend && String(ab?.type) === 'Ativa' && (ab?.cost?.length || ab?.auto_cost);
+          if(shouldSpend){
+            window.__sfx?.play?.(getAbilitySfx(ab));
+            spendAbilityCosts(ab, (ok) => { if(ok) doRoll(); });
+          }else{
+            doRoll();
+          }
+        });
+        row.appendChild(btn);
+        actions.appendChild(row);
+      });
+    }
+
+    card.appendChild(actions);
+    root.appendChild(card);
+  });
+}
+
+function initAbilitiesLibraryUi(){
+  const search = document.getElementById('abilitySearch');
+  const type = document.getElementById('abilityTypeFilter');
+  const autoSpend = document.getElementById('abilityAutoSpend');
+  const dmgTarget = document.getElementById('abilityDamageTarget');
+
+  if(search){
+    search.value = String(state.ui.abilitySearch || '');
+    search.addEventListener('input', () => {
+      state.ui.abilitySearch = String(search.value || '');
+      saveState();
+      renderAbilitiesLibrary();
+    });
+  }
+
+  if(type){
+    type.value = String(state.ui.abilityTypeFilter || 'all');
+    type.addEventListener('change', () => {
+      state.ui.abilityTypeFilter = String(type.value || 'all');
+      saveState();
+      renderAbilitiesLibrary();
+    });
+  }
+
+  if(autoSpend){
+    autoSpend.checked = !!state.ui.abilityAutoSpend;
+    autoSpend.addEventListener('change', () => {
+      state.ui.abilityAutoSpend = !!autoSpend.checked;
+      saveState();
+    });
+  }
+
+  if(dmgTarget){
+    dmgTarget.value = String(state.ui.abilityDamageTarget || 'sword');
+    dmgTarget.addEventListener('change', () => {
+      state.ui.abilityDamageTarget = String(dmgTarget.value || 'generic');
+      saveState();
+    });
+  }
+
+  wirePvModal();
+  renderAbilitiesLibrary();
+  renderEquipment();
 }
 
 // ------------------------------
@@ -2748,6 +3199,9 @@ async function init(){
 
   // Etapa 11 — Builds & Presets
   initBuildsUi();
+
+  // Etapa 16 — Habilidades exclusivas + Equipamentos
+  initAbilitiesLibraryUi();
 
   renderCombatActions();
   render();

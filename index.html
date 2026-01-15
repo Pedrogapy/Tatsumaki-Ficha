@@ -467,6 +467,43 @@
             <button id="toggle_plasma" class="btn">Arma de Plasma (On/Off)</button>
           </div>
         </section>
+
+        <section class="card">
+          <div class="cardHeaderRow">
+            <h2>Biblioteca de habilidades</h2>
+            <div class="abilityTools">
+              <input id="abilitySearch" class="input input-sm" placeholder="Buscar habilidade…" />
+
+              <select id="abilityTypeFilter" class="select select-sm" aria-label="Filtrar por tipo">
+                <option value="all">Todas</option>
+                <option value="Ativa">Ativas</option>
+                <option value="Passiva">Passivas</option>
+              </select>
+
+              <label class="inline small" title="Se marcado, ao clicar em um botão de rolagem a habilidade já gasta os custos automaticamente.">
+                <input id="abilityAutoSpend" type="checkbox" checked />
+                <span>Gastar custo ao rolar</span>
+              </label>
+
+              <label class="inline small" title="Define em qual alvo o dano entra (pra aplicar Sanguenta/Plasma quando fizer sentido).">
+                <span>Dano aplica em</span>
+                <select id="abilityDamageTarget" class="select select-sm" aria-label="Alvo do dano">
+                  <option value="generic">Genérico</option>
+                  <option value="melee">Mãos</option>
+                  <option value="sword" selected>Espada</option>
+                  <option value="heavy">Arma pesada</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div id="abilitiesList" class="abilitiesList"></div>
+        </section>
+
+        <section class="card">
+          <h2>Equipamentos & Itens</h2>
+          <div id="equipmentBox" class="equipmentBox"></div>
+        </section>
       </section>
 
       <section id="tab-log" class="panel" role="tabpanel">
@@ -489,6 +526,29 @@
         </section>
       </section>
     </main>
+  </div>
+
+  <!-- Modal: escolher como gastar PV (PVO vs PVD) -->
+  <div id="pvModal" class="modal" hidden>
+    <div class="modalBackdrop" data-close="true"></div>
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="pvModalTitle">
+      <h3 id="pvModalTitle">PV = Pontos de Vigor</h3>
+      <p id="pvModalText" class="muted">Escolha se este custo de PV entra como PVO (ofensivo) ou PVD (defensivo).</p>
+
+      <div class="row">
+        <button id="pvChoosePVO" class="btn">PVO (ataque)</button>
+        <button id="pvChoosePVD" class="btn">PVD (defesa)</button>
+      </div>
+
+      <label class="inline small" title="Se marcado, essa escolha vira padrão só para esta habilidade.">
+        <input id="pvRememberChoice" type="checkbox" checked />
+        <span>Lembrar para esta habilidade</span>
+      </label>
+
+      <div class="row">
+        <button id="pvCancel" class="btn btn-ghost">Cancelar</button>
+      </div>
+    </div>
   </div>
 
   <div id="toastHost" class="toastHost" aria-live="polite" aria-atomic="true"></div>
