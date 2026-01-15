@@ -272,6 +272,71 @@
             <pre id="essenceBook" class="preWrap muted">Carregando…</pre>
           </details>
         </section>
+
+        <section class="card">
+          <div class="cardHeaderRow">
+            <h2>Builds & Presets</h2>
+            <div class="row">
+              <button id="exportBuilds" class="btn btn-ghost btn-sm">Exportar builds</button>
+              <button id="importBuildsBtn" class="btn btn-ghost btn-sm">Importar builds</button>
+              <input id="importBuildsFile" type="file" accept="application/json" hidden />
+            </div>
+          </div>
+
+          <div class="muted mini" style="margin-top:-4px;">
+            Cada build salva: Essência (EV/OF/DEF/APT), empilhamento, resistência passiva, bônus global de dados, modo/perícias, auto-vantagem (magia) e configurações de som.
+          </div>
+
+          <div id="buildGrid" class="buildGrid" aria-label="Slots de builds">
+            <div class="buildSlot" data-slot="0">
+              <div class="buildHeader">
+                <strong id="buildTitle0">Build 1</strong>
+                <span id="buildBadge0" class="badge">Vazio</span>
+              </div>
+              <div id="buildSummary0" class="buildSummary muted">—</div>
+              <div class="buildBtns">
+                <button id="buildSave0" class="btn btn-sm">Salvar aqui</button>
+                <button id="buildLoad0" class="btn btn-ghost btn-sm" disabled>Carregar</button>
+                <button id="buildRename0" class="btn btn-ghost btn-sm">Renomear</button>
+                <button id="buildClear0" class="btn btn-danger btn-sm" disabled>Limpar</button>
+              </div>
+            </div>
+
+            <div class="buildSlot" data-slot="1">
+              <div class="buildHeader">
+                <strong id="buildTitle1">Build 2</strong>
+                <span id="buildBadge1" class="badge">Vazio</span>
+              </div>
+              <div id="buildSummary1" class="buildSummary muted">—</div>
+              <div class="buildBtns">
+                <button id="buildSave1" class="btn btn-sm">Salvar aqui</button>
+                <button id="buildLoad1" class="btn btn-ghost btn-sm" disabled>Carregar</button>
+                <button id="buildRename1" class="btn btn-ghost btn-sm">Renomear</button>
+                <button id="buildClear1" class="btn btn-danger btn-sm" disabled>Limpar</button>
+              </div>
+            </div>
+
+            <div class="buildSlot" data-slot="2">
+              <div class="buildHeader">
+                <strong id="buildTitle2">Build 3</strong>
+                <span id="buildBadge2" class="badge">Vazio</span>
+              </div>
+              <div id="buildSummary2" class="buildSummary muted">—</div>
+              <div class="buildBtns">
+                <button id="buildSave2" class="btn btn-sm">Salvar aqui</button>
+                <button id="buildLoad2" class="btn btn-ghost btn-sm" disabled>Carregar</button>
+                <button id="buildRename2" class="btn btn-ghost btn-sm">Renomear</button>
+                <button id="buildClear2" class="btn btn-danger btn-sm" disabled>Limpar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px; flex-wrap: wrap;">
+            <button id="exportSession" class="btn btn-ghost btn-sm" title="Exporta a sessão inteira (recursos, rodada, efeitos, log, essência e UI)">Exportar sessão</button>
+            <button id="importSessionBtn" class="btn btn-ghost btn-sm" title="Importa uma sessão exportada (substitui o estado atual)">Importar sessão</button>
+            <input id="importSessionFile" type="file" accept="application/json" hidden />
+          </div>
+        </section>
       </section>
 
       <section id="tab-abilities" class="panel" role="tabpanel">

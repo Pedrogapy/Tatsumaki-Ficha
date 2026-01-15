@@ -964,3 +964,217 @@ select,input{
 }
 
 .skillLast b{ color: var(--text); }
+
+/* Etapa 11 — Builds & Presets */
+.buildGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.buildSlot{
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.28);
+}
+
+.buildHeader{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.buildSummary{
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+  min-height: 46px;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.18);
+  color: var(--muted);
+}
+
+.badge.on{
+  color: rgba(170,255,210,.95);
+  border-color: rgba(170,255,210,.22);
+  background: rgba(20,120,70,.10);
+}
+
+.buildBtns{
+  margin-top: 10px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.buildBtns .btn{ white-space: nowrap; }
+
+/* Etapa 11 — Builds & Presets */
+.buildGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.buildSlot{
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.28);
+}
+
+.buildHeader{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.buildHeader strong{
+  font-size: 14px;
+  letter-spacing: .2px;
+}
+
+.badge{
+  font-size: 11px;
+  color: rgba(255,255,255,.85);
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.22);
+  padding: 3px 8px;
+  border-radius: 999px;
+  user-select: none;
+}
+
+.badge.ok{
+  border-color: rgba(71, 255, 163, .28);
+  color: rgba(201, 255, 229, .95);
+  background: rgba(71, 255, 163, .08);
+}
+
+.buildSummary{
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  min-height: 36px;
+}
+
+.buildBtns{
+  display:flex;
+  flex-wrap:wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.buildBtns .btn{ flex: 1 1 auto; }
+
+.buildBtns .btn.btn-danger{ flex: 0 0 auto; }
+
+
+/* Etapa 11 — Builds & Presets */
+.buildGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.buildSlot{
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.28);
+}
+
+.buildHeader{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.buildHeader strong{
+  font-size: 14px;
+  letter-spacing: .2px;
+}
+
+.buildSummary{
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: pre-wrap;
+}
+
+.buildBtns{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.buildSlot .btn{
+  min-height: 32px;
+}
+
+.buildSlot .btn.btn-sm{
+  min-height: 30px;
+}
+
+
+/* Etapa 11 — Builds & Presets */
+.buildGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.buildSlot{
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.28);
+}
+
+.buildHeader{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.buildHeader strong{
+  font-size: 14px;
+}
+
+.buildSummary{
+  font-size: 12px;
+  line-height: 1.35;
+  min-height: 38px;
+  margin-bottom: 10px;
+}
+
+.buildBtns{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.buildSlot .btn{ white-space: nowrap; }

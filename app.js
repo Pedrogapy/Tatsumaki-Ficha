@@ -1253,6 +1253,410 @@ function initEssenceUi(){
 }
 
 // ------------------------------
+// Etapa 11 — Builds & Presets (slots + export/import)
+// ------------------------------
+
+function toastQuick(title, detail){
+  try{
+    let host = document.getElementById('toastHost');
+    if(!host){
+      host = document.createElement('div');
+      host.id = 'toastHost';
+      host.className = 'toastHost';
+      host.setAttribute('aria-live', 'polite');
+      host.setAttribute('aria-atomic', 'true');
+      document.body.appendChild(host);
+    }
+
+    const el = document.createElement('div');
+    el.className = 'toast';
+    const strong = document.createElement('div');
+    strong.textContent = String(title || 'OK');
+    el.appendChild(strong);
+
+    if(detail){
+      const small = document.createElement('small');
+      small.textContent = String(detail);
+      el.appendChild(small);
+    }
+
+    host.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(6px)';
+      el.style.transition = 'opacity .18s ease, transform .18s ease';
+      setTimeout(() => el.remove(), 220);
+    }, 2000);
+  }catch(_){/* ignore */}
+}
+
+
+function downloadJson(filename, obj){
+  try{
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 0);
+  }catch(_){/* ignore */}
+}
+
+function buildsKey(){
+  const name = (character?.meta?.name || "character").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  return `rpg_builds:${name}:v1`;
+}
+
+let builds = [
+  { title: "Build 1", preset: null },
+  { title: "Build 2", preset: null },
+  { title: "Build 3", preset: null }
+];
+
+function loadBuilds(){
+  try{
+    const raw = localStorage.getItem(buildsKey());
+    if(!raw) return;
+    const j = JSON.parse(raw);
+    if(!j || j.v !== 1 || !Array.isArray(j.slots)) return;
+
+    builds = builds.map((b, i) => {
+      const s = j.slots[i];
+      if(!s) return b;
+      return {
+        title: String(s.title || b.title || `Build ${i+1}`),
+        preset: (s.preset && typeof s.preset === 'object') ? s.preset : null
+      };
+    });
+  }catch(_){/* ignore */}
+}
+
+function saveBuilds(){
+  try{
+    localStorage.setItem(buildsKey(), JSON.stringify({
+      v: 1,
+      slots: builds,
+      saved_at: new Date().toISOString()
+    }));
+  }catch(_){/* ignore */}
+}
+
+function readSfxSettings(){
+  // prefer live API (sfx.js) when available
+  try{
+    if(window.__sfx){
+      return {
+        enabled: !!window.__sfx.enabled,
+        volume: Number(window.__sfx.volume ?? 0.35),
+        pack: String(window.__sfx.pack || 'shadowheart'),
+        ambient: !!window.__sfx.ambient
+      };
+    }
+  }catch(_){/* ignore */}
+
+  // fallback: localStorage (tats_sfx:v2 / v1)
+  try{
+    const raw2 = localStorage.getItem('tats_sfx:v2');
+    if(raw2){
+      const j = JSON.parse(raw2);
+      return {
+        enabled: (j.enabled !== false),
+        volume: Number(j.volume ?? 0.35),
+        pack: String(j.pack || 'shadowheart'),
+        ambient: !!j.ambient
+      };
+    }
+    const raw1 = localStorage.getItem('tats_sfx:v1');
+    if(raw1){
+      const j = JSON.parse(raw1);
+      return {
+        enabled: (j.enabled !== false),
+        volume: Number(j.volume ?? 0.35),
+        pack: 'shadowheart',
+        ambient: false
+      };
+    }
+  }catch(_){/* ignore */}
+
+  return { enabled: true, volume: 0.35, pack: 'shadowheart', ambient: false };
+}
+
+function applySfxSettings(s){
+  if(!s || typeof s !== 'object') return;
+  if(!window.__sfx) return;
+  try{
+    if('enabled' in s) window.__sfx.setEnabled(!!s.enabled);
+    if('volume' in s) window.__sfx.setVolume(Math.max(0, Math.min(1, Number(s.volume))));
+    if('pack' in s) window.__sfx.setPack(String(s.pack || 'shadowheart'));
+    if('ambient' in s) window.__sfx.setAmbient(!!s.ambient);
+  }catch(_){/* ignore */}
+}
+
+function capturePreset(){
+  const e = getEssence();
+  const luckMode = String(document.getElementById('luckMode')?.value || 'normal');
+  return {
+    v: 1,
+    captured_at: new Date().toISOString(),
+    essence: { ...e },
+    globalDamageBonusDice: clampInt(state.globalDamageBonusDice, 0, 10),
+    ui: {
+      skillMode: String(state.ui.skillMode || 'normal'),
+      autoMagicAdv: !!state.ui.autoMagicAdv
+    },
+    luckMode,
+    sfx: readSfxSettings()
+  };
+}
+
+function applyPreset(p){
+  if(!p || typeof p !== 'object') return;
+
+  if(p.essence && typeof p.essence === 'object'){
+    state.essence = { ...state.essence, ...p.essence };
+  }
+  if(typeof p.globalDamageBonusDice === 'number'){
+    state.globalDamageBonusDice = clampInt(p.globalDamageBonusDice, 0, 10);
+  }
+  if(p.ui && typeof p.ui === 'object'){
+    if('skillMode' in p.ui) state.ui.skillMode = String(p.ui.skillMode || 'normal');
+    if('autoMagicAdv' in p.ui) state.ui.autoMagicAdv = !!p.ui.autoMagicAdv;
+  }
+  if(p.luckMode){
+    const el = document.getElementById('luckMode');
+    if(el) el.value = String(p.luckMode);
+  }
+
+  if(p.sfx) applySfxSettings(p.sfx);
+
+  // mantém consistência do toggle de auto-vantagem (perícias/magia)
+  try{
+    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!state.ui.autoMagicAdv);
+  }catch(_){/* ignore */}
+
+  saveState();
+  renderEssenceUi();
+  render();
+}
+
+function presetSummary(p){
+  if(!p || typeof p !== 'object') return '—';
+  const e = p.essence || {};
+  const mode = (e.stackMode === 'literal') ? 'Literal' : 'Conservador';
+  const dmg = (typeof p.globalDamageBonusDice === 'number') ? p.globalDamageBonusDice : '—';
+  const ama = p.ui?.autoMagicAdv ? 'ON' : 'OFF';
+  const sm = p.ui?.skillMode ? String(p.ui.skillMode) : 'normal';
+  const sfx = p.sfx ? `${p.sfx.enabled ? 'Som ON' : 'Som OFF'} • ${String(p.sfx.pack || 'shadowheart')}` : 'Som —';
+  const res = (e.defPassiveRes && String(e.defPassiveRes).trim()) ? `\nResist.: ${String(e.defPassiveRes).trim()}` : '';
+  return `EV${e.ev ?? 0} / OF${e.off ?? 0} / DEF${e.def ?? 0} / APT${e.apt ?? 0} • ${mode}\nBônus dano: ${dmg} dado(s) • Auto magia: ${ama} • Perícias: ${sm}\n${sfx}${res}`;
+}
+
+function renderBuildsUi(){
+  for(let i=0;i<3;i++){
+    const titleEl = document.getElementById(`buildTitle${i}`);
+    const badgeEl = document.getElementById(`buildBadge${i}`);
+    const sumEl = document.getElementById(`buildSummary${i}`);
+    const loadBtn = document.getElementById(`buildLoad${i}`);
+    const clearBtn = document.getElementById(`buildClear${i}`);
+
+    const slot = builds[i] || { title: `Build ${i+1}`, preset: null };
+    const has = !!slot.preset;
+
+    if(titleEl) titleEl.textContent = slot.title || `Build ${i+1}`;
+    if(badgeEl){
+      badgeEl.textContent = has ? 'Salva' : 'Vazio';
+      badgeEl.classList.toggle('on', has);
+    }
+    if(sumEl) sumEl.textContent = has ? presetSummary(slot.preset) : '—';
+    if(loadBtn) loadBtn.disabled = !has;
+    if(clearBtn) clearBtn.disabled = !has;
+  }
+}
+
+function initBuildsUi(){
+  loadBuilds();
+  renderBuildsUi();
+
+  for(let i=0;i<3;i++){
+    const saveBtn = document.getElementById(`buildSave${i}`);
+    const loadBtn = document.getElementById(`buildLoad${i}`);
+    const renBtn = document.getElementById(`buildRename${i}`);
+    const clrBtn = document.getElementById(`buildClear${i}`);
+
+    if(saveBtn) saveBtn.addEventListener('click', () => {
+      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null };
+      builds[i].preset = capturePreset();
+      saveBuilds();
+      renderBuildsUi();
+      toastQuick(`Build ${i+1} salva.`);
+      log(`Build salva no slot ${i+1}.`);
+    });
+
+    if(loadBtn) loadBtn.addEventListener('click', () => {
+      const p = builds[i]?.preset;
+      if(!p) return;
+      applyPreset(p);
+      renderBuildsUi();
+      toastQuick(`Build ${i+1} carregada.`);
+      log(`Build carregada do slot ${i+1}.`);
+    });
+
+    if(renBtn) renBtn.addEventListener('click', () => {
+      const cur = builds[i]?.title || `Build ${i+1}`;
+      const name = prompt('Nome da build:', cur);
+      if(name == null) return;
+      const trimmed = String(name).trim();
+      if(!trimmed) return;
+
+      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null };
+      builds[i].title = trimmed.slice(0, 32);
+      saveBuilds();
+      renderBuildsUi();
+      toastQuick('Nome atualizado.');
+    });
+
+    if(clrBtn) clrBtn.addEventListener('click', () => {
+      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null };
+      builds[i].preset = null;
+      saveBuilds();
+      renderBuildsUi();
+      toastQuick(`Build ${i+1} limpa.`);
+      log(`Build limpa no slot ${i+1}.`);
+    });
+  }
+
+  const exportBuildsBtn = document.getElementById('exportBuilds');
+  if(exportBuildsBtn) exportBuildsBtn.addEventListener('click', () => {
+    const payload = {
+      v: 1,
+      kind: 'builds',
+      character: character?.meta?.name || 'character',
+      exported_at: new Date().toISOString(),
+      slots: builds
+    };
+    downloadJson('builds_tatsumaki.json', payload);
+    toastQuick('Builds exportadas.');
+  });
+
+  const importBtn = document.getElementById('importBuildsBtn');
+  const importFile = document.getElementById('importBuildsFile');
+  if(importBtn && importFile){
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', async () => {
+      const file = importFile.files?.[0];
+      importFile.value = '';
+      if(!file) return;
+      try{
+        const j = JSON.parse(await file.text());
+        if(!j || j.v !== 1 || !Array.isArray(j.slots)) throw new Error('inválido');
+        builds = builds.map((b, i) => {
+          const s = j.slots[i];
+          if(!s) return b;
+          return {
+            title: String(s.title || b.title || `Build ${i+1}`),
+            preset: (s.preset && typeof s.preset === 'object') ? s.preset : null
+          };
+        });
+        saveBuilds();
+        renderBuildsUi();
+        toastQuick('Builds importadas.');
+        log('Builds importadas (JSON).');
+      }catch(_){
+        toastQuick('Falha ao importar.', 'JSON inválido.');
+      }
+    });
+  }
+
+  // Sessão export/import (para backup rápido)
+  const exportSessionBtn = document.getElementById('exportSession');
+  if(exportSessionBtn) exportSessionBtn.addEventListener('click', () => {
+    const payload = {
+      v: 1,
+      kind: 'session',
+      character: character?.meta?.name || 'character',
+      exported_at: new Date().toISOString(),
+      state: {
+        round: state.round,
+        tracks: { ps: state.ps, pf: state.pf, pvo: state.pvo, pvd: state.pvd },
+        effects: state.effects,
+        essence: state.essence,
+        globalDamageBonusDice: state.globalDamageBonusDice,
+        logLines: state.logLines,
+        ui: state.ui
+      },
+      sfx: readSfxSettings()
+    };
+    downloadJson('sessao_tatsumaki.json', payload);
+    toastQuick('Sessão exportada.');
+  });
+
+  const importSessionBtn = document.getElementById('importSessionBtn');
+  const importSessionFile = document.getElementById('importSessionFile');
+  if(importSessionBtn && importSessionFile){
+    importSessionBtn.addEventListener('click', () => importSessionFile.click());
+    importSessionFile.addEventListener('change', async () => {
+      const file = importSessionFile.files?.[0];
+      importSessionFile.value = '';
+      if(!file) return;
+      try{
+        const j = JSON.parse(await file.text());
+        if(!j || j.v !== 1) throw new Error('inválido');
+        const s = (j.state && typeof j.state === 'object') ? j.state : j;
+
+        if(s.round != null) state.round = clampInt(s.round, 1, 9999);
+
+        const tr = s.tracks || {};
+        if(tr.ps != null) state.ps = Number(tr.ps);
+        if(tr.pf != null) state.pf = Number(tr.pf);
+        if(tr.pvo != null) state.pvo = Number(tr.pvo);
+        if(tr.pvd != null) state.pvd = Number(tr.pvd);
+
+        if(s.effects && typeof s.effects === 'object'){
+          state.effects = { sanguenta: null, plasma: null, aura: null, ...s.effects };
+        }
+        if(s.essence && typeof s.essence === 'object'){
+          state.essence = { ...state.essence, ...s.essence };
+        }
+        if(typeof s.globalDamageBonusDice === 'number'){
+          state.globalDamageBonusDice = clampInt(s.globalDamageBonusDice, 0, 10);
+        }
+        if(Array.isArray(s.logLines)){
+          state.logLines = s.logLines.slice(0, 200);
+        }
+        if(s.ui && typeof s.ui === 'object'){
+          state.ui = { ...state.ui, ...s.ui };
+          if(!state.ui.lastSkillRolls || typeof state.ui.lastSkillRolls !== 'object') state.ui.lastSkillRolls = {};
+        }
+
+        if(j.sfx) applySfxSettings(j.sfx);
+
+        // sincroniza toggles
+        try{
+          if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!state.ui.autoMagicAdv);
+        }catch(_){/* ignore */}
+
+        saveState();
+        renderEssenceUi();
+        renderBuildsUi();
+        render();
+        renderLog();
+
+        toastQuick('Sessão importada.');
+        log('Sessão importada (JSON).');
+      }catch(_){
+        toastQuick('Falha ao importar.', 'Arquivo inválido.');
+      }
+    });
+  }
+}
+
+
+// ------------------------------
 // Logging
 // ------------------------------
 function log(msg){
@@ -1639,9 +2043,8 @@ async function init(){
   initEssenceUi();
   loadEssenceBook();
 
-  // Etapa 10 — UI de Essência
-  initEssenceUi();
-  loadEssenceBook();
+  // Etapa 11 — Builds & Presets
+  initBuildsUi();
 
   renderCombatActions();
   render();
