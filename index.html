@@ -331,10 +331,63 @@
             </div>
           </div>
 
-          <div class="row" style="margin-top:10px; flex-wrap: wrap;">
-            <button id="exportSession" class="btn btn-ghost btn-sm" title="Exporta a sessão inteira (recursos, rodada, efeitos, log, essência e UI)">Exportar sessão</button>
-            <button id="importSessionBtn" class="btn btn-ghost btn-sm" title="Importa uma sessão exportada (substitui o estado atual)">Importar sessão</button>
-            <input id="importSessionFile" type="file" accept="application/json" hidden />
+          <hr class="divider" />
+
+          <div class="cardHeaderRow" style="margin-top: 6px;">
+            <h3 class="subTitle">Snapshots de Sessão</h3>
+            <div class="row">
+              <button id="exportSession" class="btn btn-ghost btn-sm" title="Exporta a sessão inteira (recursos, rodada, efeitos, log, essência e UI)">Exportar sessão</button>
+              <button id="importSessionBtn" class="btn btn-ghost btn-sm" title="Importa uma sessão exportada (substitui o estado atual)">Importar sessão</button>
+              <input id="importSessionFile" type="file" accept="application/json" hidden />
+            </div>
+          </div>
+
+          <div class="muted mini" style="margin-top:-4px;">
+            Snapshots salvam a <b>sessão inteira</b> para alternar rapidamente durante a mesa. Builds continuam salvando <b>apenas</b> configurações de personagem.
+          </div>
+
+          <div id="sessionGrid" class="buildGrid sessionGrid" aria-label="Slots de sessão">
+            <div class="buildSlot sessionSlot" data-sslot="0">
+              <div class="buildHeader">
+                <strong id="sessionTitle0">Sessão 1</strong>
+                <span id="sessionBadge0" class="badge">Vazio</span>
+              </div>
+              <div id="sessionSummary0" class="buildSummary muted">—</div>
+              <div class="buildBtns">
+                <button id="sessionSave0" class="btn btn-sm">Salvar sessão</button>
+                <button id="sessionLoad0" class="btn btn-ghost btn-sm" disabled>Carregar</button>
+                <button id="sessionRename0" class="btn btn-ghost btn-sm">Renomear</button>
+                <button id="sessionClear0" class="btn btn-danger btn-sm" disabled>Limpar</button>
+              </div>
+            </div>
+
+            <div class="buildSlot sessionSlot" data-sslot="1">
+              <div class="buildHeader">
+                <strong id="sessionTitle1">Sessão 2</strong>
+                <span id="sessionBadge1" class="badge">Vazio</span>
+              </div>
+              <div id="sessionSummary1" class="buildSummary muted">—</div>
+              <div class="buildBtns">
+                <button id="sessionSave1" class="btn btn-sm">Salvar sessão</button>
+                <button id="sessionLoad1" class="btn btn-ghost btn-sm" disabled>Carregar</button>
+                <button id="sessionRename1" class="btn btn-ghost btn-sm">Renomear</button>
+                <button id="sessionClear1" class="btn btn-danger btn-sm" disabled>Limpar</button>
+              </div>
+            </div>
+
+            <div class="buildSlot sessionSlot" data-sslot="2">
+              <div class="buildHeader">
+                <strong id="sessionTitle2">Sessão 3</strong>
+                <span id="sessionBadge2" class="badge">Vazio</span>
+              </div>
+              <div id="sessionSummary2" class="buildSummary muted">—</div>
+              <div class="buildBtns">
+                <button id="sessionSave2" class="btn btn-sm">Salvar sessão</button>
+                <button id="sessionLoad2" class="btn btn-ghost btn-sm" disabled>Carregar</button>
+                <button id="sessionRename2" class="btn btn-ghost btn-sm">Renomear</button>
+                <button id="sessionClear2" class="btn btn-danger btn-sm" disabled>Limpar</button>
+              </div>
+            </div>
           </div>
         </section>
       </section>

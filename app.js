@@ -1253,7 +1253,10 @@ function initEssenceUi(){
 }
 
 // ------------------------------
-// Etapa 11 — Builds & Presets (slots + export/import)
+// Etapa 12 — Builds & Snapshots (presets + sessão)
+// - Nome automático com timestamp
+// - Confirmação visual (flash)
+// - Builds (só configurações) separados de Snapshots (sessão inteira)
 // ------------------------------
 
 function toastQuick(title, detail){
@@ -1270,6 +1273,7 @@ function toastQuick(title, detail){
 
     const el = document.createElement('div');
     el.className = 'toast';
+
     const strong = document.createElement('div');
     strong.textContent = String(title || 'OK');
     el.appendChild(strong);
@@ -1286,10 +1290,28 @@ function toastQuick(title, detail){
       el.style.transform = 'translateY(6px)';
       el.style.transition = 'opacity .18s ease, transform .18s ease';
       setTimeout(() => el.remove(), 220);
-    }, 2000);
+    }, 2200);
   }catch(_){/* ignore */}
 }
 
+function formatStampShort(isoOrDate){
+  try{
+    const d = (isoOrDate instanceof Date) ? isoOrDate : new Date(isoOrDate);
+    if(!d || isNaN(d.getTime())) return '';
+    return d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }).replace(',', '');
+  }catch(_){ return ''; }
+}
+
+function flashSlot(el){
+  try{
+    if(!el) return;
+    el.classList.remove('slotFlash');
+    // force reflow
+    void el.offsetWidth;
+    el.classList.add('slotFlash');
+    setTimeout(() => el.classList.remove('slotFlash'), 650);
+  }catch(_){/* ignore */}
+}
 
 function downloadJson(filename, obj){
   try{
@@ -1309,18 +1331,53 @@ function downloadJson(filename, obj){
 
 function buildsKey(){
   const name = (character?.meta?.name || "character").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  return `rpg_builds:${name}:v1`;
+  return `rpg_builds:${name}:v2`;
+}
+
+function sessionsKey(){
+  const name = (character?.meta?.name || "character").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  return `rpg_sessions:${name}:v1`;
 }
 
 let builds = [
-  { title: "Build 1", preset: null },
-  { title: "Build 2", preset: null },
-  { title: "Build 3", preset: null }
+  { title: "Build 1", preset: null, savedAt: null, userNamed: false },
+  { title: "Build 2", preset: null, savedAt: null, userNamed: false },
+  { title: "Build 3", preset: null, savedAt: null, userNamed: false }
+];
+
+let sessions = [
+  { title: "Sessão 1", snap: null, savedAt: null, userNamed: false },
+  { title: "Sessão 2", snap: null, savedAt: null, userNamed: false },
+  { title: "Sessão 3", snap: null, savedAt: null, userNamed: false }
 ];
 
 function loadBuilds(){
+  // compatível com v1 (Etapa 11) e v2 (Etapa 12)
   try{
-    const raw = localStorage.getItem(buildsKey());
+    const rawV2 = localStorage.getItem(buildsKey());
+    if(rawV2){
+      const j = JSON.parse(rawV2);
+      if(j && j.v === 2 && Array.isArray(j.slots)){
+        builds = builds.map((b, i) => {
+          const s = j.slots[i];
+          if(!s) return b;
+          return {
+            title: String(s.title || b.title || `Build ${i+1}`),
+            preset: (s.preset && typeof s.preset === 'object') ? s.preset : null,
+            savedAt: s.savedAt || (s.preset?.captured_at || null),
+            userNamed: !!s.userNamed
+          };
+        });
+        return;
+      }
+    }
+  }catch(_){/* ignore */}
+
+  // v1 legacy
+  try{
+    const name = (character?.meta?.name || "character").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    const legacyKey = `rpg_builds:${name}:v1`;
+    const raw = localStorage.getItem(legacyKey);
     if(!raw) return;
     const j = JSON.parse(raw);
     if(!j || j.v !== 1 || !Array.isArray(j.slots)) return;
@@ -1330,17 +1387,50 @@ function loadBuilds(){
       if(!s) return b;
       return {
         title: String(s.title || b.title || `Build ${i+1}`),
-        preset: (s.preset && typeof s.preset === 'object') ? s.preset : null
+        preset: (s.preset && typeof s.preset === 'object') ? s.preset : null,
+        savedAt: s.preset?.captured_at || null,
+        userNamed: false
       };
     });
+    saveBuilds();
   }catch(_){/* ignore */}
 }
 
 function saveBuilds(){
   try{
     localStorage.setItem(buildsKey(), JSON.stringify({
-      v: 1,
+      v: 2,
       slots: builds,
+      saved_at: new Date().toISOString()
+    }));
+  }catch(_){/* ignore */}
+}
+
+function loadSessions(){
+  try{
+    const raw = localStorage.getItem(sessionsKey());
+    if(!raw) return;
+    const j = JSON.parse(raw);
+    if(!j || j.v !== 1 || !Array.isArray(j.slots)) return;
+
+    sessions = sessions.map((s0, i) => {
+      const s = j.slots[i];
+      if(!s) return s0;
+      return {
+        title: String(s.title || s0.title || `Sessão ${i+1}`),
+        snap: (s.snap && typeof s.snap === 'object') ? s.snap : null,
+        savedAt: s.savedAt || (s.snap?.captured_at || null),
+        userNamed: !!s.userNamed
+      };
+    });
+  }catch(_){/* ignore */}
+}
+
+function saveSessions(){
+  try{
+    localStorage.setItem(sessionsKey(), JSON.stringify({
+      v: 1,
+      slots: sessions,
       saved_at: new Date().toISOString()
     }));
   }catch(_){/* ignore */}
@@ -1444,6 +1534,67 @@ function applyPreset(p){
   render();
 }
 
+function captureSessionSnapshot(){
+  return {
+    v: 1,
+    kind: 'session_snapshot',
+    captured_at: new Date().toISOString(),
+    character: character?.meta?.name || 'character',
+    state: {
+      round: state.round,
+      tracks: { ps: state.ps, pf: state.pf, pvo: state.pvo, pvd: state.pvd },
+      effects: state.effects,
+      essence: state.essence,
+      globalDamageBonusDice: state.globalDamageBonusDice,
+      logLines: state.logLines,
+      ui: state.ui
+    },
+    sfx: readSfxSettings()
+  };
+}
+
+function applySessionSnapshot(j){
+  if(!j || typeof j !== 'object') return;
+  const s = (j.state && typeof j.state === 'object') ? j.state : j;
+
+  if(s.round != null) state.round = clampInt(s.round, 1, 9999);
+
+  const tr = s.tracks || {};
+  if(tr.ps != null) state.ps = Number(tr.ps);
+  if(tr.pf != null) state.pf = Number(tr.pf);
+  if(tr.pvo != null) state.pvo = Number(tr.pvo);
+  if(tr.pvd != null) state.pvd = Number(tr.pvd);
+
+  if(s.effects && typeof s.effects === 'object'){
+    state.effects = { sanguenta: null, plasma: null, aura: null, ...s.effects };
+  }
+  if(s.essence && typeof s.essence === 'object'){
+    state.essence = { ...state.essence, ...s.essence };
+  }
+  if(typeof s.globalDamageBonusDice === 'number'){
+    state.globalDamageBonusDice = clampInt(s.globalDamageBonusDice, 0, 10);
+  }
+  if(Array.isArray(s.logLines)){
+    state.logLines = s.logLines.slice(0, 200);
+  }
+  if(s.ui && typeof s.ui === 'object'){
+    state.ui = { ...state.ui, ...s.ui };
+    if(!state.ui.lastSkillRolls || typeof state.ui.lastSkillRolls !== 'object') state.ui.lastSkillRolls = {};
+  }
+
+  if(j.sfx) applySfxSettings(j.sfx);
+
+  // sincroniza toggles
+  try{
+    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!state.ui.autoMagicAdv);
+  }catch(_){/* ignore */}
+
+  saveState();
+  renderEssenceUi();
+  render();
+  renderLog();
+}
+
 function presetSummary(p){
   if(!p || typeof p !== 'object') return '—';
   const e = p.essence || {};
@@ -1453,7 +1604,19 @@ function presetSummary(p){
   const sm = p.ui?.skillMode ? String(p.ui.skillMode) : 'normal';
   const sfx = p.sfx ? `${p.sfx.enabled ? 'Som ON' : 'Som OFF'} • ${String(p.sfx.pack || 'shadowheart')}` : 'Som —';
   const res = (e.defPassiveRes && String(e.defPassiveRes).trim()) ? `\nResist.: ${String(e.defPassiveRes).trim()}` : '';
-  return `EV${e.ev ?? 0} / OF${e.off ?? 0} / DEF${e.def ?? 0} / APT${e.apt ?? 0} • ${mode}\nBônus dano: ${dmg} dado(s) • Auto magia: ${ama} • Perícias: ${sm}\n${sfx}${res}`;
+  const when = p.captured_at ? `\nSalva: ${formatStampShort(p.captured_at)}` : '';
+  return `EV${e.ev ?? 0} / OF${e.off ?? 0} / DEF${e.def ?? 0} / APT${e.apt ?? 0} • ${mode}\nBônus dano: ${dmg} dado(s) • Auto magia: ${ama} • Perícias: ${sm}\n${sfx}${res}${when}`;
+}
+
+function sessionSummary(sn){
+  if(!sn || typeof sn !== 'object') return '—';
+  const st = sn.state || {};
+  const tr = st.tracks || {};
+  const when = sn.captured_at ? formatStampShort(sn.captured_at) : '';
+  const fx = st.effects || {};
+  const fxOn = [fx.sanguenta ? 'Sanguenta' : null, fx.plasma ? 'Plasma' : null, fx.aura ? 'Aura' : null].filter(Boolean);
+  const fxTxt = fxOn.length ? fxOn.join(', ') : '—';
+  return `Rodada: ${st.round ?? '—'} • PS ${tr.ps ?? '—'} / PF ${tr.pf ?? '—'} • PVO ${tr.pvo ?? '—'} / PVD ${tr.pvd ?? '—'}\nEfeitos: ${fxTxt}${when ? `\nSalva: ${when}` : ''}`;
 }
 
 function renderBuildsUi(){
@@ -1464,23 +1627,78 @@ function renderBuildsUi(){
     const loadBtn = document.getElementById(`buildLoad${i}`);
     const clearBtn = document.getElementById(`buildClear${i}`);
 
-    const slot = builds[i] || { title: `Build ${i+1}`, preset: null };
+    const slotEl = document.querySelector(`.buildSlot[data-slot=\"${i}\"]`);
+    const slot = builds[i] || { title: `Build ${i+1}`, preset: null, savedAt: null };
     const has = !!slot.preset;
 
     if(titleEl) titleEl.textContent = slot.title || `Build ${i+1}`;
     if(badgeEl){
-      badgeEl.textContent = has ? 'Salva' : 'Vazio';
-      badgeEl.classList.toggle('on', has);
+      if(has){
+        const t = formatStampShort(slot.savedAt || slot.preset?.captured_at);
+        badgeEl.textContent = t ? `Salva • ${t}` : 'Salva';
+        badgeEl.classList.add('on');
+        badgeEl.title = slot.savedAt || slot.preset?.captured_at || '';
+      }else{
+        badgeEl.textContent = 'Vazio';
+        badgeEl.classList.remove('on');
+        badgeEl.title = '';
+      }
     }
     if(sumEl) sumEl.textContent = has ? presetSummary(slot.preset) : '—';
     if(loadBtn) loadBtn.disabled = !has;
     if(clearBtn) clearBtn.disabled = !has;
+
+    if(slotEl) slotEl.classList.toggle('hasData', has);
   }
+}
+
+function renderSessionsUi(){
+  for(let i=0;i<3;i++){
+    const titleEl = document.getElementById(`sessionTitle${i}`);
+    const badgeEl = document.getElementById(`sessionBadge${i}`);
+    const sumEl = document.getElementById(`sessionSummary${i}`);
+    const loadBtn = document.getElementById(`sessionLoad${i}`);
+    const clearBtn = document.getElementById(`sessionClear${i}`);
+
+    const slotEl = document.querySelector(`.sessionSlot[data-sslot=\"${i}\"]`);
+    const slot = sessions[i] || { title: `Sessão ${i+1}`, snap: null, savedAt: null };
+    const has = !!slot.snap;
+
+    if(titleEl) titleEl.textContent = slot.title || `Sessão ${i+1}`;
+    if(badgeEl){
+      if(has){
+        const t = formatStampShort(slot.savedAt || slot.snap?.captured_at);
+        badgeEl.textContent = t ? `Salva • ${t}` : 'Salva';
+        badgeEl.classList.add('on');
+        badgeEl.title = slot.savedAt || slot.snap?.captured_at || '';
+      }else{
+        badgeEl.textContent = 'Vazio';
+        badgeEl.classList.remove('on');
+        badgeEl.title = '';
+      }
+    }
+    if(sumEl) sumEl.textContent = has ? sessionSummary(slot.snap) : '—';
+    if(loadBtn) loadBtn.disabled = !has;
+    if(clearBtn) clearBtn.disabled = !has;
+
+    if(slotEl) slotEl.classList.toggle('hasData', has);
+  }
+}
+
+function ensureAutoTitle(slot, base){
+  try{
+    if(!slot) return;
+    if(slot.userNamed) return;
+    if(String(slot.title || '').trim() !== base) return;
+    slot.title = `${base} — ${formatStampShort(new Date())}`;
+  }catch(_){/* ignore */}
 }
 
 function initBuildsUi(){
   loadBuilds();
+  loadSessions();
   renderBuildsUi();
+  renderSessionsUi();
 
   for(let i=0;i<3;i++){
     const saveBtn = document.getElementById(`buildSave${i}`);
@@ -1488,12 +1706,17 @@ function initBuildsUi(){
     const renBtn = document.getElementById(`buildRename${i}`);
     const clrBtn = document.getElementById(`buildClear${i}`);
 
+    const slotEl = document.querySelector(`.buildSlot[data-slot=\"${i}\"]`);
+
     if(saveBtn) saveBtn.addEventListener('click', () => {
-      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null };
+      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null, savedAt: null, userNamed: false };
+      ensureAutoTitle(builds[i], `Build ${i+1}`);
       builds[i].preset = capturePreset();
+      builds[i].savedAt = new Date().toISOString();
       saveBuilds();
       renderBuildsUi();
-      toastQuick(`Build ${i+1} salva.`);
+      flashSlot(slotEl);
+      toastQuick(`Build salva`, builds[i].title);
       log(`Build salva no slot ${i+1}.`);
     });
 
@@ -1502,7 +1725,8 @@ function initBuildsUi(){
       if(!p) return;
       applyPreset(p);
       renderBuildsUi();
-      toastQuick(`Build ${i+1} carregada.`);
+      flashSlot(slotEl);
+      toastQuick(`Build carregada`, builds[i]?.title || `Build ${i+1}`);
       log(`Build carregada do slot ${i+1}.`);
     });
 
@@ -1513,27 +1737,31 @@ function initBuildsUi(){
       const trimmed = String(name).trim();
       if(!trimmed) return;
 
-      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null };
-      builds[i].title = trimmed.slice(0, 32);
+      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null, savedAt: null, userNamed: false };
+      builds[i].title = trimmed.slice(0, 40);
+      builds[i].userNamed = true;
       saveBuilds();
       renderBuildsUi();
-      toastQuick('Nome atualizado.');
+      toastQuick('Nome atualizado.', builds[i].title);
     });
 
     if(clrBtn) clrBtn.addEventListener('click', () => {
-      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null };
+      builds[i] = builds[i] || { title: `Build ${i+1}`, preset: null, savedAt: null, userNamed: false };
       builds[i].preset = null;
+      builds[i].savedAt = null;
       saveBuilds();
       renderBuildsUi();
-      toastQuick(`Build ${i+1} limpa.`);
+      flashSlot(slotEl);
+      toastQuick('Build limpa.', builds[i].title);
       log(`Build limpa no slot ${i+1}.`);
     });
   }
 
+  // Export/Import Builds
   const exportBuildsBtn = document.getElementById('exportBuilds');
   if(exportBuildsBtn) exportBuildsBtn.addEventListener('click', () => {
     const payload = {
-      v: 1,
+      v: 2,
       kind: 'builds',
       character: character?.meta?.name || 'character',
       exported_at: new Date().toISOString(),
@@ -1553,15 +1781,19 @@ function initBuildsUi(){
       if(!file) return;
       try{
         const j = JSON.parse(await file.text());
-        if(!j || j.v !== 1 || !Array.isArray(j.slots)) throw new Error('inválido');
+        if(!j || !Array.isArray(j.slots) || (j.v !== 1 && j.v !== 2)) throw new Error('inválido');
+
         builds = builds.map((b, i) => {
           const s = j.slots[i];
           if(!s) return b;
           return {
             title: String(s.title || b.title || `Build ${i+1}`),
-            preset: (s.preset && typeof s.preset === 'object') ? s.preset : null
+            preset: (s.preset && typeof s.preset === 'object') ? s.preset : null,
+            savedAt: s.savedAt || (s.preset?.captured_at || null),
+            userNamed: !!s.userNamed
           };
         });
+
         saveBuilds();
         renderBuildsUi();
         toastQuick('Builds importadas.');
@@ -1572,25 +1804,71 @@ function initBuildsUi(){
     });
   }
 
-  // Sessão export/import (para backup rápido)
+  // Snapshots de Sessão (slots)
+  for(let i=0;i<3;i++){
+    const saveBtn = document.getElementById(`sessionSave${i}`);
+    const loadBtn = document.getElementById(`sessionLoad${i}`);
+    const renBtn = document.getElementById(`sessionRename${i}`);
+    const clrBtn = document.getElementById(`sessionClear${i}`);
+
+    const slotEl = document.querySelector(`.sessionSlot[data-sslot=\"${i}\"]`);
+
+    if(saveBtn) saveBtn.addEventListener('click', () => {
+      sessions[i] = sessions[i] || { title: `Sessão ${i+1}`, snap: null, savedAt: null, userNamed: false };
+      ensureAutoTitle(sessions[i], `Sessão ${i+1}`);
+      sessions[i].snap = captureSessionSnapshot();
+      sessions[i].savedAt = new Date().toISOString();
+      saveSessions();
+      renderSessionsUi();
+      flashSlot(slotEl);
+      toastQuick('Sessão salva', sessions[i].title);
+      log(`Snapshot de sessão salvo no slot ${i+1}.`);
+    });
+
+    if(loadBtn) loadBtn.addEventListener('click', () => {
+      const sn = sessions[i]?.snap;
+      if(!sn) return;
+      applySessionSnapshot(sn);
+      renderBuildsUi();
+      renderSessionsUi();
+      flashSlot(slotEl);
+      toastQuick('Sessão carregada', sessions[i]?.title || `Sessão ${i+1}`);
+      log(`Snapshot de sessão carregado do slot ${i+1}.`);
+    });
+
+    if(renBtn) renBtn.addEventListener('click', () => {
+      const cur = sessions[i]?.title || `Sessão ${i+1}`;
+      const name = prompt('Nome da sessão:', cur);
+      if(name == null) return;
+      const trimmed = String(name).trim();
+      if(!trimmed) return;
+
+      sessions[i] = sessions[i] || { title: `Sessão ${i+1}`, snap: null, savedAt: null, userNamed: false };
+      sessions[i].title = trimmed.slice(0, 40);
+      sessions[i].userNamed = true;
+      saveSessions();
+      renderSessionsUi();
+      toastQuick('Nome atualizado.', sessions[i].title);
+    });
+
+    if(clrBtn) clrBtn.addEventListener('click', () => {
+      sessions[i] = sessions[i] || { title: `Sessão ${i+1}`, snap: null, savedAt: null, userNamed: false };
+      sessions[i].snap = null;
+      sessions[i].savedAt = null;
+      saveSessions();
+      renderSessionsUi();
+      flashSlot(slotEl);
+      toastQuick('Sessão limpa.', sessions[i].title);
+      log(`Snapshot de sessão limpo no slot ${i+1}.`);
+    });
+  }
+
+  // Export/Import Sessão (arquivo)
   const exportSessionBtn = document.getElementById('exportSession');
   if(exportSessionBtn) exportSessionBtn.addEventListener('click', () => {
-    const payload = {
-      v: 1,
-      kind: 'session',
-      character: character?.meta?.name || 'character',
-      exported_at: new Date().toISOString(),
-      state: {
-        round: state.round,
-        tracks: { ps: state.ps, pf: state.pf, pvo: state.pvo, pvd: state.pvd },
-        effects: state.effects,
-        essence: state.essence,
-        globalDamageBonusDice: state.globalDamageBonusDice,
-        logLines: state.logLines,
-        ui: state.ui
-      },
-      sfx: readSfxSettings()
-    };
+    const payload = captureSessionSnapshot();
+    payload.kind = 'session';
+    payload.exported_at = new Date().toISOString();
     downloadJson('sessao_tatsumaki.json', payload);
     toastQuick('Sessão exportada.');
   });
@@ -1606,46 +1884,9 @@ function initBuildsUi(){
       try{
         const j = JSON.parse(await file.text());
         if(!j || j.v !== 1) throw new Error('inválido');
-        const s = (j.state && typeof j.state === 'object') ? j.state : j;
-
-        if(s.round != null) state.round = clampInt(s.round, 1, 9999);
-
-        const tr = s.tracks || {};
-        if(tr.ps != null) state.ps = Number(tr.ps);
-        if(tr.pf != null) state.pf = Number(tr.pf);
-        if(tr.pvo != null) state.pvo = Number(tr.pvo);
-        if(tr.pvd != null) state.pvd = Number(tr.pvd);
-
-        if(s.effects && typeof s.effects === 'object'){
-          state.effects = { sanguenta: null, plasma: null, aura: null, ...s.effects };
-        }
-        if(s.essence && typeof s.essence === 'object'){
-          state.essence = { ...state.essence, ...s.essence };
-        }
-        if(typeof s.globalDamageBonusDice === 'number'){
-          state.globalDamageBonusDice = clampInt(s.globalDamageBonusDice, 0, 10);
-        }
-        if(Array.isArray(s.logLines)){
-          state.logLines = s.logLines.slice(0, 200);
-        }
-        if(s.ui && typeof s.ui === 'object'){
-          state.ui = { ...state.ui, ...s.ui };
-          if(!state.ui.lastSkillRolls || typeof state.ui.lastSkillRolls !== 'object') state.ui.lastSkillRolls = {};
-        }
-
-        if(j.sfx) applySfxSettings(j.sfx);
-
-        // sincroniza toggles
-        try{
-          if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!state.ui.autoMagicAdv);
-        }catch(_){/* ignore */}
-
-        saveState();
-        renderEssenceUi();
+        applySessionSnapshot(j);
         renderBuildsUi();
-        render();
-        renderLog();
-
+        renderSessionsUi();
         toastQuick('Sessão importada.');
         log('Sessão importada (JSON).');
       }catch(_){
@@ -1654,7 +1895,6 @@ function initBuildsUi(){
     });
   }
 }
-
 
 // ------------------------------
 // Logging
