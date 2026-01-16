@@ -1639,3 +1639,68 @@ select,input{
 /* Garante que overlays não capturem clique */
 .modalBackdrop, .toastHost{ pointer-events: auto; }
 .quickbar, .quickSlot, .actions, .btn, button, input, select{ pointer-events: auto; }
+
+
+/* Resultado global */
+.resultOverlay{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9999;
+  pointer-events: none;
+}
+.resultOverlay[hidden]{
+  display: none !important;
+}
+.resultOverlayCard{
+  position: relative;
+  width: min(520px, calc(100vw - 32px));
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(180deg, rgba(14,16,22,0.94), rgba(10,12,18,0.88));
+  box-shadow: 0 18px 55px rgba(0,0,0,0.55);
+  border-radius: 16px;
+  padding: 14px 14px 12px 14px;
+  pointer-events: auto;
+  backdrop-filter: blur(10px);
+}
+.resultOverlayContent{
+  padding-right: 32px;
+}
+.resultClose{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+}
+.resultClose:hover{
+  background: rgba(255,255,255,0.10);
+}
+.resultTitle{
+  font-weight: 800;
+  letter-spacing: .2px;
+}
+.resultMeta{
+  margin-top: 2px;
+  color: rgba(255,255,255,0.72);
+  font-size: 12px;
+}
+.resultBig{
+  margin-top: 10px;
+  font-size: 22px;
+  font-weight: 900;
+}
+.resultDetail{
+  margin-top: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(255,255,255,0.80);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

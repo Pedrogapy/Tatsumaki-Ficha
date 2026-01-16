@@ -93,9 +93,18 @@
         <button id="startTurn" class="btn btn-ghost">Começar turno</button>
         <button id="newRound" class="btn">Nova rodada</button>
         <button id="newCombat" class="btn">Novo combate</button>
+        <button id="fullRestore" class="btn btn-ghost">Full restore</button>
         <button id="resetAll" class="btn btn-danger">Reset total</button>
       </div>
     </header>
+
+    <!-- Resultado global (mostra 1 teste por vez, só fecha ao clicar) -->
+    <div id="resultOverlay" class="resultOverlay" hidden>
+      <div class="resultOverlayCard" role="dialog" aria-modal="false" aria-live="polite" aria-atomic="true">
+        <button id="resultOverlayClose" class="resultClose" aria-label="Fechar resultado" title="Fechar (Esc)">✕</button>
+        <div id="resultOverlayContent" class="resultOverlayContent"></div>
+      </div>
+    </div>
 
     <nav class="tabs" role="tablist" aria-label="Navegação">
       <button class="tab active" data-tab="tab-combat" aria-controls="tab-combat" aria-selected="true">Combate</button>

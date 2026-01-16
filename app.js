@@ -432,6 +432,83 @@ function applyStateToSkillUi(){
   if(b) b.checked = !!state?.ui?.autoMagicAdv;
 }
 
+
+// ------------------------------
+// Resultado global (persistente)
+// - Mostra 1 resultado por vez
+// - Só fecha no X (ou ESC)
+// ------------------------------
+let __resultOverlayEl = null;
+let __resultOverlayContentEl = null;
+let __resultOverlayCloseEl = null;
+let __resultOverlayBound = false;
+
+function initResultOverlay(){
+  __resultOverlayEl = document.getElementById('resultOverlay');
+  __resultOverlayContentEl = document.getElementById('resultOverlayContent');
+  __resultOverlayCloseEl = document.getElementById('resultOverlayClose');
+  if(__resultOverlayBound) return;
+  __resultOverlayBound = true;
+
+  if(__resultOverlayCloseEl){
+    __resultOverlayCloseEl.addEventListener('click', () => hideResultOverlay());
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && __resultOverlayEl && !__resultOverlayEl.hidden){
+      hideResultOverlay();
+    }
+  });
+}
+
+function hideResultOverlay(){
+  if(!__resultOverlayEl) initResultOverlay();
+  if(!__resultOverlayEl) return;
+  __resultOverlayEl.hidden = true;
+  if(__resultOverlayContentEl) __resultOverlayContentEl.innerHTML = '';
+}
+
+function showResultOverlay(payload){
+  if(!__resultOverlayEl) initResultOverlay();
+  if(!__resultOverlayEl || !__resultOverlayContentEl) return;
+
+  const title = String(payload?.title || 'Resultado');
+  const meta = String(payload?.meta || '').trim();
+  const big = String(payload?.big || '').trim();
+  const detail = String(payload?.detail || '').trim();
+
+  // Limpa e reconstrói sem HTML inseguro
+  __resultOverlayContentEl.innerHTML = '';
+
+  const titleEl = document.createElement('div');
+  titleEl.className = 'resultTitle';
+  titleEl.textContent = title;
+  __resultOverlayContentEl.appendChild(titleEl);
+
+  if(meta){
+    const metaEl = document.createElement('div');
+    metaEl.className = 'resultMeta';
+    metaEl.textContent = meta;
+    __resultOverlayContentEl.appendChild(metaEl);
+  }
+
+  if(big){
+    const bigEl = document.createElement('div');
+    bigEl.className = 'resultBig';
+    bigEl.textContent = big;
+    __resultOverlayContentEl.appendChild(bigEl);
+  }
+
+  if(detail){
+    const dEl = document.createElement('div');
+    dEl.className = 'resultDetail';
+    dEl.textContent = detail;
+    __resultOverlayContentEl.appendChild(dEl);
+  }
+
+  __resultOverlayEl.hidden = false;
+}
+
 // Etapa 9 — helpers de UI (resultado destacado + animação + atalhos)
 let skillResultTimer = null;
 let combatResultTimer = null;
@@ -448,69 +525,31 @@ function modeLabel(mode){
 }
 
 function showSkillResultBanner(payload){
-  const el = document.getElementById('skillResult');
-  if(!el) return;
-
-  const name = payload?.name || 'Perícia';
-  const attr = String(payload?.attr || '').toUpperCase();
-  const total = payload?.total;
-  const mode = payload?.mode || 'normal';
-  const detail = payload?.detail || '';
-
-  el.hidden = false;
-  el.classList.remove('show');
-
-  // Conteúdo
-  el.innerHTML = `
-    <div class="srTitle">
-      <div class="srName">${name} <span class="muted">[${attr}]</span></div>
-      <div class="srMode">${modeLabel(mode)}</div>
-    </div>
-    <div class="srValue">Resultado: ${fmtNumber(Number(total))}</div>
-    <div class="srDetail">${detail}</div>
-  `;
-
-  // animação
-  requestAnimationFrame(() => el.classList.add('show'));
-
-  // auto-hide
-  if(skillResultTimer) clearTimeout(skillResultTimer);
-  skillResultTimer = setTimeout(() => {
-    el.classList.remove('show');
-    el.hidden = true;
-  }, 9000);
+  // Um único resultado na tela (overlay global).
+  if(!payload) return;
+  const mode = payload.mode ? `Modo: ${payload.mode}` : '';
+  showResultOverlay({
+    title: `Perícia — ${payload.skill || 'Teste'}`,
+    meta: mode,
+    big: `Total: ${payload.total}`,
+    detail: payload.detail
+  });
 }
+
 
 
 function showCombatResultBanner(payload){
-  const el = document.getElementById('combatResult');
-  if(!el) return;
-
-  const title = String(payload?.title || payload?.name || "Ação");
-  const label = String(payload?.label || "");
-  const total = payload?.total;
-  const detail = String(payload?.detail || payload?.exprDetail || "");
-
-  el.hidden = false;
-  el.classList.remove('show');
-
-  el.innerHTML = `
-    <div class="crTitle">
-      <div class="crName">${title}${label ? ` <span class="muted">— ${label}</span>` : ""}</div>
-      <div class="crHot">Atalhos: 1-9</div>
-    </div>
-    <div class="crValue">Resultado: ${Number.isFinite(Number(total)) ? fmtNumber(Number(total)) : "—"}</div>
-    <div class="crDetail">${detail || ""}</div>
-  `;
-
-  requestAnimationFrame(() => el.classList.add('show'));
-
-  if(combatResultTimer) clearTimeout(combatResultTimer);
-  combatResultTimer = setTimeout(() => {
-    el.classList.remove('show');
-    el.hidden = true;
-  }, 11000);
+  // Um único resultado na tela (overlay global).
+  if(!payload) return;
+  const label = payload.label ? ` — ${payload.label}` : '';
+  showResultOverlay({
+    title: `Combate — ${payload.name || 'Ação'}${label}`,
+    meta: payload.target ? `Alvo: ${payload.target}` : '',
+    big: (payload.total !== undefined && payload.total !== null) ? `Total: ${payload.total}` : '',
+    detail: payload.detail || ''
+  });
 }
+
 
 function animateSkillCard(cardEl){
   if(!cardEl) return;
@@ -903,7 +942,7 @@ let state = {
   pf: 100,
   round: 1,
   // configurable (kept as 2 to match your current behavior)
-  globalDamageBonusDice: 2,
+  globalDamageBonusDice: 3,
 
   // Etapa 10 — níveis de Essência (EV/Of/Def/Apt) e preferências
   // Defaults: Tatsumaki (EV3, OF2, DEF1, APT1)
@@ -912,7 +951,7 @@ let state = {
     off: 2,
     def: 1,
     apt: 1,
-    stackMode: "conservative", // conservative | literal
+    stackMode: "literal", // conservative | literal
     defPassiveRes: ""
   },
 
@@ -925,6 +964,7 @@ let state = {
   logLines: [],
 
   ui: {
+    passivesAlwaysOn: true,
     skillMode: "normal",
     autoMagicAdv: true,
     // Etapa 16 — Biblioteca de habilidades
@@ -1008,6 +1048,18 @@ function resetTracks(){
   state.pvd = MAX.pvd;
 }
 
+function fullRestoreTracks(){
+  // Restaura recursos principais sem mexer em buffs/efeitos.
+  state.ps = MAX.ps;
+  state.pf = MAX.pf;
+  state.pvo = MAX.pvo;
+  state.pvd = MAX.pvd;
+  log(`Full restore: PS ${state.ps}/${MAX.ps} | PF ${state.pf}/${MAX.pf} | PV ${state.pvo+state.pvd}/${MAX.pvo+MAX.pvd}`);
+  try{ window.__sfx?.play?.('reset'); }catch(_){/* ignore */}
+  render();
+}
+
+
 function spend(resourceKey, amount){
   const k = resourceKey.toLowerCase();
   if(typeof state[k] !== "number") return false;
@@ -1035,7 +1087,7 @@ function getEssence(){
     off: clampInt(e.off, 0, 5),
     def: clampInt(e.def, 0, 5),
     apt: clampInt(e.apt, 0, 5),
-    stackMode: (e.stackMode === 'literal') ? 'literal' : 'conservative',
+    stackMode: (e.stackMode === 'conservative') ? 'conservative' : 'literal',
     defPassiveRes: String(e.defPassiveRes || '')
   };
 }
@@ -1061,6 +1113,27 @@ function computeEssenceDamageDice(){
   const recommended = (e.stackMode === 'literal') ? literal : conservative;
 
   return { evDice, offDice, literal, conservative, recommended };
+}
+
+
+function syncPassiveEssenceRules(){
+  // Regra: EV, Ofensiva e Aptidão são sempre passivas (sempre ativas).
+  // Isso implica empilhar EV + Ofensiva no bônus global de dano.
+  const e = getEssence();
+  if(!state.essence) state.essence = {};
+  // Mantém o seletor, mas por padrão empilha (literal).
+  state.essence.stackMode = (state.ui?.passivesAlwaysOn === false) ? e.stackMode : "literal";
+
+  // Bônus de dados global (quando passivas sempre ativas): soma EV + Ofensiva
+  if(state.ui?.passivesAlwaysOn !== false){
+    const diceInfo = computeEssenceDamageDice();
+    const passiveDice = diceInfo.literal;
+    if(Number.isFinite(passiveDice)) state.globalDamageBonusDice = clampInt(passiveDice, 0, 10);
+  }
+
+  // Aptidão 1: vantagem automática em perícias mágicas
+  if(!state.ui) state.ui = {};
+  if(e.apt >= 1) state.ui.autoMagicAdv = true;
 }
 
 function applyRecommendedDamageDice(){
@@ -1159,6 +1232,9 @@ function endAura(){
 }
 
 function renderEssenceUi(){
+  if(state.ui?.passivesAlwaysOn !== false){
+    syncPassiveEssenceRules();
+  }
   const e = getEssence();
   // inputs
   const evEl = document.getElementById('essEV');
@@ -1175,6 +1251,12 @@ function renderEssenceUi(){
   if(aptEl) aptEl.value = String(e.apt);
   if(dmgEl) dmgEl.value = String(clampInt(state.globalDamageBonusDice, 0, 10));
   if(modeEl) modeEl.value = e.stackMode;
+
+  // Se passivas sempre ativas, travo o modo e o bônus global (evita conta errada)
+  const passivesLocked = state.ui?.passivesAlwaysOn !== false;
+  if(modeEl) modeEl.disabled = passivesLocked;
+  if(dmgEl) dmgEl.disabled = passivesLocked;
+  document.querySelectorAll('[data-stepper][data-ess="dmg"]').forEach(b => b.disabled = passivesLocked);
 
   // hints
   const evH = document.getElementById('essEVHint');
@@ -3761,12 +3843,19 @@ async function init(){
     render();
   };
 
+  // Full restore (vida/energia/PV)
+  const fullRestoreEl = document.getElementById("fullRestore");
+  if(fullRestoreEl){
+    fullRestoreEl.onclick = () => { fullRestoreTracks(); };
+  }
+
   // Sorte
   document.getElementById("roll_luck").onclick = () => {
     const mod = Number(character?.stats?.luck ?? 0);
     const mode = (document.getElementById("luckMode")?.value || "normal");
     const res = rollD20WithMode(mod, mode);
     log(`Sorte: ${res.detail}`);
+    showResultOverlay({ title: "Sorte", meta: `d20 + ${mod} (${modeLabel(mode)})`, big: `Total: ${res.total}`, detail: res.detail });
     render();
   };
 
