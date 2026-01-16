@@ -143,8 +143,8 @@
   }
 
   function applyPack(){
-    const c = ensure();
-    if(!c) return;
+    // Não cria contexto de áudio sozinho; só aplica se já existir.
+    if(!ctx) return;
     const pp = packParams();
     if(sfxSend) sfxSend.gain.value = pp.fxSend;
     if(delay) delay.delayTime.value = pp.delayTime;
@@ -626,8 +626,6 @@
   };
 
   document.addEventListener('DOMContentLoaded', () => {
-    ensure();
-    applyPack();
     setupControls();
     setupGlobalClicks();
     // por padrão, ambiente respeita o settings (OFF)

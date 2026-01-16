@@ -1799,6 +1799,7 @@ function renderQuickbar(){
           b.className = 'btn btn-sm';
           b.textContent = r.label;
           b.addEventListener('click', () => {
+            const label = String(r.label||'');
             // custo
             const cost = action?.auto_cost && typeof action.auto_cost === 'object' ? action.auto_cost : null;
             if(cost && shouldSpendCombatCost(action, label, ridx)){
@@ -1806,21 +1807,20 @@ function renderQuickbar(){
               log(`Custo pago (${action.name}): ${Object.entries(cost).map(([k,v])=>`${k} -${v}`).join(' • ')}`);
             }
 
-            const label = String(r.label||'');
             if(label.toLowerCase().includes('dano')){
               // se existir input especial e o dano padrão for o da arma, preferir o input
               const targetKey = normKey(action?.name || 'combat');
               // se o roll já tem expr, usa ele
               const out = damageFor(targetKey, r.expr);
-              showCombatResultBanner({ name: action.name, label: r.label, total: out?.total, detail: out?.detail });
+              showCombatResultBanner({ name: action.name, label, total: out?.total, detail: out?.detail });
               try{ window.__sfx?.play?.('hit'); }catch(_){ }
               render();
               return;
             }
 
             const res = evalExpr(r.expr, ctx);
-            log(`Ação ${action.name} — ${r.label}: ${res.detail}`);
-            showCombatResultBanner({ name: action.name, label: r.label, total: res.total, detail: res.detail });
+            log(`Ação ${action.name} — ${label}: ${res.detail}`);
+            showCombatResultBanner({ name: action.name, label, total: res.total, detail: res.detail });
             try{ window.__sfx?.play?.('roll'); }catch(_){ }
             render();
           });
@@ -3744,6 +3744,7 @@ function renderCombatActions(){
     rolls.forEach(r => {
       if(!r.expr) return; // skip empty
       const btn = document.createElement("button");
+      btn.className = "btn btn-sm";
       btn.textContent = r.label || "Rolar";
       btn.onclick = () => {
         // Spend cost only when rolling "Teste" (ação principal)
@@ -3774,6 +3775,7 @@ function renderCombatActions(){
     // If this action expects weapon damage input but has no damage roll, create one
     if(action.ui && action.ui.weapon_damage_input){
       const dmgBtn = document.createElement("button");
+      dmgBtn.className = "btn btn-sm";
       dmgBtn.textContent = "Dano";
       dmgBtn.onclick = () => {
         const base = (weaponInput?.value || "2d6").trim() || "2d6";
