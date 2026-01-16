@@ -2271,10 +2271,10 @@ function renderAbilitiesLibrary(){
             if(isDamage){
               const target = String(state.ui.abilityDamageTarget || 'generic');
               const out = damageFor(target, effectiveExpr);
-              log(`Rolagem (${ab.name} / ${label}): ${out.text}`);
+              log(`Rolagem (${ab.name} / ${label}): ${out.detail}`);
             }else{
               const out = evalExpr(effectiveExpr);
-              log(`Rolagem (${ab.name} / ${label}): ${out.text}`);
+              log(`Rolagem (${ab.name} / ${label}): ${out.detail}`);
             }
             render();
           };
