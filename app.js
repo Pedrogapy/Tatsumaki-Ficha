@@ -1645,6 +1645,26 @@ function toggleFavoriteToken(token){
   renderFavoritesManagerList();
 }
 
+// Aliases de compatibilidade (algumas telas usam os nomes sem sufixo)
+function isFavorite(token){
+  return isFavoriteToken(token);
+}
+
+function toggleFavorite(token){
+  return toggleFavoriteToken(token);
+}
+
+// Regras de custo para ações de combate:
+// - Por padrão, o custo (PVO/PVD/PS/PF) é pago apenas na rolagem de "Teste" (ou 1ª rolagem se não houver rótulo).
+// - Rolagens de "Dano" NÃO consomem PV novamente (evita pagar duas vezes para o mesmo ataque).
+function shouldSpendCombatCost(action, rollLabel, rollIdx){
+  const lbl = String(rollLabel || '').toLowerCase();
+  if(lbl.includes('dano')) return false;
+  if(lbl.includes('teste')) return true;
+  // fallback: só a primeira rolagem paga
+  return Number(rollIdx) === 0;
+}
+
 function updateFavoriteButtons(){
   document.querySelectorAll('.favBtn[data-fav-token]').forEach(btn => {
     const token = btn.getAttribute('data-fav-token');
@@ -1774,14 +1794,14 @@ function renderQuickbar(){
           rollsBox.appendChild(dmgInput);
         }
 
-        (action.rolls || []).forEach(r => {
+        (action.rolls || []).forEach((r, ridx) => {
           const b = document.createElement('button');
           b.className = 'btn btn-sm';
           b.textContent = r.label;
           b.addEventListener('click', () => {
             // custo
             const cost = action?.auto_cost && typeof action.auto_cost === 'object' ? action.auto_cost : null;
-            if(cost){
+            if(cost && shouldSpendCombatCost(action, label, ridx)){
               for(const [k,v] of Object.entries(cost)) if(!spend(k, v)){ try{ window.__sfx?.play?.('error'); }catch(_){}; render(); return; }
               log(`Custo pago (${action.name}): ${Object.entries(cost).map(([k,v])=>`${k} -${v}`).join(' • ')}`);
             }
@@ -1813,11 +1833,6 @@ function renderQuickbar(){
           b.className = 'btn btn-sm';
           b.textContent = 'Dano (base arma)';
           b.addEventListener('click', () => {
-            const cost = action?.auto_cost && typeof action.auto_cost === 'object' ? action.auto_cost : null;
-            if(cost){
-              for(const [k,v] of Object.entries(cost)) if(!spend(k, v)){ try{ window.__sfx?.play?.('error'); }catch(_){}; render(); return; }
-              log(`Custo pago (${action.name}): ${Object.entries(cost).map(([k,v])=>`${k} -${v}`).join(' • ')}`);
-            }
             const cfg = action.ui.weapon_damage_input;
             const base = String(state.ui.weaponBases[token] || '').trim() || String(cfg.default||'').trim();
             const extra = base ? `${base} + @attributes.Força.quarter` : `@attributes.Força.quarter`;
