@@ -933,12 +933,13 @@ function buildContextFromCharacter(c){
 // ------------------------------
 // State + persistence
 // ------------------------------
-let MAX = { ps: 100, pvo: 2, pvd: 3, pf: 100 };
+// Defaults (fallback). Os valores reais vêm do data/character.json (stats.tracks).
+let MAX = { ps: 100, pvo: 3, pvd: 4, pf: 100 };
 
 let state = {
   ps: 100,
-  pvo: 2,
-  pvd: 3,
+  pvo: 3,
+  pvd: 4,
   pf: 100,
   round: 1,
   // configurable (kept as 2 to match your current behavior)
@@ -3831,8 +3832,8 @@ async function init(){
   MAX = {
     ps: tracks.PS?.max ?? 100,
     pf: tracks.PF?.max ?? 100,
-    pvo: tracks.PVO?.max ?? 2,
-    pvd: tracks.PVD?.max ?? 3
+    pvo: tracks.PVO?.max ?? 3,
+    pvd: tracks.PVD?.max ?? 4
   };
 
   // Default current from character
@@ -3843,6 +3844,11 @@ async function init(){
 
   // Restore save if exists
   loadState();
+
+  // Compat: se veio de um save antigo (PVO=2 / PVD=3 cheios), promove para o novo teto.
+  // (Se o jogador já gastou PV e está abaixo disso, mantém.)
+  if(state.pvo === 2 && MAX.pvo === 3) state.pvo = MAX.pvo;
+  if(state.pvd === 3 && MAX.pvd === 4) state.pvd = MAX.pvd;
 
   // Etapa 17 — Favoritos
   seedDefaultFavoritesIfNeeded();

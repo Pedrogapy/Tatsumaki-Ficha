@@ -3,15 +3,15 @@
     "name": "Tatsumaki ShadowHeart Gojo",
     "race": {
       "name": "Humano",
-      "level": 69,
-      "raw": "Humano69"
+      "level": 80,
+      "raw": "Humano80"
     },
     "class": {
       "name": "Espadachim",
       "level": 7,
       "raw": "Espadachim7"
     },
-    "experience_raw": "1975 + 335"
+    "experience_raw": "1025 + 85"
   },
   "attributes": [
     {
@@ -23,17 +23,17 @@
     },
     {
       "name": "Arcano",
-      "value": 20,
-      "half": 10,
-      "quarter": 5,
-      "eighth": 2
+      "value": 24,
+      "half": 12,
+      "quarter": 6,
+      "eighth": 3
     },
     {
       "name": "Destreza",
-      "value": 27,
-      "half": 13,
-      "quarter": 6,
-      "eighth": 3
+      "value": 40,
+      "half": 20,
+      "quarter": 10,
+      "eighth": 5
     },
     {
       "name": "Sabedoria",
@@ -44,14 +44,14 @@
     },
     {
       "name": "Fortitude",
-      "value": 20,
-      "half": 10,
-      "quarter": 5,
-      "eighth": 2
+      "value": 26,
+      "half": 13,
+      "quarter": 6,
+      "eighth": 3
     },
     {
       "name": "Inteligência",
-      "value": 18,
+      "value": 19,
       "half": 9,
       "quarter": 4,
       "eighth": 2
@@ -127,126 +127,126 @@
         "attribute": "DES",
         "level": 6,
         "proficient": true,
-        "total": 12
+        "total": 16
       },
       {
         "name": "Defletir",
         "attribute": "DES",
         "level": 1,
         "proficient": false,
-        "total": 4
+        "total": 6
       },
       {
         "name": "Pontaria",
         "attribute": "DES",
         "level": 5,
         "proficient": false,
-        "total": 8
+        "total": 10
       },
       {
         "name": "Manuseio",
         "attribute": "DES",
         "level": 1,
         "proficient": false,
-        "total": 4
+        "total": 6
       },
       {
         "name": "Acrobacia",
         "attribute": "DES",
         "level": 1,
         "proficient": false,
-        "total": 4
+        "total": 6
       },
       {
         "name": "Espionagem",
         "attribute": "DES",
         "level": null,
         "proficient": false,
-        "total": 3
+        "total": 5
       },
       {
         "name": "Furtividade",
         "attribute": "DES",
         "level": 2,
         "proficient": false,
-        "total": 5
+        "total": 7
       },
       {
         "name": "Prestidigitação",
         "attribute": "DES",
         "level": 2,
         "proficient": false,
-        "total": 5
+        "total": 7
       },
       {
         "name": "Armas Avançadas",
         "attribute": "DES",
         "level": 5,
         "proficient": true,
-        "total": 11
+        "total": 15
       },
       {
         "name": "Saúde",
         "attribute": "FORT",
         "level": 1,
         "proficient": false,
-        "total": 3
+        "total": 4
       },
       {
         "name": "Firmeza",
         "attribute": "FORT",
         "level": null,
         "proficient": false,
-        "total": 2
+        "total": 3
       },
       {
         "name": "Manobra",
         "attribute": "FORT",
         "level": null,
         "proficient": false,
-        "total": 2
+        "total": 3
       },
       {
         "name": "Atletismo",
         "attribute": "FORT",
         "level": 2,
         "proficient": false,
-        "total": 4
+        "total": 5
       },
       {
         "name": "Defender",
         "attribute": "FORT",
         "level": null,
         "proficient": false,
-        "total": 2
+        "total": 3
       },
       {
         "name": "Resistência",
         "attribute": "FORT",
-        "level": 2,
-        "proficient": false,
-        "total": 4
+        "level": 6,
+        "proficient": true,
+        "total": 12
       },
       {
         "name": "Tolerar a Dor",
         "attribute": "FORT",
         "level": 1,
         "proficient": false,
-        "total": 3
+        "total": 4
       },
       {
         "name": "Determinação",
         "attribute": "FORT",
         "level": 1,
         "proficient": false,
-        "total": 3
+        "total": 4
       },
       {
         "name": "Contra-Ataque",
         "attribute": "FORT",
-        "level": 6,
+        "level": 8,
         "proficient": true,
-        "total": 10
+        "total": 14
       }
     ],
     "intellectual": [
@@ -309,9 +309,9 @@
       {
         "name": "Investigação",
         "attribute": "INT",
-        "level": 3,
+        "level": 7,
         "proficient": false,
-        "total": 5
+        "total": 9
       },
       {
         "name": "Ofício",
@@ -365,9 +365,9 @@
       {
         "name": "Percepção",
         "attribute": "SAB",
-        "level": 3,
+        "level": 8,
         "proficient": false,
-        "total": 5
+        "total": 10
       },
       {
         "name": "Sobrevivência",
@@ -381,97 +381,97 @@
         "attribute": "ARC",
         "level": 1,
         "proficient": false,
-        "total": 3
+        "total": 4
       },
       {
         "name": "Intuição",
         "attribute": "ARC",
         "level": 3,
         "proficient": false,
-        "total": 5
+        "total": 6
       },
       {
         "name": "Presença",
         "attribute": "ARC",
         "level": 3,
         "proficient": false,
-        "total": 5
+        "total": 6
       },
       {
         "name": "Ocultismo",
         "attribute": "ARC",
         "level": 1,
         "proficient": false,
-        "total": 3
+        "total": 4
       },
       {
         "name": "Arcanismo",
         "attribute": "ARC",
         "level": 5,
         "proficient": false,
-        "total": 7
+        "total": 8
       },
       {
         "name": "Invocação",
         "attribute": "ARC",
         "level": 1,
         "proficient": false,
-        "total": 3
+        "total": 4
       },
       {
         "name": "Conjuração",
         "attribute": "ARC",
         "level": 1,
         "proficient": false,
-        "total": 3
+        "total": 4
       },
       {
         "name": "Canalização",
         "attribute": "ARC",
         "level": 5,
         "proficient": true,
-        "total": 9
+        "total": 11
       },
       {
         "name": "Intimidação",
         "attribute": "ARC",
         "level": 2,
         "proficient": true,
-        "total": 6
+        "total": 8
       }
     ]
   },
   "stats": {
     "armor_class": {
-      "total": 16,
+      "total": 20,
       "components": {
         "Extras": 2,
         "Padrão": 8,
         "Escudo": 0,
-        "Destreza": 6,
+        "Destreza": 10,
         "Armadura": 0
       }
     },
-    "perception": 21,
-    "luck": 6,
+    "perception": 28,
+    "luck": 10,
     "tracks": {
       "PS": {
-        "current": 108,
-        "max": 108,
+        "current": 110,
+        "max": 110,
         "temp": 0,
         "label": "Pontos de Sangue (vida)"
       },
       "PVO": {
-        "current": 2,
-        "max": 2,
-        "temp": 0,
-        "label": "PV Ofensivo (ações ofensivas)"
-      },
-      "PVD": {
         "current": 3,
         "max": 3,
         "temp": 0,
-        "label": "PV Defensivo (reações/defesa)"
+        "label": "PV Ofensivo (ações de ataque)"
+      },
+      "PVD": {
+        "current": 4,
+        "max": 4,
+        "temp": 0,
+        "label": "PV Defensivo (reações)"
       },
       "PF": {
         "current": 66,
