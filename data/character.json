@@ -456,8 +456,8 @@
     "luck": 10,
     "tracks": {
       "PS": {
-        "current": 110,
-        "max": 110,
+        "current": 118,
+        "max": 118,
         "temp": 0,
         "label": "Pontos de Sangue (vida)"
       },
@@ -474,8 +474,8 @@
         "label": "PV Defensivo (reações)"
       },
       "PF": {
-        "current": 66,
-        "max": 66,
+        "current": 74,
+        "max": 74,
         "temp": 0,
         "label": "Pontos de Foco (mana)"
       }
