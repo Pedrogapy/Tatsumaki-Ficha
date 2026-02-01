@@ -643,9 +643,9 @@ function renderSkillsTab(){
     }else{
       filtered.forEach(s => {
         const skillData = lookupSkill(gCode, s.name, s.aliases) || { total: 0, level: 0, proficient: false };
-        const attrObj2 = getAttrObjByCode(gCode);
-        const attrEighth = Number(attrObj2?.eighth ?? 0);
-        const total = Number(skillData.level ?? 0) + attrEighth;
+        // Importante: o "Total" é a coluna Total da ficha. Ele já inclui atributo/nível e quaisquer bônus extras.
+        // Quando você edita atributos, eu recalculo skillData.total usando (nível + 1/8 atributo + bonus_extra).
+        const total = Number(skillData.total ?? 0);
         const lvl = Number(skillData.level ?? 0);
         const prof = !!skillData.proficient;
         const magic = !!s.magic;
@@ -923,6 +923,31 @@ function buildContextFromCharacter(c){
     });
   });
 
+  // Ajuste importante:
+  // - "total" vem da coluna Total da perícia (pode incluir bônus extras além do atributo/nível).
+  // - Para permitir editar atributos e ainda assim respeitar esses bônus, calculo um "bonus_extra"
+  //   (diferença entre Total e [nível + 1/8 do atributo] na ficha base).
+  const getAttrObjByCodeLocal = (code) => {
+    const name = ATTR_LABEL[String(code || "").toUpperCase()] || String(code || "");
+    return (attributes?.[name] || attributes?.[name.toLowerCase()] || attributes?.[deaccent(name)] || null);
+  };
+
+  Object.values(allGroups).forEach(arr => {
+    (arr || []).forEach(s => {
+      const a = getAttrObjByCodeLocal(s.attribute);
+      const baseEighth = Number(a?.eighth ?? (Number(a?.value) ? Math.floor(Number(a.value) / 8) : 0));
+      const lvl = Number(s.level ?? 0);
+      const hasTotal = (s.total !== undefined && s.total !== null && String(s.total).trim() !== "");
+      const base = lvl + baseEighth;
+      const total = hasTotal ? Number(s.total) : base;
+      // bônus fixo que não depende do atributo (ex: passivas, equipamentos, etc.)
+      s.bonus_extra = Number.isFinite(total) ? (total - base) : 0;
+      if(!Number.isFinite(s.bonus_extra)) s.bonus_extra = 0;
+      // normaliza total
+      s.total = Number.isFinite(total) ? total : base;
+    });
+  });
+
   return {
     attributes,
     skills,
@@ -954,6 +979,27 @@ function applyAttributeOverridesToCtx(){
     a.half = Math.floor(val / 2);
     a.quarter = Math.floor(val / 4);
     a.eighth = Math.floor(val / 8);
+  });
+
+  // Recalcula totais das perícias a partir do atributo editado:
+  // Total = nível + (1/8 do atributo) + bonus_extra
+  try{ recalcSkillTotalsFromAttributes(); }catch(_){ }
+}
+
+function recalcSkillTotalsFromAttributes(){
+  if(!ctx || !ctx.skills) return;
+  Object.keys(ctx.skills).forEach(attrCode => {
+    const bucket = ctx.skills[attrCode];
+    if(!bucket || typeof bucket !== 'object') return;
+    const a = getAttrObjByCode(attrCode);
+    const baseEighth = Number(a?.eighth ?? 0);
+    Object.values(bucket).forEach(s => {
+      if(!s || typeof s !== 'object') return;
+      const lvl = Number(s.level ?? 0);
+      const extra = Number(s.bonus_extra ?? 0);
+      const total = lvl + baseEighth + (Number.isFinite(extra) ? extra : 0);
+      s.total = Number.isFinite(total) ? total : (lvl + baseEighth);
+    });
   });
 }
 
