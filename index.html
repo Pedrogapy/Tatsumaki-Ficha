@@ -140,6 +140,15 @@
             <h2>Efeitos Ativos</h2>
             <ul id="effects" class="effectsList"></ul>
           </section>
+
+          <section class="card">
+            <h2>Atributos</h2>
+            <p class="muted">Editar aqui muda todos os cálculos (1/8, 1/4, etc.) e também atualiza automaticamente os totais das perícias.</p>
+            <div id="attrEditor" class="attrEditor"></div>
+            <div class="row">
+              <button id="attrReset" class="btn btn-ghost btn-sm">Resetar atributos</button>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -289,6 +298,11 @@
               <input id="defPassiveRes" class="input input-sm" placeholder="Ex.: resistência a cortante / fogo / maldição…" />
             </label>
           </div>
+
+                    <details class="details">
+            <summary>Passivas e habilidades de Essência do personagem</summary>
+            <div id="essencePassivesList" class="essencePassives"></div>
+          </details>
 
           <details class="details">
             <summary>Livro da Essência (referência rápida)</summary>

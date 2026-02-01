@@ -1035,30 +1035,29 @@
           "name": "Onda Sonora",
           "type": "Ativa",
           "flavor": "O som é minha lâmina invisível, e o silêncio... sua consequência.",
-          "text": "“O som é minha lâmina invisível, e o silêncio... sua consequência.”\nEmite uma poderosa onda sonora de alta frequência que danifica e desorienta o inimigo.\nEfeito: Causa sangramento pelos olhos e ouvidos, além de risco de paralisia momentânea.\nTeste: Resistência ou Firmeza para evitar ficar inconsciente ou perder o equilíbrio.\nDano: 2d12 +1/4 do Arcano\nCusto: 8 P.F e 1 P.V\nPerícia: Canalização (Arcano)\nEstilo Ofensivo - Estágio I\nLiberação de Energia: Ao escolher este caminho, sua essência começa a se fundir de forma natural e passiva com seus ataques. Cada golpe, seja físico ou mágico, carrega um fragmento de sua vontade e poder interior, deixando rastros da sua energia por onde passa.\nEfeito:\nVocê adiciona +1 dado de dano a qualquer ataque realizado (mágico ou físico).\nEsse bônus representa a manifestação sutil, mas constante, de sua essência ofensiva.\nLiberação Instintiva - Estágio 2 (Ofensiva)\nCom uma conexão mais profunda com sua essência, seus ataques mágicos\ndeixam de ser técnicas elaboradas para se tornarem instintos naturais. Eles fluem\ncom precisão, ferocidade e uma força quase automática. Nesse estágio, é como se\nsua própria essência lutasse ao seu lado — um reflexo direto de sua vontade,\nampliando cada investida.\nEfeitos:\n- O usuário recebe +1 P.V.\n- Todos os seus ataques passam a causar +1 dado extra de dano, como se a\nessência executasse um golpe adicional junto ao seu.\nPré-Requisitos:\n2 Ponto de Essência\n10 Pontos de Karma Positivos\n2º treinamento de essência\nAura Defensiva: Estágio 1 – Defesa\nNeste estágio inicial, a essência do usuário começa a se manifestar fisicamente, condensando-se em uma aura visível e densa ao redor do corpo. Essa aura atua como um escudo, capaz de bloquear tanto ataques físicos quanto mágicos, oferecendo uma camada robusta de proteção durante o combate.\nEfeito: Garante uma defesa equivalente a 2d6 + ¼ do atributo Arcano.\nDuração: 1d4 rodadas (uso de uma vez por dia).\nCusto: Determinado pelo mestre com base na intensidade e uso contínuo.\nEssa forma de defesa é ideal para usuários focados em resistência e controle de campo, mantendo-se firmes mesmo diante de ataques devastadores.\nEntendimento: 3º Estágio – Essência Verdadeira\n- Todos os seus ataques causam **+1 dado de dano adicional (ex: de 1d8 para2d8), representando o ápice da conexão entre você e sua essência.\nControle Inicial – Estágio 1 (Aptidão Mágica)\nEste é o primeiro passo na harmonia entre sua essência e sua magia. Um elo\ndesperto, ainda em crescimento, mas que já permite uma compreensão mais\nrefinada do fluxo mágico que percorre seu ser. Ao seguir esse caminho, o usuário\ncomeça a canalizar sua energia de forma mais eficiente, aprimorando o domínio\nsobre sua própria magia.\nEfeito:\nO usuário recebe vantagem em testes de perícia relacionados ao uso de magia.",
+          "text": "“O som é minha lâmina invisível, e o silêncio... sua consequência.”\nEmite uma poderosa onda sonora de alta frequência que danifica e desorienta o inimigo.\nEfeito: Causa sangramento pelos olhos e ouvidos, além de risco de paralisia momentânea.\nTeste: Resistência ou Firmeza para evitar ficar inconsciente ou perder o equilíbrio.\nDano: 2d12 +1/4 do Arcano\nCusto: 8 P.F e 1 P.V\nPerícia: Canalização (Arcano)",
           "kv": {
-            "Efeito": "",
+            "Efeito": "Causa sangramento pelos olhos e ouvidos, além de risco de paralisia momentânea.",
             "Teste": "Resistência ou Firmeza para evitar ficar inconsciente ou perder o equilíbrio.",
-            "Dano": "2d12 +1/4 do Arcano",
-            "Custo": "Determinado pelo mestre com base na intensidade e uso contínuo.",
-            "Perícia": "Canalização (Arcano)",
-            "Liberação de Energia": "Ao escolher este caminho, sua essência começa a se fundir de forma natural e passiva com seus ataques. Cada golpe, seja físico ou mágico, carrega um fragmento de sua vontade e poder interior, deixando rastros da sua energia por onde passa.",
-            "Efeitos": "",
-            "Pré-Requisitos": "",
-            "Aura Defensiva": "Estágio 1 – Defesa",
-            "Duração": "1d4 rodadas (uso de uma vez por dia).",
-            "Entendimento": "3º Estágio – Essência Verdadeira",
-            "- Todos os seus ataques causam **+1 dado de dano adicional (ex": "de 1d8 para2d8), representando o ápice da conexão entre você e sua essência."
+            "Dano": "2d12 + 1/4 do Arcano",
+            "Custo": "8 P.F e 1 P.V",
+            "Perícia": "Canalização (Arcano)"
           },
-          "cost": [],
+          "cost": [
+            {
+              "resource": "PF",
+              "amount": 8,
+              "context": "e 1 P.V"
+            }
+          ],
           "rolls": [
             {
               "label": "Dano",
-              "expr": "2d12 +@attributes.Arcano.quarter"
+              "expr": "2d12 + @attributes.Arcano.quarter"
             }
           ],
           "auto_cost": {
-            "PVO": 1
+            "PF": 8
           }
         }
       ]
@@ -1087,7 +1086,67 @@
       "Estágio 9: Apenas um Agora",
       "Estágio 10: Eu quem Decido."
     ],
-    "karma_positive": 14
+    "karma_positive": 14,
+    "essence_passives": [
+      {
+        "name": "Liberação de Energia",
+        "type": "Passiva",
+        "stage": "Ofensiva 1",
+        "effects": [
+          "+1 dado de dano em qualquer ataque (mágico ou físico)."
+        ]
+      },
+      {
+        "name": "Liberação Instintiva",
+        "type": "Passiva",
+        "stage": "Ofensiva 2",
+        "effects": [
+          "+1 PV máximo.",
+          "+1 dado extra de dano em todos os ataques."
+        ]
+      },
+      {
+        "name": "Aura Defensiva",
+        "type": "Ativa",
+        "stage": "Defensiva 1",
+        "effects": [
+          "Defesa = 2d6 + 1/4 do Arcano.",
+          "Duração: 1d4 rodadas. (1x por dia; custo definido pelo mestre)"
+        ]
+      },
+      {
+        "name": "Aura Protetora",
+        "type": "Passiva",
+        "stage": "Defensiva 2",
+        "effects": [
+          "Mantém Aura Defensiva.",
+          "+1 turno de duração.",
+          "+2 dados na defesa da Aura."
+        ]
+      },
+      {
+        "name": "Entendimento",
+        "type": "Passiva",
+        "stage": "EV 3",
+        "effects": [
+          "+1 dado de dano adicional em todos os ataques."
+        ]
+      },
+      {
+        "name": "Controle Inicial",
+        "type": "Passiva",
+        "stage": "Aptidão Mágica 1",
+        "effects": [
+          "Vantagem em testes de perícia relacionados ao uso de magia."
+        ]
+      }
+    ],
+    "essence_levels_default": {
+      "ev": 3,
+      "off": 2,
+      "def": 2,
+      "apt": 1
+    }
   },
   "ui": {
     "defaults": {

@@ -643,7 +643,9 @@ function renderSkillsTab(){
     }else{
       filtered.forEach(s => {
         const skillData = lookupSkill(gCode, s.name, s.aliases) || { total: 0, level: 0, proficient: false };
-        const total = Number(skillData.total ?? 0);
+        const attrObj2 = getAttrObjByCode(gCode);
+        const attrEighth = Number(attrObj2?.eighth ?? 0);
+        const total = Number(skillData.level ?? 0) + attrEighth;
         const lvl = Number(skillData.level ?? 0);
         const prof = !!skillData.proficient;
         const magic = !!s.magic;
@@ -929,11 +931,81 @@ function buildContextFromCharacter(c){
     custom: {} // runtime inputs (e.g. arma pesada dano base)
   };
 }
+// ------------------------------
+// Atributos editáveis (override em runtime)
+// - Guarda overrides em state.ui.attrOverrides
+// - Recalcula 1/2, 1/4, 1/8 e atualiza perícias/rolagens automaticamente
+// ------------------------------
+function applyAttributeOverridesToCtx(){
+  const ov = state?.ui?.attrOverrides;
+  if(!ctx || !ctx.attributes || !ov || typeof ov !== 'object') return;
+
+  Object.keys(ov).forEach(key => {
+    const raw = ov[key];
+    const v = Number(raw);
+    if(!Number.isFinite(v)) return;
+
+    // tenta localizar o atributo na tabela de aliases
+    const a = ctx.attributes[key] || ctx.attributes[String(key).toLowerCase()] || ctx.attributes[deaccent(String(key))] || null;
+    if(!a) return;
+
+    const val = Math.max(0, Math.round(v));
+    a.value = val;
+    a.half = Math.floor(val / 2);
+    a.quarter = Math.floor(val / 4);
+    a.eighth = Math.floor(val / 8);
+  });
+}
+
+function rebuildCtx(){
+  ctx = buildContextFromCharacter(character);
+
+  // Aplica defaults de essência do personagem (se existirem) na 1ª execução
+  const dEss = character?.notes?.essence_levels_default;
+  if(dEss && typeof dEss === 'object'){
+    // só seta se o save não trouxe algo explícito
+    if(!state.essence || typeof state.essence !== 'object') state.essence = {};
+    state.essence.ev = clampInt(state.essence.ev ?? dEss.ev, 0, 5);
+    state.essence.off = clampInt(state.essence.off ?? dEss.off, 0, 5);
+    state.essence.def = clampInt(state.essence.def ?? dEss.def, 0, 5);
+    state.essence.apt = clampInt(state.essence.apt ?? dEss.apt, 0, 5);
+  }
+
+  applyAttributeOverridesToCtx();
+}
+
+// PV extra por passiva de Essência (OF 2): +1 PV máximo
+function syncPvFromEssence(){
+  const e = getEssence();
+  const extra = (e.off >= 2) ? 1 : 0;
+
+  const baseTotal = (BASE_MAX.pvo || 0) + (BASE_MAX.pvd || 0);
+  const total = Math.max(0, baseTotal + extra);
+
+  // regra: divide por 2; a menor parte é ataque (PVO) e o resto é reação (PVD)
+  const pvoMax = Math.floor(total / 2);
+  const pvdMax = total - pvoMax;
+
+  const prevPvo = MAX.pvo, prevPvd = MAX.pvd;
+
+  MAX.pvo = pvoMax;
+  MAX.pvd = pvdMax;
+
+  // se estava "cheio" antes, promove para o novo teto automaticamente
+  if(state.pvo === prevPvo && pvoMax > prevPvo) state.pvo = pvoMax;
+  if(state.pvd === prevPvd && pvdMax > prevPvd) state.pvd = pvdMax;
+
+  // clamp (se diminuiu por algum motivo)
+  state.pvo = Math.min(state.pvo, MAX.pvo);
+  state.pvd = Math.min(state.pvd, MAX.pvd);
+}
+
 
 // ------------------------------
 // State + persistence
 // ------------------------------
 // Defaults (fallback). Os valores reais vêm do data/character.json (stats.tracks).
+let BASE_MAX = { ps: 100, pvo: 3, pvd: 4, pf: 100 };
 let MAX = { ps: 100, pvo: 3, pvd: 4, pf: 100 };
 
 let state = {
@@ -950,7 +1022,7 @@ let state = {
   essence: {
     ev: 3,
     off: 2,
-    def: 1,
+    def: 2,
     apt: 1,
     stackMode: "literal", // conservative | literal
     defPassiveRes: ""
@@ -1125,6 +1197,9 @@ function syncPassiveEssenceRules(){
   // Mantém o seletor, mas por padrão empilha (literal).
   state.essence.stackMode = (state.ui?.passivesAlwaysOn === false) ? e.stackMode : "literal";
 
+  // PV extra (OF 2): +1 PV máximo
+  syncPvFromEssence();
+
   // Bônus de dados global (quando passivas sempre ativas): soma EV + Ofensiva
   if(state.ui?.passivesAlwaysOn !== false){
     const diceInfo = computeEssenceDamageDice();
@@ -1232,7 +1307,74 @@ function endAura(){
   render();
 }
 
+
+function renderEssencePassives(){
+  const root = document.getElementById('essencePassivesList');
+  if(!root) return;
+  root.innerHTML = '';
+
+  const list = character?.notes?.essence_passives;
+  if(!Array.isArray(list) || !list.length){
+    root.innerHTML = '<div class="muted">Nenhuma passiva de essência cadastrada no arquivo do personagem.</div>';
+    return;
+  }
+
+  const e = getEssence();
+  const diceInfo = computeEssenceDamageDice();
+  const applied = [];
+  if(e.ev >= 3) applied.push('EV 3: +1 dado (dano)');
+  if(e.off >= 1) applied.push('OF 1+: +1 dado (dano)');
+  if(e.off >= 2) applied.push('OF 2: +1 dado (dano) +1 PV máximo');
+  if(e.def >= 1) applied.push('DEF 1+: Aura Defensiva disponível');
+  if(e.def >= 2) applied.push('DEF 2: Aura +1 turno e +2 dados');
+  if(e.apt >= 1 && state.ui?.autoMagicAdv) applied.push('APT 1: auto vantagem (magia)');
+
+  const top = document.createElement('div');
+  top.className = 'muted';
+  top.textContent = applied.length ? ('Aplicando automaticamente agora: ' + applied.join(' • ')) : 'Sem bônus automáticos aplicáveis no nível atual.';
+  root.appendChild(top);
+
+  const box = document.createElement('div');
+  box.className = 'essPassiveGrid';
+
+  list.forEach(it => {
+    const card = document.createElement('div');
+    card.className = 'essPassiveCard';
+
+    const title = document.createElement('div');
+    title.className = 'essPassiveTitle';
+    title.textContent = `${it?.name || 'Passiva'} ${it?.stage ? `(${it.stage})` : ''}`.trim();
+
+    const meta = document.createElement('div');
+    meta.className = 'muted small';
+    meta.textContent = String(it?.type || '').trim();
+
+    const ul = document.createElement('ul');
+    ul.className = 'essPassiveList';
+    const eff = Array.isArray(it?.effects) ? it.effects : [];
+    if(!eff.length){
+      const li = document.createElement('li'); li.textContent = '—'; ul.appendChild(li);
+    }else{
+      eff.forEach(t => { const li=document.createElement('li'); li.textContent = String(t); ul.appendChild(li); });
+    }
+
+    card.appendChild(title);
+    card.appendChild(meta);
+    card.appendChild(ul);
+    box.appendChild(card);
+  });
+
+  root.appendChild(box);
+
+  const footer = document.createElement('div');
+  footer.className = 'muted small';
+  footer.textContent = `Bônus global de dano (passivo): ${diceInfo.literal} dado(s) [EV=${diceInfo.evDice} + OF=${diceInfo.offDice}]`;
+  root.appendChild(footer);
+}
 function renderEssenceUi(){
+  // PV máximo pode depender de Essência (OF 2)
+  syncPvFromEssence();
+
   if(state.ui?.passivesAlwaysOn !== false){
     syncPassiveEssenceRules();
   }
@@ -3804,10 +3946,74 @@ function renderCombatActions(){
   });
 }
 
+function renderAttrEditor(){
+  const root = document.getElementById('attrEditor');
+  if(!root) return;
+  root.innerHTML = '';
+
+  const list = Array.isArray(character?.attributes) ? character.attributes : [];
+  if(!list.length){
+    root.innerHTML = '<div class="muted">Sem atributos cadastrados.</div>';
+    return;
+  }
+
+  if(!state.ui) state.ui = {};
+  if(!state.ui.attrOverrides || typeof state.ui.attrOverrides !== 'object') state.ui.attrOverrides = {};
+
+  list.forEach(a0 => {
+    const name = String(a0?.name || '').trim();
+    if(!name) return;
+
+    const a = (ctx?.attributes?.[name] || ctx?.attributes?.[name.toLowerCase()] || ctx?.attributes?.[deaccent(name)] || a0);
+    const row = document.createElement('div');
+    row.className = 'attrRow';
+
+    const left = document.createElement('div');
+    left.className = 'attrLeft';
+    left.innerHTML = `<div class="attrName">${name}</div><div class="muted small">½=${fmtNumber(Number(a?.half))} • ¼=${fmtNumber(Number(a?.quarter))} • 1/8=${fmtNumber(Number(a?.eighth))}</div>`;
+
+    const input = document.createElement('input');
+    input.className = 'input input-sm attrInput';
+    input.type = 'number';
+    input.min = '0';
+    input.step = '1';
+    input.value = String(Number(a?.value ?? 0));
+
+    input.addEventListener('input', () => {
+      state.ui.attrOverrides[name] = clampInt(input.value, 0, 9999);
+      rebuildCtx();
+      // Atualiza tudo que depende de atributo
+      renderSkillsTab();
+      renderEssenceUi();
+      renderCombatActions(); // textos de alguns botões
+      saveState();
+      renderAttrEditor();
+    });
+
+    row.appendChild(left);
+    row.appendChild(input);
+    root.appendChild(row);
+  });
+}
+
+function resetAttrOverrides(){
+  if(!state.ui) state.ui = {};
+  state.ui.attrOverrides = {};
+  rebuildCtx();
+  render();
+  renderAttrEditor();
+  log('Atributos: overrides resetados.');
+}
+
 function render(){
+  // garante ctx atualizado (caso algo tenha mexido em overrides)
+  if(!ctx) rebuildCtx();
   renderTracks();
   renderEffects();
   renderEssenceUi();
+  renderEssencePassives();
+  renderSkillsTab();
+  renderAttrEditor();
   saveState();
 }
 
@@ -3817,6 +4023,18 @@ function render(){
 async function init(){
   character = await fetch("data/character.json").then(r => r.json());
   ctx = buildContextFromCharacter(character);
+
+  // Aplica defaults de essência do personagem (se existirem) na 1ª execução
+  const dEss = character?.notes?.essence_levels_default;
+  if(dEss && typeof dEss === 'object'){
+    // só seta se o save não trouxe algo explícito
+    if(!state.essence || typeof state.essence !== 'object') state.essence = {};
+    state.essence.ev = clampInt(state.essence.ev ?? dEss.ev, 0, 5);
+    state.essence.off = clampInt(state.essence.off ?? dEss.off, 0, 5);
+    state.essence.def = clampInt(state.essence.def ?? dEss.def, 0, 5);
+    state.essence.apt = clampInt(state.essence.apt ?? dEss.apt, 0, 5);
+  }
+
 
   // Etapa 8 — Perícias
   await loadSkillsCatalog();
@@ -3829,12 +4047,13 @@ async function init(){
 
   // Load MAX from character tracks
   const tracks = character?.stats?.tracks || {};
-  MAX = {
+  BASE_MAX = {
     ps: tracks.PS?.max ?? 100,
     pf: tracks.PF?.max ?? 100,
     pvo: tracks.PVO?.max ?? 3,
     pvd: tracks.PVD?.max ?? 4
   };
+  MAX = { ...BASE_MAX };
 
   // Default current from character
   state.ps = tracks.PS?.current ?? MAX.ps;
@@ -3844,6 +4063,10 @@ async function init(){
 
   // Restore save if exists
   loadState();
+
+  // Rebuild ctx (aplica overrides)
+  rebuildCtx();
+
 
   // Compat: se veio de um save antigo (PVO=2 / PVD=3 cheios), promove para o novo teto.
   // (Se o jogador já gastou PV e está abaixo disso, mantém.)
@@ -3903,6 +4126,10 @@ async function init(){
     togglePlasma(t);
     render();
   };
+
+  // Atributos (editor)
+  const attrReset = document.getElementById('attrReset');
+  if(attrReset) attrReset.onclick = () => resetAttrOverrides();
 
   // Etapa 8 — UI de Perícias
   initSkillsUi();

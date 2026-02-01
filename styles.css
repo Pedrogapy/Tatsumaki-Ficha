@@ -1704,3 +1704,18 @@ select,input{
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+
+/* --- Atributos editor --- */
+.attrEditor{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+.attrRow{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px; border:1px solid var(--border); border-radius:14px; background:rgba(255,255,255,0.02); }
+.attrLeft{ flex:1; min-width:0; }
+.attrName{ font-weight:700; }
+.attrInput{ width:110px; text-align:right; }
+
+/* --- Essência: passivas do personagem --- */
+.essencePassives{ margin-top:10px; display:flex; flex-direction:column; gap:10px; }
+.essPassiveGrid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; margin-top:10px; }
+.essPassiveCard{ border:1px solid var(--border); border-radius:16px; padding:12px; background:rgba(255,255,255,0.02); }
+.essPassiveTitle{ font-weight:800; margin-bottom:4px; }
+.essPassiveList{ margin:10px 0 0 18px; }
