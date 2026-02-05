@@ -4015,7 +4015,12 @@ function rollWeaponAttack(){
   const modeTxt = (mode === "adv") ? " (vantagem)" : (mode === "dis") ? " (desvantagem)" : "";
 
   log(`Acerto (${w.name}) — ${w.skill}${modeTxt}\n${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt}`);
-  showCombatResultBanner(`${w.name}\nAcerto: ${fmtNumber(res.total)}${critTxt.replaceAll("**","")}`);
+  showCombatResultBanner({
+    name: w.name,
+    label: `Acerto${mode !== 'normal' ? ` (${modeLabel(mode)})` : ''}`,
+    total: res.total,
+    detail: `${w.skill}${modeTxt}\n${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt.replaceAll('**','')}`
+  });
   return res;
 }
 
@@ -4062,7 +4067,12 @@ function rollWeaponDamage(opts = {}){
     log(`Notas (${w.name}): ${notes.join(", ")}`);
   }
 
-  showCombatResultBanner(`${w.name}\nDano: ${fmtNumber(out.total)}`);
+  showCombatResultBanner({
+    name: w.name,
+    label: 'Dano',
+    total: out.total,
+    detail: out.detail
+  });
   render();
   return out;
 }
@@ -4423,7 +4433,12 @@ function renderCombatActions(){
         const target = state.infernalTarget ? "infernal" : (state.target || "alvo");
         const out = damageFor(target, w.shield.blockExpr); // reuse damageFor for rolagem de redução
         log(`Bloqueio (${w.name}): ${out.detail}`);
-        showCombatResultBanner(`${w.name}\nBloqueio: ${fmtNumber(out.total)}`);
+        showCombatResultBanner({
+          name: w.name,
+          label: 'Bloqueio',
+          total: out.total,
+          detail: out.detail
+        });
       });
       extra.querySelector("#votoMaintBtn")?.addEventListener("click", ()=>{
         if(spendCosts(w.shield.maintenance)){
