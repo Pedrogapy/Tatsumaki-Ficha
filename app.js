@@ -438,38 +438,50 @@ function applyStateToSkillUi(){
 // - Mostra 1 resultado por vez
 // - Só fecha no X (ou ESC)
 // ------------------------------
+// ------------------------------
 let __resultOverlayEl = null;
 let __resultOverlayContentEl = null;
 let __resultOverlayCloseEl = null;
-let __resultOverlayBound = false;
+let __resultOverlayKeyBound = false;
 
+/**
+ * Resultado global (caixa no canto)
+ * Fix: às vezes o overlay era inicializado antes do DOM estar pronto e ficava "preso" em null.
+ * Aqui eu re-consulto os elementos sempre que precisar e só marco listeners por elemento.
+ */
 function initResultOverlay(){
   __resultOverlayEl = document.getElementById('resultOverlay');
   __resultOverlayContentEl = document.getElementById('resultOverlayContent');
   __resultOverlayCloseEl = document.getElementById('resultOverlayClose');
-  if(__resultOverlayBound) return;
-  __resultOverlayBound = true;
 
-  if(__resultOverlayCloseEl){
+  // Bind do botão fechar (uma vez por elemento)
+  if(__resultOverlayCloseEl && !__resultOverlayCloseEl.dataset.bound){
+    __resultOverlayCloseEl.dataset.bound = '1';
     __resultOverlayCloseEl.addEventListener('click', () => hideResultOverlay());
   }
 
-  window.addEventListener('keydown', (e) => {
-    if(e.key === 'Escape' && __resultOverlayEl && !__resultOverlayEl.hidden){
-      hideResultOverlay();
-    }
-  });
+  // Bind do ESC (uma vez global)
+  if(!__resultOverlayKeyBound){
+    __resultOverlayKeyBound = true;
+    window.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && __resultOverlayEl && !__resultOverlayEl.hidden){
+        hideResultOverlay();
+      }
+    });
+  }
 }
 
 function hideResultOverlay(){
-  if(!__resultOverlayEl) initResultOverlay();
+  // sempre revalida refs
+  initResultOverlay();
   if(!__resultOverlayEl) return;
   __resultOverlayEl.hidden = true;
   if(__resultOverlayContentEl) __resultOverlayContentEl.innerHTML = '';
 }
 
 function showResultOverlay(payload){
-  if(!__resultOverlayEl) initResultOverlay();
+  // sempre revalida refs (evita falha intermitente)
+  initResultOverlay();
   if(!__resultOverlayEl || !__resultOverlayContentEl) return;
 
   const title = String(payload?.title || 'Resultado');
@@ -508,6 +520,7 @@ function showResultOverlay(payload){
 
   __resultOverlayEl.hidden = false;
 }
+
 
 // Etapa 9 — helpers de UI (resultado destacado + animação + atalhos)
 let skillResultTimer = null;
