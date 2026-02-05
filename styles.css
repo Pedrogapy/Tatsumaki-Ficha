@@ -1719,3 +1719,55 @@ select,input{
 .essPassiveCard{ border:1px solid var(--border); border-radius:16px; padding:12px; background:rgba(255,255,255,0.02); }
 .essPassiveTitle{ font-weight:800; margin-bottom:4px; }
 .essPassiveList{ margin:10px 0 0 18px; }
+
+
+/* =========================
+   Shadowheart Arsenal panel
+   ========================= */
+.arsenalPanel .titleRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.arsenalPanel .tools{ display:flex; align-items:center; gap:8px; }
+
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  background:rgba(255,255,255,.04);
+}
+.chip input{ transform: translateY(1px); }
+.chipLabel{ font-size:12px; opacity:.85; }
+
+.arsenalGrid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap:10px;
+  margin:10px 0 12px;
+}
+@media (max-width: 900px){
+  .arsenalGrid{ grid-template-columns: 1fr; }
+}
+
+.weaponExtraControls{
+  margin-top:10px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.miniNotes{
+  font-size:12px;
+  line-height:1.35;
+  opacity:.9;
+}
+.weaponNotes{
+  margin-top:8px;
+  font-size:12px;
+  line-height:1.35;
+}

@@ -1063,6 +1063,15 @@ let state = {
   // configurable (kept as 2 to match your current behavior)
   globalDamageBonusDice: 3,
 
+  // Shadowheart — alvo infernal + arsenal
+  infernalTarget: false,
+  infernalExtraDamageDie: true,
+  weapon: {
+    currentId: "personificacao",
+    pvPool: "pvo", // "pvo" (ataque) ou "pvd" (reação)
+    modes: {}
+  },
+
   // Etapa 10 — níveis de Essência (EV/Of/Def/Apt) e preferências
   // Defaults: Tatsumaki (EV3, OF2, DEF1, APT1)
   essence: {
@@ -1114,6 +1123,9 @@ function saveState(){
       effects: state.effects,
       essence: state.essence,
       globalDamageBonusDice: state.globalDamageBonusDice,
+      infernalTarget: state.infernalTarget,
+      infernalExtraDamageDie: state.infernalExtraDamageDie,
+      weapon: state.weapon,
       logLines: state.logLines,
       ui: state.ui
     };
@@ -1138,6 +1150,12 @@ function loadState(){
     if(!('aura' in state.effects)) state.effects.aura = null;
     if(!('sanguenta' in state.effects)) state.effects.sanguenta = null;
     if(!('plasma' in state.effects)) state.effects.plasma = null;
+
+    state.infernalTarget = s.infernalTarget ?? state.infernalTarget;
+    state.infernalExtraDamageDie = s.infernalExtraDamageDie ?? state.infernalExtraDamageDie;
+    state.weapon = s.weapon ?? state.weapon;
+    if(!state.weapon || typeof state.weapon !== 'object') state.weapon = { currentId: 'personificacao', pvPool: 'pvo', modes: {} };
+    if(!state.weapon.modes || typeof state.weapon.modes !== 'object') state.weapon.modes = {};
 
     if(s.essence && typeof s.essence === 'object'){
       state.essence = { ...state.essence, ...s.essence };
@@ -3745,9 +3763,26 @@ function startTurn(){
   // Sem aumentar rodada: só restaura ações (útil quando você quer usar "rodada" como contador global)
   state.pvo = MAX.pvo;
   state.pvd = MAX.pvd;
+
+  // Shadowheart: manutenção de efeitos por turno
+  if(state.weapon?.currentId === "serravento" && state.weapon?.modes?.serravento_on){
+    const t = Number(state.weapon.modes.serravento_turns || 0);
+    if(t > 0){
+      const self = evalExpr("1d6", ctx);
+      state.ps = Math.max(0, Number(state.ps||0) - Number(self.total||0));
+      state.weapon.modes.serravento_turns = t - 1;
+      log(`Serravento: desgaste ${self.detail} → -${fmtNumber(self.total)} PS (restam ${state.weapon.modes.serravento_turns} turno(s)).`);
+      if(state.weapon.modes.serravento_turns <= 0){
+        state.weapon.modes.serravento_on = false;
+        log("Serravento: efeito encerrado (motosserra desligada).");
+      }
+    }
+  }
+
   render();
   log("Turno iniciado: PVO/PVD restaurados.");
 }
+
 
 // ------------------------------
 // Damage modifiers (Essência + efeitos por alvo)
@@ -3756,6 +3791,269 @@ function addDiceToFirstDiceTerm(expr, bonusDice){
   if(!bonusDice || bonusDice <= 0) return expr;
   return expr.replace(/(\d+)d(\d+)/, (m,a,b) => `${Number(a) + bonusDice}d${b}`);
 }
+
+
+// ------------------------------
+// Shadowheart Arsenal (armas invocadas) + alvo infernal toggle
+// ------------------------------
+const SHADOWHEART_WEAPONS = {
+  personificacao: {
+    id: "personificacao",
+    name: "A Personificação (Espada)",
+    skill: "Armas Avançadas",
+    critMin: 20,
+    damageExpr: "3d8", // base; bônus e efeitos entram depois
+    notes: ["Espada padrão do Tatsumaki."]
+  },
+
+  lamento: {
+    id: "lamento",
+    name: "Lamento da Última Aurora (Foice)",
+    skill: "Armas Avançadas",
+    critMin: 20,
+    damageExpr: "2d12 + @attributes.Arcano.quarter",
+    activation: { pv: 1, pf: 5, label: "Ceifar essência" },
+    notes: ["Dano verdadeiro à essência.", "Ao alvo chegar em 50% vida: desvantagem em ataques (Exaustão Infernal)."]
+  },
+
+  gemeas: {
+    id: "gemeas",
+    name: "Gêmeas do Eclipse (Pistolas Duplas)",
+    skill: "Pontaria",
+    critMin: 20,
+    damageExpr: "1d8 + @attributes.Destreza.quarter",
+    modes: { adapted: false },
+    adaptedCost: { pv: 1, pf: 3 }, // por disparo adaptado (além do disparo normal)
+    notes: ["Após acertar as duas 1x no mesmo alvo, pode ativar 'Adaptado' manualmente."]
+  },
+
+  hekaton: {
+    id: "hekaton",
+    name: "Fúria de Hekatôn (Machado Gigante)",
+    skill: "Armas Pesadas",
+    critMin: 16,
+    damageExpr: "3d12 + @attributes.Forca.quarter",
+    activation: { pv: 1, pf: 6, label: "Golpe brutal" },
+    notes: ["Ignora resistência de infernais.", "Crítico 16–20 (efeitos narrativos: desmembrar em crítico)."]
+  },
+
+  serpente: {
+    id: "serpente",
+    name: "Serpente de Ferro (Adaga/Corrente)",
+    skill: "Armas Leves",
+    critMin: 20,
+    modes: { range: "curta" }, // curta | longa
+    damageExprShort: "1d12 + @attributes.Destreza.quarter",
+    damageExprLong: "1d6 + @attributes.Destreza.quarter",
+    flame: { pv: 1, pf: 3, extraExpr: "1d4 + @attributes.Arcano.quarter", label: "Chamas Carmesins" },
+    notes: ["Longa distância até 9m.", "Queimadura contínua (1 turno para apagar, narrativo)."]
+  },
+
+  voto: {
+    id: "voto",
+    name: "Voto de Andrakar (Escudo/Lança)",
+    skill: "Armas Avançadas",
+    critMin: 20,
+    modes: { form: "escudo" }, // escudo | lanca
+    transform: { pv: 1, pf: 0, label: "Transformar" },
+    shield: {
+      tempHp: 20,
+      regen: "1d4/turno (se danificado)",
+      blockExpr: "2d6 + @attributes.Arcano.quarter",
+      maintenance: { pv: 2, pf: 5, label: "Manutenção defensiva" }
+    },
+    spear: {
+      damageExpr: "2d12 + @attributes.Destreza.quarter",
+      shotExtraExpr: "1d6",
+      shotCost: { pv: 0, pf: 3, label: "Disparo de energia" }
+    },
+    notes: ["Modo Escudo: vida temporária 20 (regenera em 1d4/turno se danificada).", "Modo Lança: pode disparar energia (1d6 extra, custo PF)."]
+  },
+
+  garras: {
+    id: "garras",
+    name: "Garras do Vazio (Manopla)",
+    skill: "Armas Avançadas",
+    critMin: 20,
+    damageExpr: "2d6 + @attributes.Destreza.quarter",
+    activation: { pv: 1, pf: 8, label: "Ativar lâminas (3 turnos)" },
+    notes: ["Dilacerar: 25% (d20 15–20) aplica 1 nível de sangramento (narrativo).",
+            "Contra infernais: regenera o dano total como vida (vampirismo).",
+            "Agilidade Predatória: +2 Destreza por 2 turnos seguidos (acumula até +6, rastrear manual)."]
+  },
+
+  serravento: {
+    id: "serravento",
+    name: "Serravento Carmesim (Espada Motosserra)",
+    skill: "Armas Pesadas",
+    critMin: 20,
+    modes: { on: false, turns: 0 },
+    damageExprOff: "2d10 + @attributes.Forca.quarter",
+    damageExprOn: "3d10 + @attributes.Forca.quarter",
+    activation: { pv: 2, pf: 5, label: "Ativar (2 turnos)" },
+    upkeepSelfDmg: "1d6",
+    notes: ["Ligada: sangramento por golpe (narrativo).", "Frenesi infernal: vantagem vs alvo atingido (narrativo).", "Enquanto ligada: 1d6 dano em você por turno."]
+  },
+
+  ruina: {
+    id: "ruina",
+    name: "Ruína dos Jurados (Martelo 2M)",
+    skill: "Armas Pesadas",
+    critMin: 17,
+    damageExpr: "3d8 + @attributes.Forca.quarter",
+    activation: { pv: 2, pf: 6, label: "Golpe devastador" },
+    notes: ["Ignora resistência física e bloqueios/defesas ativas de infernais.", "Crítico 17–20 (crítico pode fraturar membro, teste Fort CD 15 + Força, narrativo)."]
+  },
+
+  sentenca: {
+    id: "sentenca",
+    name: "Sentença dos Caídos (Espada Colossal)",
+    skill: "Armas Pesadas",
+    critMin: 20,
+    damageExpr: "2d12 + @attributes.Forca.quarter",
+    activation: { pv: 1, pf: 4, label: "Ataque" },
+    notes: ["Infernais: teste Sabedoria CD 15 ou amedrontado 1 turno; em crítico dura 1d4 (narrativo)."]
+  },
+
+  noctaris: {
+    id: "noctaris",
+    name: "Luz de Noctaris (Espada curta)",
+    skill: "Armas Avançadas",
+    critMin: 20,
+    damageExpr: "1d10 + @attributes.Destreza.quarter",
+    activation: { pv: 1, pf: 2, label: "Ataque" },
+    notes: ["A cada acerto vs mesmo tipo: +1d4 (rastreamento manual). Após 3 acertos: explosão 2d6 (manual)."]
+  }
+};
+
+function currentWeapon(){
+  return SHADOWHEART_WEAPONS[state.weapon?.currentId] || SHADOWHEART_WEAPONS.personificacao;
+}
+
+function spendPV(amount){
+  if(!amount) return true;
+  const pool = (state.weapon?.pvPool === "pvd") ? "pvd" : "pvo";
+  if(state[pool] < amount){
+    toastQuick("Sem PV", `Falta PV (${pool.toUpperCase()})`);
+    return false;
+  }
+  state[pool] -= amount;
+  return true;
+}
+function spendPF(amount){
+  if(!amount) return true;
+  if(state.pf < amount){
+    toastQuick("Sem PF", "Falta PF");
+    return false;
+  }
+  state.pf -= amount;
+  return true;
+}
+function spendCosts(cost){
+  if(!cost) return true;
+  const pv = Number(cost.pv||0);
+  const pf = Number(cost.pf||0);
+  if(!spendPV(pv)) return false;
+  if(!spendPF(pf)){ // rollback PV if PF fails
+    const pool = (state.weapon?.pvPool === "pvd") ? "pvd" : "pvo";
+    state[pool] += pv;
+    return false;
+  }
+  return true;
+}
+
+function weaponDamageExpr(w){
+  // retorna a expressão base de dano do modo atual
+  if(w.id === "serpente"){
+    const range = state.weapon?.modes?.serpente_range || "curta";
+    return (range === "longa") ? w.damageExprLong : w.damageExprShort;
+  }
+  if(w.id === "voto"){
+    const form = state.weapon?.modes?.voto_form || "escudo";
+    if(form === "lanca") return w.spear.damageExpr;
+    // modo escudo não tem dano padrão
+    return "";
+  }
+  if(w.id === "serravento"){
+    const on = !!state.weapon?.modes?.serravento_on;
+    return on ? w.damageExprOn : w.damageExprOff;
+  }
+  return String(w.damageExpr || "");
+}
+
+function rollWeaponAttack(){
+  const w = currentWeapon();
+  const skill = lookupSkill(w.skill);
+  const mod = Number(skill?.total ?? 0);
+
+  // modo de rolagem escolhido na UI
+  const uiMode = String(document.getElementById("weaponMode")?.value || "normal");
+  let mode = uiMode;
+
+  // vantagem automática contra infernal (se não estiver forçando desvantagem)
+  if(state.infernalTarget && uiMode === "normal"){
+    mode = "adv";
+  }
+
+  const res = rollD20WithMode(mod, mode);
+  const d20 = res?.chosen ?? null;
+  const critMin = Number(w.critMin || 20);
+  const critTxt = (d20 !== null && d20 >= critMin) ? " — **CRÍTICO!**" : "";
+  const modeTxt = (mode === "adv") ? " (vantagem)" : (mode === "dis") ? " (desvantagem)" : "";
+
+  log(`Acerto (${w.name}) — ${w.skill}${modeTxt}\n${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt}`);
+  showCombatResultBanner(`${w.name}\nAcerto: ${fmtNumber(res.total)}${critTxt.replaceAll("**","")}`);
+  return res;
+}
+
+function rollWeaponDamage(opts = {}){
+  const w = currentWeapon();
+
+  let base = weaponDamageExpr(w);
+  if(!base){
+    toastQuick("Sem dano", "Esta forma não possui dano base.");
+    return null;
+  }
+
+  // custos por ataque (quando existirem)
+  if(opts.cost && !spendCosts(opts.cost)) return null;
+
+  // modos especiais
+  const notes = [];
+  if(w.id === "gemeas" && !!state.weapon?.modes?.gemeas_adapted){
+    notes.push("Adaptado (fraqueza)");
+  }
+  if(w.id === "serravento" && !!state.weapon?.modes?.serravento_on){
+    notes.push("Motosserra ligada");
+  }
+  if(w.id === "serpente"){
+    const range = state.weapon?.modes?.serpente_range || "curta";
+    notes.push(`Alcance: ${range}`);
+  }
+  if(w.id === "voto"){
+    const form = state.weapon?.modes?.voto_form || "escudo";
+    notes.push(`Forma: ${form}`);
+  }
+
+  const target = state.infernalTarget ? "infernal" : (state.target || "alvo");
+  const out = damageFor(target, base);
+
+  if(opts.extraExpr){
+    // dano adicional (ex: queimadura / disparo de energia)
+    const extra = damageFor(target, opts.extraExpr);
+    log(`Extra (${w.name}): ${extra.detail}`);
+    out.total += extra.total;
+  }
+
+  if(notes.length){
+    log(`Notas (${w.name}): ${notes.join(", ")}`);
+  }
+
+  showCombatResultBanner(`${w.name}\nDano: ${fmtNumber(out.total)}`);
+  render();
+  return out;
+}
+
 
 function damageFor(target, baseExpr){
   let totalExpr = baseExpr;
@@ -3770,6 +4068,17 @@ function damageFor(target, baseExpr){
   const passiveQuarterAttrExpr = '+@attributes.Destreza.quarter';
   totalExpr += passiveQuarterAttrExpr;
   notes.push('Passiva: +¼ Destreza');
+
+  // PASSIVAS — Caça Infernal (Shadowheart)
+  if(state.infernalTarget){
+    // vantagem é aplicada nos acertos (rolagens de ataque) no painel de arma.
+    // aqui aplico o bônus de dano extra contra alvo infernal.
+    if(state.infernalExtraDamageDie){
+      totalExpr = addDiceToFirstDiceTerm(totalExpr, 1);
+      notes.push('Infernal: +1 dado');
+    }
+  }
+
 
   // bônus global de dano (mantive como 2 para não mudar o que você já estava usando)
   totalExpr = addDiceToFirstDiceTerm(totalExpr, state.globalDamageBonusDice);
@@ -3874,6 +4183,315 @@ function targetKeyFromActionName(name){
 function renderCombatActions(){
   const root = document.getElementById("combatActions");
   root.innerHTML = "";
+
+  // Shadowheart Arsenal panel (arma atual + alvo infernal)
+  const arsenal = document.createElement("div");
+  arsenal.className = "action arsenalPanel";
+
+  const w = currentWeapon();
+  const weaponOptions = Object.values(SHADOWHEART_WEAPONS)
+    .map(x => `<option value="${x.id}">${x.name}</option>`).join("");
+
+  arsenal.innerHTML = `
+    <div class="titleRow">
+      <div class="title">
+        <span class="emoji">🗡️</span>
+        <span>Arsenal Shadowheart</span>
+      </div>
+      <div class="tools">
+        <label class="chip">
+          <span class="chipLabel">Alvo infernal</span>
+          <input id="infernalToggle" type="checkbox" ${state.infernalTarget ? "checked" : ""} />
+        </label>
+      </div>
+    </div>
+
+    <div class="arsenalGrid">
+      <div class="field">
+        <label class="muted">Arma atual</label>
+        <select id="weaponSelect" class="input">
+          ${weaponOptions}
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="muted">Modo d20</label>
+        <select id="weaponMode" class="input">
+          <option value="normal">Normal</option>
+          <option value="adv">Vantagem</option>
+          <option value="dis">Desvantagem</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="muted">PV gasto (ações)</label>
+        <select id="pvPoolSelect" class="input">
+          <option value="pvo">PVO (ataque)</option>
+          <option value="pvd">PVD (reação)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="muted">Regras rápidas</label>
+        <div class="miniNotes">
+          <div>• Vantagem vs infernais (auto no acerto quando modo=Normal)</div>
+          <div>• +1 dado de dano vs infernais (toggle)</div>
+          <div>• +¼ Destreza em todo dano (passiva global)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row gap">
+      <button id="weaponAttackBtn" class="btn btn-primary">Acerto (${w.skill})</button>
+      <button id="weaponDamageBtn" class="btn">Dano</button>
+      <button id="weaponActivationBtn" class="btn btn-ghost" ${w.activation ? "" : "disabled"}>${w.activation ? `Ativar: ${w.activation.label} (-${w.activation.pv} PV, -${w.activation.pf} PF)` : "Sem ativação"}</button>
+    </div>
+
+    <div id="weaponExtraControls" class="weaponExtraControls"></div>
+    <div class="muted weaponNotes" id="weaponNotes"></div>
+  `;
+  root.appendChild(arsenal);
+
+  // set selects to state
+  const weaponSelect = arsenal.querySelector("#weaponSelect");
+  const weaponMode = arsenal.querySelector("#weaponMode");
+  const pvPoolSelect = arsenal.querySelector("#pvPoolSelect");
+
+  weaponSelect.value = state.weapon?.currentId || "personificacao";
+  weaponMode.value = String(state.weapon?.d20Mode || "normal");
+  pvPoolSelect.value = String(state.weapon?.pvPool || "pvo");
+
+  function renderWeaponExtras(){
+    const w = currentWeapon();
+    const extra = arsenal.querySelector("#weaponExtraControls");
+    const notes = arsenal.querySelector("#weaponNotes");
+
+    // update main buttons labels
+    arsenal.querySelector("#weaponAttackBtn").textContent = `Acerto (${w.skill}${(state.infernalTarget ? " • infernal" : "")})`;
+
+    // damage button label can show mode info
+    const dmgExpr = weaponDamageExpr(w);
+    arsenal.querySelector("#weaponDamageBtn").textContent = dmgExpr ? `Dano (${dmgExpr})` : "Dano (—)";
+
+    const actBtn = arsenal.querySelector("#weaponActivationBtn");
+    if(w.activation){
+      actBtn.disabled = false;
+      actBtn.textContent = `Ativar: ${w.activation.label} (-${w.activation.pv} PV, -${w.activation.pf} PF)`;
+    }else{
+      actBtn.disabled = true;
+      actBtn.textContent = "Sem ativação";
+    }
+
+    // notes
+    const lines = (w.notes || []).map(s => `• ${s}`).join("<br/>");
+    notes.innerHTML = lines || "";
+
+    // extra controls by weapon
+    let html = "";
+    if(w.id === "gemeas"){
+      const adapted = !!state.weapon?.modes?.gemeas_adapted;
+      html += `
+        <div class="row gap">
+          <label class="chip">
+            <span class="chipLabel">Disparo adaptado</span>
+            <input id="gemeasAdapted" type="checkbox" ${adapted ? "checked" : ""}/>
+          </label>
+          <button id="gemeasShotBtn" class="btn">Disparo (dano)</button>
+        </div>
+        <div class="muted">Quando "adaptado" estiver ligado: cada disparo adaptado custa +${w.adaptedCost.pv} PV e +${w.adaptedCost.pf} PF.</div>
+      `;
+    }
+    if(w.id === "serpente"){
+      const range = state.weapon?.modes?.serpente_range || "curta";
+      html += `
+        <div class="row gap">
+          <label class="muted">Alcance:</label>
+          <select id="serpenteRange" class="input">
+            <option value="curta">Curta (1d12)</option>
+            <option value="longa">Longa 9m (1d6)</option>
+          </select>
+          <button id="serpenteHitBtn" class="btn">Ataque (dano)</button>
+          <button id="serpenteFlameBtn" class="btn btn-ghost">Ataque flamejante (-${w.flame.pv} PV, -${w.flame.pf} PF)</button>
+        </div>
+      `;
+    }
+    if(w.id === "voto"){
+      const form = state.weapon?.modes?.voto_form || "escudo";
+      html += `
+        <div class="row gap">
+          <label class="muted">Forma:</label>
+          <select id="votoForm" class="input">
+            <option value="escudo">Escudo</option>
+            <option value="lanca">Lança</option>
+          </select>
+          <button id="votoTransformBtn" class="btn btn-ghost">Transformar (-${w.transform.pv} PV)</button>
+        </div>
+      `;
+      if(form === "escudo"){
+        html += `
+          <div class="row gap">
+            <button id="votoBlockBtn" class="btn">Bloquear (rolar ${w.shield.blockExpr})</button>
+            <button id="votoMaintBtn" class="btn btn-ghost">Manutenção (-${w.shield.maintenance.pv} PV, -${w.shield.maintenance.pf} PF)</button>
+          </div>
+          <div class="muted">Vida temporária: ${w.shield.tempHp} (regen: ${w.shield.regen}).</div>
+        `;
+      }else{
+        html += `
+          <div class="row gap">
+            <button id="votoSpearHitBtn" class="btn">Ataque (dano)</button>
+            <button id="votoShotBtn" class="btn btn-ghost">Disparo (+${w.spear.shotExtraExpr} extra, -${w.spear.shotCost.pf} PF)</button>
+          </div>
+        `;
+      }
+    }
+    if(w.id === "serravento"){
+      const on = !!state.weapon?.modes?.serravento_on;
+      const turns = Number(state.weapon?.modes?.serravento_turns || 0);
+      html += `
+        <div class="row gap">
+          <label class="chip">
+            <span class="chipLabel">Ligada</span>
+            <input id="serraventoOn" type="checkbox" ${on ? "checked" : ""}/>
+          </label>
+          <button id="serraventoHitBtn" class="btn">Ataque (dano)</button>
+          <button id="serraventoActBtn" class="btn btn-ghost">Ativar 2 turnos (-${w.activation.pv} PV, -${w.activation.pf} PF)</button>
+          <span class="muted">Turnos restantes: ${turns}</span>
+        </div>
+        <div class="muted">Enquanto ligada: você toma ${w.upkeepSelfDmg} por turno (aplico ao clicar em "Iniciar Turno").</div>
+      `;
+    }
+    extra.innerHTML = html;
+
+    // bind extra listeners
+    if(w.id === "gemeas"){
+      extra.querySelector("#gemeasAdapted")?.addEventListener("change", (e)=>{
+        state.weapon.modes.gemeas_adapted = !!e.target.checked;
+        saveState(); renderWeaponExtras();
+      });
+      extra.querySelector("#gemeasShotBtn")?.addEventListener("click", ()=>{
+        const cost = state.weapon?.modes?.gemeas_adapted ? w.adaptedCost : null;
+        rollWeaponDamage({ cost });
+        saveState(); render();
+      });
+    }
+    if(w.id === "serpente"){
+      const sel = extra.querySelector("#serpenteRange");
+      if(sel){
+        sel.value = range;
+        sel.addEventListener("change",(e)=>{
+          state.weapon.modes.serpente_range = e.target.value;
+          saveState(); renderWeaponExtras();
+        });
+      }
+      extra.querySelector("#serpenteHitBtn")?.addEventListener("click", ()=>{ rollWeaponDamage(); saveState(); render(); });
+      extra.querySelector("#serpenteFlameBtn")?.addEventListener("click", ()=>{
+        rollWeaponDamage({ cost: w.flame, extraExpr: w.flame.extraExpr });
+        saveState(); render();
+      });
+    }
+    if(w.id === "voto"){
+      const formSel = extra.querySelector("#votoForm");
+      if(formSel){
+        formSel.value = form;
+        formSel.addEventListener("change",(e)=>{
+          state.weapon.modes.voto_form = e.target.value;
+          saveState(); renderWeaponExtras();
+        });
+      }
+      extra.querySelector("#votoTransformBtn")?.addEventListener("click", ()=>{
+        if(spendCosts(w.transform)){
+          const cur = state.weapon.modes.voto_form || "escudo";
+          state.weapon.modes.voto_form = (cur === "escudo") ? "lanca" : "escudo";
+          log(`Voto de Andrakar: forma → ${state.weapon.modes.voto_form}`);
+          saveState(); renderWeaponExtras(); render();
+        }
+      });
+      extra.querySelector("#votoBlockBtn")?.addEventListener("click", ()=>{
+        const target = state.infernalTarget ? "infernal" : (state.target || "alvo");
+        const out = damageFor(target, w.shield.blockExpr); // reuse damageFor for rolagem de redução
+        log(`Bloqueio (${w.name}): ${out.detail}`);
+        showCombatResultBanner(`${w.name}\nBloqueio: ${fmtNumber(out.total)}`);
+      });
+      extra.querySelector("#votoMaintBtn")?.addEventListener("click", ()=>{
+        if(spendCosts(w.shield.maintenance)){
+          log(`Manutenção defensiva (${w.name}) aplicada.`);
+          saveState(); render();
+        }
+      });
+      extra.querySelector("#votoSpearHitBtn")?.addEventListener("click", ()=>{ rollWeaponDamage(); saveState(); render(); });
+      extra.querySelector("#votoShotBtn")?.addEventListener("click", ()=>{
+        rollWeaponDamage({ cost: w.spear.shotCost, extraExpr: w.spear.shotExtraExpr });
+        saveState(); render();
+      });
+    }
+    if(w.id === "serravento"){
+      extra.querySelector("#serraventoOn")?.addEventListener("change",(e)=>{
+        state.weapon.modes.serravento_on = !!e.target.checked;
+        saveState(); renderWeaponExtras();
+      });
+      extra.querySelector("#serraventoHitBtn")?.addEventListener("click", ()=>{ rollWeaponDamage(); saveState(); render(); });
+      extra.querySelector("#serraventoActBtn")?.addEventListener("click", ()=>{
+        if(spendCosts(w.activation)){
+          state.weapon.modes.serravento_on = true;
+          state.weapon.modes.serravento_turns = 2;
+          log(`Serravento Carmesim ativada por 2 turnos.`);
+          saveState(); renderWeaponExtras(); render();
+        }
+      });
+    }
+  }
+
+  renderWeaponExtras();
+
+  arsenal.querySelector("#infernalToggle")?.addEventListener("change", (e)=>{
+    state.infernalTarget = !!e.target.checked;
+    saveState(); renderCombatActions(); render();
+  });
+
+  weaponSelect.addEventListener("change", (e)=>{
+    state.weapon.currentId = e.target.value;
+    // init mode defaults
+    state.weapon.modes = state.weapon.modes || {};
+    saveState();
+    renderCombatActions();
+  });
+
+  weaponMode.addEventListener("change", (e)=>{
+    state.weapon.d20Mode = e.target.value;
+    saveState();
+  });
+
+  pvPoolSelect.addEventListener("change", (e)=>{
+    state.weapon.pvPool = e.target.value;
+    saveState();
+  });
+
+  arsenal.querySelector("#weaponAttackBtn")?.addEventListener("click", ()=>{
+    rollWeaponAttack();
+    saveState();
+    render();
+  });
+
+  arsenal.querySelector("#weaponDamageBtn")?.addEventListener("click", ()=>{
+    rollWeaponDamage();
+    saveState();
+    render();
+  });
+
+  arsenal.querySelector("#weaponActivationBtn")?.addEventListener("click", ()=>{
+    const w = currentWeapon();
+    if(!w.activation) return;
+    if(spendCosts(w.activation)){
+      log(`Ativação (${w.name}): ${w.activation.label} (-${w.activation.pv} PV, -${w.activation.pf} PF)`);
+      // efeitos persistentes simples
+      if(w.id === "serravento"){
+        state.weapon.modes.serravento_on = true;
+        state.weapon.modes.serravento_turns = 2;
+      }
+      saveState(); renderCombatActions(); render();
+    }
+  });
+
 
   const list = character?.abilities?.combat_tree || [];
   list.forEach(action => {
