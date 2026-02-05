@@ -3761,6 +3761,16 @@ function damageFor(target, baseExpr){
   let totalExpr = baseExpr;
   const notes = [];
 
+  // ==============================
+  // PASSIVA — Bônus fixo de dano
+  // "Adiciona ¼ de um atributo à sua escolha em todas as jogadas de dano"
+  // Escolha do personagem neste site: Destreza.
+  // Centralizei aqui para garantir que TODA rolagem que é tratada como dano
+  // (inclusive as que usam input de dano base da arma) receba o bônus.
+  const passiveQuarterAttrExpr = '+@attributes.Destreza.quarter';
+  totalExpr += passiveQuarterAttrExpr;
+  notes.push('Passiva: +¼ Destreza');
+
   // bônus global de dano (mantive como 2 para não mudar o que você já estava usando)
   totalExpr = addDiceToFirstDiceTerm(totalExpr, state.globalDamageBonusDice);
   if(state.globalDamageBonusDice) notes.push(`Essência +${state.globalDamageBonusDice} dado(s)`);
