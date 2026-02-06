@@ -1098,7 +1098,7 @@ let state = {
 
   effects: {
     sanguenta: null, // {target, rounds}
-    plasma: null,    // {target}
+    plasma: null,    // {target, rounds, resNotified}
     aura: null       // {rounds, dice}
   },
 
@@ -3721,12 +3721,14 @@ function applySanguenta(target){
 
   log(`Arma Sanguenta em ${target} por ${dur} rodadas (+1d8 dano).`);
   renderEffects();
+  syncPlasmaControls();
 }
 
 function togglePlasma(target){
+  // Se já está ativo nesse alvo, encerra.
   if(state.effects.plasma && state.effects.plasma.target === target){
     state.effects.plasma = null;
-    log(`Plasma desligado em ${target}.`);
+    log(`Plasma encerrado em ${target}.`);
     renderEffects();
     return;
   }
@@ -3735,18 +3737,20 @@ function togglePlasma(target){
   if(!spend("PF", 8)) return;
   if(!spend("PVO", 1)) return;
 
-  state.effects.plasma = { target };
+  const dur = evalExpr("1d4+1", ctx).total;
+  state.effects.plasma = { target, rounds: dur, resNotified: false };
 
   // regra: substitui sanguenta no mesmo alvo
   if(state.effects.sanguenta && state.effects.sanguenta.target === target){
     state.effects.sanguenta = null;
   }
 
-  log(`Plasma ativado em ${target} (+1d12, ignora resistências).`);
+  log(`Plasma ativado em ${target} por ${dur} rodadas (+1d12). Lembrete: escolha 1 resistência para ignorar.`);
   renderEffects();
 }
 
 function nextRound(){
+
   state.round++;
 
   // Reset de ações por rodada (seu sistema: PVO/PVD)
@@ -3759,7 +3763,15 @@ function nextRound(){
       log("Arma Sanguenta expirou.");
       state.effects.sanguenta = null;
     }
+  }if(state.effects.plasma){
+  state.effects.plasma.rounds--;
+  if(state.effects.plasma.rounds <= 0){
+    log("Plasma expirou.");
+    state.effects.plasma = null;
   }
+}
+
+
 
   if(state.effects.aura){
     state.effects.aura.rounds--;
@@ -4113,7 +4125,8 @@ function damageFor(target, baseExpr){
   }
   if(state.effects.plasma && state.effects.plasma.target === target){
     totalExpr += "+1d12";
-    notes.push("Plasma (ignora resistências)");
+    const flag = state.effects.plasma.resNotified ? "✓ resistência avisada" : "⚠ definir resistência";
+    notes.push(`Plasma (+1d12, ignora 1 resistência) — ${flag}`);
   }
 
   const res = evalExpr(totalExpr, ctx);
@@ -4185,14 +4198,40 @@ function renderEffects(){
   }
   if(state.effects.plasma){
     any = true;
-    add(`Plasma em ${state.effects.plasma.target} (∞)`, [
-      { label: "Encerrar", title: "Desligar plasma", onClick: () => { state.effects.plasma = null; log("Plasma desligado."); render(); } }
+    const flag = state.effects.plasma.resNotified ? "✓ resistência avisada" : "⚠ resistência não avisada";
+    add(`Plasma em ${state.effects.plasma.target} (${state.effects.plasma.rounds} rodadas) — ${flag}`, [
+      { label: "Encerrar", title: "Remover efeito", onClick: () => { state.effects.plasma = null; log("Plasma encerrado."); render(); } },
+      { label: state.effects.plasma.resNotified ? "Aviso: ON" : "Aviso: OFF", title: "Lembrete: já avisou ao mestre qual resistência será ignorada?", onClick: () => {
+          state.effects.plasma.resNotified = !state.effects.plasma.resNotified;
+          log(state.effects.plasma.resNotified ? "Plasma: resistência escolhida foi avisada ao mestre." : "Plasma: lembrete reiniciado (resistência ainda não avisada).");
+          render();
+        } }
     ]);
   }
 
   if(!any){
     add("—");
   }
+
+function syncPlasmaControls(){
+  const btn = document.getElementById("toggle_plasma");
+  const rem = document.getElementById("plasma_res_notified");
+
+  if(btn){
+    if(state.effects.plasma){
+      btn.textContent = `Plasma ativo (${state.effects.plasma.rounds}r) — Encerrar`;
+    }else{
+      btn.textContent = "Arma de Plasma (Ativar 1d4+1)";
+    }
+  }
+
+  if(rem){
+    const active = !!state.effects.plasma;
+    rem.disabled = !active;
+    const flag = (active && state.effects.plasma.resNotified) ? "ON" : "OFF";
+    rem.textContent = `Aviso resistência: ${flag}`;
+  }
+}
 }
 
 function targetKeyFromActionName(name){
@@ -4828,6 +4867,19 @@ async function init(){
     togglePlasma(t);
     render();
   };
+const plasmaResBtn = document.getElementById("plasma_res_notified");
+if(plasmaResBtn){
+  plasmaResBtn.onclick = () => {
+    if(!state.effects.plasma){
+      log("Plasma não está ativo.");
+      return;
+    }
+    state.effects.plasma.resNotified = !state.effects.plasma.resNotified;
+    log(state.effects.plasma.resNotified ? "Plasma: resistência escolhida foi avisada ao mestre." : "Plasma: lembrete reiniciado (resistência ainda não avisada).");
+    render();
+  };
+}
+
 
   // Atributos (editor)
   const attrReset = document.getElementById('attrReset');
