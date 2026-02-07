@@ -3824,11 +3824,18 @@ function addDiceToFirstDiceTerm(expr, bonusDice){
 const SHADOWHEART_WEAPONS = {
   personificacao: {
     id: "personificacao",
-    name: "A Personificação (Espada)",
+    name: "Personificação (Espada Longa)",
+    // Categoria de perícia varia pelo estilo do usuário (ver controles extras no painel)
     skill: "Armas Avançadas",
     critMin: 20,
-    damageExpr: "3d8", // base; bônus e efeitos entram depois
-    notes: ["Espada padrão do Tatsumaki."]
+    // Dano base atualizado pelo mestre: 3d10 + 1/4 Destreza
+    damageExpr: "3d10 + @attributes.Destreza.quarter",
+    notes: [
+      "Espada lendária dos ShadowHeart, ligada ao sangue da família.",
+      "A lâmina reage à presença de energia em ambientes corrompidos.",
+      "O potencial verdadeiro é desconhecido e pode se revelar com o tempo.",
+      "A arma parece crescer junto ao portador, adaptando-se ao estilo."
+    ]
   },
 
   lamento: {
@@ -3955,6 +3962,15 @@ function currentWeapon(){
   return SHADOWHEART_WEAPONS[state.weapon?.currentId] || SHADOWHEART_WEAPONS.personificacao;
 }
 
+function weaponAttackSkillName(w){
+  if(!w) return "—";
+  if(w.id === "personificacao"){
+    const style = String(state.weapon?.modes?.personificacao_style || "avancadas");
+    return (style === "pesadas") ? "Armas Pesadas" : "Armas Avançadas";
+  }
+  return w.skill;
+}
+
 function spendPV(amount){
   if(!amount) return true;
   const pool = (state.weapon?.pvPool === "pvd") ? "pvd" : "pvo";
@@ -4008,7 +4024,8 @@ function weaponDamageExpr(w){
 
 function rollWeaponAttack(){
   const w = currentWeapon();
-  const skill = lookupSkill(w.skill);
+  const atkSkillName = weaponAttackSkillName(w);
+  const skill = lookupSkill(atkSkillName);
   const mod = Number(skill?.total ?? 0);
 
   // modo de rolagem escolhido na UI
@@ -4098,11 +4115,17 @@ function damageFor(target, baseExpr){
   // PASSIVA — Bônus fixo de dano
   // "Adiciona ¼ de um atributo à sua escolha em todas as jogadas de dano"
   // Escolha do personagem neste site: Destreza.
-  // Centralizei aqui para garantir que TODA rolagem que é tratada como dano
-  // (inclusive as que usam input de dano base da arma) receba o bônus.
-  const passiveQuarterAttrExpr = '+@attributes.Destreza.quarter';
-  totalExpr += passiveQuarterAttrExpr;
-  notes.push('Passiva: +¼ Destreza');
+  // Importante: se a fórmula do dano JÁ tiver +¼ Destreza (ex.: armas do arsenal),
+  // não somar de novo para não duplicar o bônus.
+  const passiveQuarterAttrToken = "@attributes.Destreza.quarter";
+  const passiveQuarterAttrExpr = `+${passiveQuarterAttrToken}`;
+  const alreadyHasQuarter = String(totalExpr).includes(passiveQuarterAttrToken);
+  if(!alreadyHasQuarter){
+    totalExpr += passiveQuarterAttrExpr;
+    notes.push("Passiva: +¼ Destreza");
+  }else{
+    notes.push("Passiva: +¼ Destreza (já incluído)");
+  }
 
   // PASSIVAS — Caça Infernal (Shadowheart)
   if(state.infernalTarget){
@@ -4329,7 +4352,8 @@ function renderCombatActions(){
     const notes = arsenal.querySelector("#weaponNotes");
 
     // update main buttons labels
-    arsenal.querySelector("#weaponAttackBtn").textContent = `Acerto (${w.skill}${(state.infernalTarget ? " • infernal" : "")})`;
+    const atkSkillName = weaponAttackSkillName(w);
+    arsenal.querySelector("#weaponAttackBtn").textContent = `Acerto (${atkSkillName}${(state.infernalTarget ? " • infernal" : "")})`;
 
     // damage button label can show mode info
     const dmgExpr = weaponDamageExpr(w);
@@ -4350,6 +4374,24 @@ function renderCombatActions(){
 
     // extra controls by weapon
     let html = "";
+
+    if(w.id === "personificacao"){
+      const style = String(state.weapon?.modes?.personificacao_style || "avancadas");
+      html += `
+        <div class="row gap">
+          <div class="field" style="min-width:240px">
+            <label class="muted">Estilo de combate (Personificação)</label>
+            <select id="personificacaoStyle" class="input">
+              <option value="avancadas">Armas Avançadas (Destreza)</option>
+              <option value="pesadas">Armas Pesadas (Força)</option>
+            </select>
+          </div>
+        </div>
+      `;
+      // keep UI in sync after injection
+      setTimeout(()=>{ const el = extra.querySelector("#personificacaoStyle"); if(el) el.value = style; }, 0);
+    }
+
     if(w.id === "gemeas"){
       const adapted = !!state.weapon?.modes?.gemeas_adapted;
       html += `
@@ -4425,6 +4467,16 @@ function renderCombatActions(){
     extra.innerHTML = html;
 
     // bind extra listeners
+
+    if(w.id === "personificacao"){
+      extra.querySelector("#personificacaoStyle")?.addEventListener("change", (e)=>{
+        state.weapon = state.weapon || {};
+        state.weapon.modes = state.weapon.modes || {};
+        state.weapon.modes.personificacao_style = String(e.target.value || "avancadas");
+        saveState();
+        renderCombatActions();
+      });
+    }
     if(w.id === "gemeas"){
       extra.querySelector("#gemeasAdapted")?.addEventListener("change", (e)=>{
         state.weapon.modes.gemeas_adapted = !!e.target.checked;
