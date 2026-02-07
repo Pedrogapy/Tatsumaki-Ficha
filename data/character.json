@@ -534,7 +534,7 @@
         "type": "Ativa",
         "level": 1,
         "icon": "🗡️",
-        "text": "Teste: Armas Avançadas (d20+11)\nDano: 3d8 + 1/4 de Destreza",
+        "text": "Teste: Armas Avançadas (d20+11)\nDano: 3d10 + 1/4 de Destreza",
         "rolls": [
           {
             "label": "Teste",
@@ -542,7 +542,7 @@
           },
           {
             "label": "Dano",
-            "expr": "3d8 + @attributes.Destreza.quarter"
+            "expr": "3d10 + @attributes.Destreza.quarter"
           }
         ],
         "auto_cost": {
@@ -564,7 +564,7 @@
           },
           {
             "title": "Atributos",
-            "text": "Dano: 3d8 + (1/4 da Destreza do usuário)\nTipo: Espada Longa / Arma Pesada\nCategoria de Perícia: Armas Avançadas ou Armas Pesadas (de acordo com o estilo de combate do usuário)"
+            "text": "Dano: 3d10 + (1/4 da Destreza do usuário)\nTipo: Espada Longa / Arma Pesada\nCategoria de Perícia: Armas Avançadas ou Armas Pesadas (de acordo com o estilo de combate do usuário)"
           },
           {
             "title": "Efeitos e Observações",
