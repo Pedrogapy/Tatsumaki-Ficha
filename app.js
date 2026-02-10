@@ -590,7 +590,7 @@ function rollSkillCheck(entry, modeOverride, cardEl){
   const res = rollD20WithMode(mod, mode);
 
   const modeTxt = (mode === "adv") ? " (vantagem)" : (mode === "dis") ? " (desvantagem)" : "";
-  const aspecto2Note = "Aspecto 2: alvo sofre -2 em esquiva/contra-ataque vs seus ataques.";
+  const aspecto2Note = (swordBuffs) ? "Aspecto 2: alvo sofre -2 em esquiva/contra-ataque vs seus ataques." : "";
   const tagTxt = entry?.magic && autoMagic ? " [auto]" : "";
 
   log(`Perícia ${entry.name} [${entry.attr}]${modeTxt}${tagTxt}: ${res.detail}`);
@@ -3964,6 +3964,12 @@ const SHADOWHEART_WEAPONS = {
   }
 };
 
+function isSwordWeapon(w){
+  const name = String(w?.name || "");
+  return /\bEspada\b/i.test(name);
+}
+
+
 function currentWeapon(){
   return SHADOWHEART_WEAPONS[state.weapon?.currentId] || SHADOWHEART_WEAPONS.personificacao;
 }
@@ -4036,25 +4042,29 @@ function rollWeaponAttack(){
   const res = rollD20WithMode(mod, mode);
   const d20 = res?.chosen ?? null;
   const passiveCritMin = 19;
-  const critMin = Math.min(Number(w.critMin || 20), passiveCritMin);
-  const critTxt = (d20 !== null && d20 >= critMin) ? " — **CRÍTICO!**" : "";
+  const swordBuffs = isSwordWeapon(w);
+  const critMin = swordBuffs ? Math.min(Number(w.critMin || 20), passiveCritMin) : Number(w.critMin || 20);
   const isCrit = (d20 !== null && d20 >= critMin);
-  if(isCrit){
+  const critTxt = isCrit ? " — **CRÍTICO!**" : "";
+  if(isCrit && swordBuffs){
     state.nextDamageCrit = true;
     saveState();
   }
   const modeTxt = (mode === "adv") ? " (vantagem)" : (mode === "dis") ? " (desvantagem)" : "";
+  const aspecto2Note = (swordBuffs) ? "Aspecto 2: alvo sofre -2 em esquiva/contra-ataque vs seus ataques." : "";
 
   log(`Acerto (${w.name}) — ${w.skill}${modeTxt}
 ${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt}
-${aspecto2Note}`);
+${aspecto2Note ? "
+"+aspecto2Note : ""}`);
   showCombatResultBanner({
     name: w.name,
     label: `Acerto${mode !== 'normal' ? ` (${modeLabel(mode)})` : ''}`,
     total: res.total,
     detail: `${w.skill}${modeTxt}
 ${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt.replaceAll('**','')}
-${aspecto2Note}`
+${aspecto2Note ? "
+"+aspecto2Note : ""}`
   });
   render();
   return res;
@@ -4160,8 +4170,8 @@ function damageFor(target, baseExpr){
     notes.push(`Plasma (+1d12, ignora 1 resistência) — ${flag}`);
   }
 
-  // Crítico (passiva: 19–20) — dobrar apenas os DADOS de dano
-  if(state.nextDamageCrit){
+  // Crítico (passiva: 19–20) — apenas para espadas
+  if(state.nextDamageCrit && isSwordWeapon(currentWeapon())){
     totalExpr = multiplyDiceCounts(totalExpr, 2);
     notes.push('CRÍTICO: dados dobrados');
     state.nextDamageCrit = false;
@@ -4305,10 +4315,10 @@ function renderCombatActions(){
           <span class="chipLabel">Alvo infernal</span>
           <input id="infernalToggle" type="checkbox" ${state.infernalTarget ? "checked" : ""} />
         </label>
-        <label class="chip">
+        ${isSwordWeapon(w) ? `<label class="chip">
           <span class="chipLabel">Próx. dano crítico</span>
           <input id="nextCritToggle" type="checkbox" ${state.nextDamageCrit ? "checked" : ""} />
-        </label>
+        </label>` : ``}
       </div>
     </div>
 
@@ -4342,8 +4352,9 @@ function renderCombatActions(){
         <div class="miniNotes">
           <div>• Vantagem vs infernais (auto no acerto quando modo=Normal)</div>
           <div>• +1 dado de dano vs infernais (toggle)</div>
-          <div>• Crítico em 19–20 (ou melhor)</div>
+          ${isSwordWeapon(w) ? `<div>• Crítico em 19–20 (ou melhor)</div>
           <div>• Aspecto 2: alvo -2 em esquiva/contra-ataque</div>
+          <div>• Quebrar postura 1x por adversário</div>` : ``}
           <div>• +¼ Destreza em todo dano (passiva global)</div>
         </div>
       </div>
@@ -4354,12 +4365,12 @@ function renderCombatActions(){
       <button id="weaponDamageBtn" class="btn">Dano</button>
       <button id="weaponActivationBtn" class="btn btn-ghost" ${w.activation ? "" : "disabled"}>${w.activation ? `Ativar: ${w.activation.label} (-${w.activation.pv} PV, -${w.activation.pf} PF)` : "Sem ativação"}</button>
     </div>
-
-
+    ${isSwordWeapon(w) ? `
     <div class="row gap">
       <button id="postureBreakBtn" class="btn btn-ghost">${state.postureBreakUsed ? "Postura já quebrada (este adversário)" : "Quebrar postura (atordoar 1 turno)"}</button>
       <button id="postureResetBtn" class="btn btn-ghost">Novo adversário</button>
     </div>
+    ` : ``}
 
     <div id="weaponExtraControls" class="weaponExtraControls"></div>
     <div class="muted weaponNotes" id="weaponNotes"></div>
@@ -4390,6 +4401,9 @@ function renderCombatActions(){
     const nc = arsenal.querySelector("#nextCritToggle");
     if(nc){
       nc.checked = !!state.nextDamageCrit;
+    } else {
+      // se não for espada, garante que não fica "carregado"
+      state.nextDamageCrit = false;
     }
 
 
