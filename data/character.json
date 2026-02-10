@@ -456,8 +456,8 @@
     "luck": 10,
     "tracks": {
       "PS": {
-        "current": 118,
-        "max": 118,
+        "current": 117,
+        "max": 117,
         "temp": 0,
         "label": "Pontos de Sangue (vida)"
       },
@@ -475,7 +475,7 @@
       },
       "PF": {
         "current": 74,
-        "max": 74,
+        "max": 92,
         "temp": 0,
         "label": "Pontos de Foco (mana)"
       }

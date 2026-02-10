@@ -590,6 +590,7 @@ function rollSkillCheck(entry, modeOverride, cardEl){
   const res = rollD20WithMode(mod, mode);
 
   const modeTxt = (mode === "adv") ? " (vantagem)" : (mode === "dis") ? " (desvantagem)" : "";
+  const aspecto2Note = "Aspecto 2: alvo sofre -2 em esquiva/contra-ataque vs seus ataques.";
   const tagTxt = entry?.magic && autoMagic ? " [auto]" : "";
 
   log(`Perícia ${entry.name} [${entry.attr}]${modeTxt}${tagTxt}: ${res.detail}`);
@@ -1084,6 +1085,11 @@ let state = {
     pvPool: "pvo", // "pvo" (ataque) ou "pvd" (reação)
     modes: {}
   },
+
+
+  // Passivas recentes
+  nextDamageCrit: false, // definido automaticamente quando um acerto for CRÍTICO (19–20 ou melhor)
+  postureBreakUsed: false, // 1x por adversário (controle manual: "Novo adversário")
 
   // Etapa 10 — níveis de Essência (EV/Of/Def/Apt) e preferências
   // Defaults: Tatsumaki (EV3, OF2, DEF1, APT1)
@@ -3818,6 +3824,13 @@ function addDiceToFirstDiceTerm(expr, bonusDice){
 }
 
 
+function multiplyDiceCounts(expr, factor){
+  const f = Number(factor || 1);
+  if(!f || f === 1) return expr;
+  return String(expr || "").replace(/(\d+)d(\d+)/g, (m,a,b) => `${Number(a) * f}d${b}`);
+}
+
+
 // ------------------------------
 // Shadowheart Arsenal (armas invocadas) + alvo infernal toggle
 // ------------------------------
@@ -4022,17 +4035,28 @@ function rollWeaponAttack(){
 
   const res = rollD20WithMode(mod, mode);
   const d20 = res?.chosen ?? null;
-  const critMin = Number(w.critMin || 20);
+  const passiveCritMin = 19;
+  const critMin = Math.min(Number(w.critMin || 20), passiveCritMin);
   const critTxt = (d20 !== null && d20 >= critMin) ? " — **CRÍTICO!**" : "";
+  const isCrit = (d20 !== null && d20 >= critMin);
+  if(isCrit){
+    state.nextDamageCrit = true;
+    saveState();
+  }
   const modeTxt = (mode === "adv") ? " (vantagem)" : (mode === "dis") ? " (desvantagem)" : "";
 
-  log(`Acerto (${w.name}) — ${w.skill}${modeTxt}\n${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt}`);
+  log(`Acerto (${w.name}) — ${w.skill}${modeTxt}
+${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt}
+${aspecto2Note}`);
   showCombatResultBanner({
     name: w.name,
     label: `Acerto${mode !== 'normal' ? ` (${modeLabel(mode)})` : ''}`,
     total: res.total,
-    detail: `${w.skill}${modeTxt}\n${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt.replaceAll('**','')}`
+    detail: `${w.skill}${modeTxt}
+${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt.replaceAll('**','')}
+${aspecto2Note}`
   });
+  render();
   return res;
 }
 
@@ -4065,7 +4089,14 @@ function rollWeaponDamage(opts = {}){
     notes.push(`Forma: ${form}`);
   }
 
-  const target = state.infernalTarget ? "infernal" : (state.target || "alvo");
+  
+  // Passiva — +5 de dano com a Personificação
+  if(w.id === "personificacao"){
+    base = `${base} + 5`;
+    notes.push("Passiva: +5 dano (Personificação)");
+  }
+
+const target = state.infernalTarget ? "infernal" : (state.target || "alvo");
   const out = damageFor(target, base);
 
   if(opts.extraExpr){
@@ -4128,6 +4159,15 @@ function damageFor(target, baseExpr){
     const flag = state.effects.plasma.resNotified ? "✓ resistência avisada" : "⚠ definir resistência";
     notes.push(`Plasma (+1d12, ignora 1 resistência) — ${flag}`);
   }
+
+  // Crítico (passiva: 19–20) — dobrar apenas os DADOS de dano
+  if(state.nextDamageCrit){
+    totalExpr = multiplyDiceCounts(totalExpr, 2);
+    notes.push('CRÍTICO: dados dobrados');
+    state.nextDamageCrit = false;
+    saveState();
+  }
+
 
   const res = evalExpr(totalExpr, ctx);
   const line = `${res.detail}${notes.length ? " | " + notes.join(", ") : ""}`;
@@ -4265,6 +4305,10 @@ function renderCombatActions(){
           <span class="chipLabel">Alvo infernal</span>
           <input id="infernalToggle" type="checkbox" ${state.infernalTarget ? "checked" : ""} />
         </label>
+        <label class="chip">
+          <span class="chipLabel">Próx. dano crítico</span>
+          <input id="nextCritToggle" type="checkbox" ${state.nextDamageCrit ? "checked" : ""} />
+        </label>
       </div>
     </div>
 
@@ -4298,6 +4342,8 @@ function renderCombatActions(){
         <div class="miniNotes">
           <div>• Vantagem vs infernais (auto no acerto quando modo=Normal)</div>
           <div>• +1 dado de dano vs infernais (toggle)</div>
+          <div>• Crítico em 19–20 (ou melhor)</div>
+          <div>• Aspecto 2: alvo -2 em esquiva/contra-ataque</div>
           <div>• +¼ Destreza em todo dano (passiva global)</div>
         </div>
       </div>
@@ -4307,6 +4353,12 @@ function renderCombatActions(){
       <button id="weaponAttackBtn" class="btn btn-primary">Acerto (${w.skill})</button>
       <button id="weaponDamageBtn" class="btn">Dano</button>
       <button id="weaponActivationBtn" class="btn btn-ghost" ${w.activation ? "" : "disabled"}>${w.activation ? `Ativar: ${w.activation.label} (-${w.activation.pv} PV, -${w.activation.pf} PF)` : "Sem ativação"}</button>
+    </div>
+
+
+    <div class="row gap">
+      <button id="postureBreakBtn" class="btn btn-ghost">${state.postureBreakUsed ? "Postura já quebrada (este adversário)" : "Quebrar postura (atordoar 1 turno)"}</button>
+      <button id="postureResetBtn" class="btn btn-ghost">Novo adversário</button>
     </div>
 
     <div id="weaponExtraControls" class="weaponExtraControls"></div>
@@ -4330,6 +4382,16 @@ function renderCombatActions(){
 
     // update main buttons labels
     arsenal.querySelector("#weaponAttackBtn").textContent = `Acerto (${w.skill}${(state.infernalTarget ? " • infernal" : "")})`;
+
+    const pb = arsenal.querySelector("#postureBreakBtn");
+    if(pb){
+      pb.textContent = state.postureBreakUsed ? "Postura já quebrada (este adversário)" : "Quebrar postura (atordoar 1 turno)";
+    }
+    const nc = arsenal.querySelector("#nextCritToggle");
+    if(nc){
+      nc.checked = !!state.nextDamageCrit;
+    }
+
 
     // damage button label can show mode info
     const dmgExpr = weaponDamageExpr(w);
@@ -4514,6 +4576,29 @@ function renderCombatActions(){
     state.infernalTarget = !!e.target.checked;
     saveState(); renderCombatActions(); render();
   });
+
+  arsenal.querySelector("#nextCritToggle")?.addEventListener("change", (e)=>{
+    state.nextDamageCrit = !!e.target.checked;
+    saveState(); renderWeaponExtras(); render();
+  });
+
+  arsenal.querySelector("#postureBreakBtn")?.addEventListener("click", ()=>{
+    if(state.postureBreakUsed){
+      toastQuick("Postura", "Já foi usada neste adversário. Clique em 'Novo adversário' para liberar de novo.");
+      return;
+    }
+    state.postureBreakUsed = true;
+    saveState();
+    log("Postura quebrada — alvo **Atordoado por 1 turno** (1x por adversário, sem custo).");
+    showCombatResultBanner({ name: "Passiva", label: "Quebrar postura", total: "", detail: "Alvo atordoado por 1 turno (sem custo). Marquei como usado para este adversário." });
+    renderWeaponExtras(); render();
+  });
+
+  arsenal.querySelector("#postureResetBtn")?.addEventListener("click", ()=>{
+    state.postureBreakUsed = false;
+    saveState(); renderWeaponExtras(); render();
+  });
+
 
   weaponSelect.addEventListener("change", (e)=>{
     state.weapon.currentId = e.target.value;
