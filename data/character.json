@@ -160,7 +160,7 @@
       {
         "name": "Espionagem",
         "attribute": "DES",
-        "level": null,
+        "level": 0,
         "proficient": false,
         "total": 5
       },
@@ -195,14 +195,14 @@
       {
         "name": "Firmeza",
         "attribute": "FORT",
-        "level": null,
+        "level": 0,
         "proficient": false,
         "total": 3
       },
       {
         "name": "Manobra",
         "attribute": "FORT",
-        "level": null,
+        "level": 1,
         "proficient": false,
         "total": 4
       },
@@ -216,7 +216,7 @@
       {
         "name": "Defender",
         "attribute": "FORT",
-        "level": null,
+        "level": 3,
         "proficient": false,
         "total": 6
       },
@@ -224,7 +224,7 @@
         "name": "Resistência",
         "attribute": "FORT",
         "level": 6,
-        "proficient": true,
+        "proficient": false,
         "total": 12
       },
       {
@@ -253,14 +253,14 @@
       {
         "name": "Tática",
         "attribute": "INT",
-        "level": null,
+        "level": 3,
         "proficient": false,
         "total": 5
       },
       {
         "name": "Pilotagem",
         "attribute": "INT",
-        "level": null,
+        "level": 0,
         "proficient": false,
         "total": 2
       },
@@ -281,28 +281,28 @@
       {
         "name": "Negociação",
         "attribute": "INT",
-        "level": null,
+        "level": 0,
         "proficient": false,
         "total": 2
       },
       {
         "name": "Cartografia",
         "attribute": "INT",
-        "level": null,
+        "level": 0,
         "proficient": false,
         "total": 2
       },
       {
         "name": "Falsificação",
         "attribute": "INT",
-        "level": null,
+        "level": 0,
         "proficient": false,
         "total": 2
       },
       {
         "name": "Criptografia",
         "attribute": "INT",
-        "level": null,
+        "level": 0,
         "proficient": false,
         "total": 2
       },
@@ -337,7 +337,7 @@
       {
         "name": "História",
         "attribute": "SAB",
-        "level": null,
+        "level": 0,
         "proficient": false,
         "total": 2
       },
@@ -358,7 +358,7 @@
       {
         "name": "Liderança",
         "attribute": "SAB",
-        "level": null,
+        "level": 0,
         "proficient": false,
         "total": 2
       },
@@ -379,8 +379,8 @@
       {
         "name": "Empatia",
         "attribute": "ARC",
-        "level": 1,
-        "proficient": false,
+        "level": 5,
+        "proficient": true,
         "total": 11
       },
       {

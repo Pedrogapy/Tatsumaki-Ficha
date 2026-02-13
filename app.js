@@ -590,7 +590,7 @@ function rollSkillCheck(entry, modeOverride, cardEl){
   const res = rollD20WithMode(mod, mode);
 
   const modeTxt = (mode === "adv") ? " (vantagem)" : (mode === "dis") ? " (desvantagem)" : "";
-  const aspecto2Note = (swordBuffs) ? "Aspecto 2: alvo sofre -2 em esquiva/contra-ataque vs seus ataques." : "";
+  // Aspecto 2 (penalidade do alvo) aplica a ataques com espada; não influencia testes de perícia.
   const tagTxt = entry?.magic && autoMagic ? " [auto]" : "";
 
   log(`Perícia ${entry.name} [${entry.attr}]${modeTxt}${tagTxt}: ${res.detail}`);
