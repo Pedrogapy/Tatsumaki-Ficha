@@ -204,7 +204,7 @@
         "attribute": "FORT",
         "level": null,
         "proficient": false,
-        "total": 3
+        "total": 4
       },
       {
         "name": "Atletismo",
@@ -218,7 +218,7 @@
         "attribute": "FORT",
         "level": null,
         "proficient": false,
-        "total": 3
+        "total": 6
       },
       {
         "name": "Resistência",
@@ -255,7 +255,7 @@
         "attribute": "INT",
         "level": null,
         "proficient": false,
-        "total": 2
+        "total": 5
       },
       {
         "name": "Pilotagem",
@@ -381,7 +381,7 @@
         "attribute": "ARC",
         "level": 1,
         "proficient": false,
-        "total": 4
+        "total": 11
       },
       {
         "name": "Intuição",
