@@ -1281,7 +1281,6 @@ function computeEssenceDamageDice(){
 }
 
 
-}
 
 
 function syncPassiveEssenceRules(){
@@ -1296,7 +1295,6 @@ function syncPassiveEssenceRules(){
 }
 
 
-}
 
 function applyRecommendedDamageDice(){
   log('Essência (2.0): bônus de dano não é global. Use os toggles "Dano mágico" / "Dano baseado em essência" quando for rolar dano.');
@@ -4089,16 +4087,14 @@ function rollWeaponAttack(){
 
   log(`Acerto (${w.name}) — ${w.skill}${modeTxt}
 ${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt}
-${aspecto2Note ? "
-"+aspecto2Note : ""}`);
+${aspecto2Note ? "\n"+aspecto2Note : ""}`);
   showCombatResultBanner({
     name: w.name,
     label: `Acerto${mode !== 'normal' ? ` (${modeLabel(mode)})` : ''}`,
     total: res.total,
     detail: `${w.skill}${modeTxt}
 ${res.detail} + ${fmtNumber(mod)} = ${fmtNumber(res.total)}${critTxt.replaceAll('**','')}
-${aspecto2Note ? "
-"+aspecto2Note : ""}`
+${aspecto2Note ? "\n"+aspecto2Note : ""}`
   });
   render();
   return res;
