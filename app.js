@@ -404,6 +404,21 @@ function lookupSkill(attrCode, name, aliases){
   return null;
 }
 
+function lookupSkillByName(name, aliases){
+  if (!name) return null;
+  const keys = [name].concat(Array.isArray(aliases) ? aliases : []).filter(Boolean).map(normKey);
+
+  for (const attrCode of Object.keys(skillIndex || {})){
+    const bucket = skillIndex[attrCode];
+    if (!bucket) continue;
+    for (const k of keys){
+      if (bucket[k]) return bucket[k];
+    }
+  }
+  return null;
+}
+
+
 function getAttrObjByCode(code){
   const name = ATTR_LABEL[String(code || "").toUpperCase()] || String(code || "");
   return (ctx?.attributes?.[name] || ctx?.attributes?.[name.toLowerCase()] || ctx?.attributes?.[deaccent(name)] || null);
@@ -4054,7 +4069,7 @@ function weaponDamageExpr(w){
 
 function rollWeaponAttack(){
   const w = currentWeapon();
-  const skill = lookupSkill(w.skill);
+  const skill = lookupSkillByName(w.skill);
   const mod = Number(skill?.total ?? 0);
 
   // modo de rolagem escolhido na UI
