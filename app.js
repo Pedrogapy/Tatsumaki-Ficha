@@ -1011,7 +1011,9 @@ function recalcSkillTotalsFromAttributes(){
       if(!s || typeof s !== 'object') return;
       const lvl = Number(s.level ?? 0);
       const extra = Number(s.bonus_extra ?? 0);
-      const total = lvl + baseEighth + (Number.isFinite(extra) ? extra : 0);
+      // Regra do sistema do Pedro: Total = nível + (atributo/8) + (proficiência? + (atributo/8) : 0) + extras
+      const prof = !!s.proficient;
+      const total = lvl + baseEighth * (prof ? 2 : 1) + (Number.isFinite(extra) ? extra : 0);
       s.total = Number.isFinite(total) ? total : (lvl + baseEighth);
     });
   });
@@ -1147,15 +1149,30 @@ let state = {
   }
 };
 
+const SAVE_STATE_VERSION = 2;
+
 function saveKey(){
   const name = (character?.meta?.name || "character").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  return `rpg_save:${name}:v1`;
+  return `rpg_save:${name}:v${SAVE_STATE_VERSION}`;
 }
 
+
+
+function resetOldSavesIfNeeded(){
+  try{
+    const name = (character?.meta?.name || "character").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    const marker = `rpg_save_reset:${name}:v${SAVE_STATE_VERSION}`;
+    if(localStorage.getItem(marker) === "1") return;
+    // remove older/buggy saves from previous builds
+    localStorage.removeItem(`rpg_save:${name}:v1`);
+    localStorage.removeItem(`rpg_save:${name}`);
+    localStorage.setItem(marker, "1");
+  }catch(_){ }
+}
 function saveState(){
   try{
     const payload = {
-      v: 1,
+      v: SAVE_STATE_VERSION,
       round: state.round,
       tracks: { ps: state.ps, pf: state.pf, pvo: state.pvo, pvd: state.pvd },
       effects: state.effects,
@@ -1177,7 +1194,7 @@ function loadState(){
     const raw = localStorage.getItem(saveKey());
     if(!raw) return false;
     const s = JSON.parse(raw);
-    if(!s || s.v !== 1) return false;
+    if(!s || s.v !== SAVE_STATE_VERSION) return false;
     state.round = s.round ?? 1;
     state.ps = s.tracks?.ps ?? state.ps;
     state.pf = s.tracks?.pf ?? state.pf;
@@ -1288,8 +1305,7 @@ function syncPassiveEssenceRules(){
   // - EV3: +1 dado só em ataques BASEADOS EM ESSÊNCIA (toggle)
   // - OF1: +1 dado só em ataques CORPO A CORPO (aplicado automaticamente em dano de arma melee)
   // - APT1: +1 dado só em dano MÁGICO (toggle)
-  // - OF2 e EV3: +PV máximo (sync)
-  syncPvFromEssence();
+  // - PV (PVO/PVD) é definido pelo personagem/sistema. Não alterar automaticamente aqui.
   syncTracksFromEssence();
   state.globalDamageBonusDice = 0;
 }
@@ -1302,12 +1318,13 @@ function applyRecommendedDamageDice(){
 
 
 function setAutoMagicAdv(v){
-  false = !!v;
+  state.ui.autoMagicAdv = !!v;
   const a = document.getElementById('autoMagicAdv');
   const b = document.getElementById('essenceAutoMagicAdv');
   if(a) a.checked = !!v;
   if(b) b.checked = !!v;
   saveState();
+  render();
 }
 
 function essenceHintEV(ev){
@@ -2823,7 +2840,7 @@ function capturePreset(){
     globalDamageBonusDice: clampInt(state.globalDamageBonusDice, 0, 10),
     ui: {
       skillMode: String(state.ui.skillMode || 'normal'),
-      autoMagicAdv: !!false
+      autoMagicAdv: !!(state.ui && state.ui.autoMagicAdv)
     },
     luckMode,
     sfx: readSfxSettings()
@@ -2841,7 +2858,7 @@ function applyPreset(p){
   }
   if(p.ui && typeof p.ui === 'object'){
     if('skillMode' in p.ui) state.ui.skillMode = String(p.ui.skillMode || 'normal');
-    if('autoMagicAdv' in p.ui) false = !!p.ui.autoMagicAdv;
+    if('autoMagicAdv' in p.ui) state.ui.autoMagicAdv = !!p.ui.autoMagicAdv;
   }
   if(p.luckMode){
     const el = document.getElementById('luckMode');
@@ -2852,7 +2869,7 @@ function applyPreset(p){
 
   // mantém consistência do toggle de auto-vantagem (perícias/magia)
   try{
-    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!false);
+    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!(state.ui && state.ui.autoMagicAdv));
   }catch(_){/* ignore */}
 
   saveState();
@@ -2915,7 +2932,7 @@ function applySessionSnapshot(j){
 
   // sincroniza toggles
   try{
-    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!false);
+    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!(state.ui && state.ui.autoMagicAdv));
   }catch(_){/* ignore */}
 
   saveState();
@@ -4976,6 +4993,7 @@ async function init(){
   state.pvd = Math.min(state.pvd, MAX.pvd);
 
   // Restore save if exists
+  resetOldSavesIfNeeded();
   loadState();
 
   // Rebuild ctx (aplica overrides)

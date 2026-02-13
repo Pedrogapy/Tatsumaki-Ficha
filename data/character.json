@@ -63,190 +63,163 @@
         "name": "Lutar",
         "attribute": "FOR",
         "level": 3,
-        "proficient": false,
-        "total": 6
+        "proficient": false
       },
       {
         "name": "Agarrar",
         "attribute": "FOR",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Quebrar",
         "attribute": "FOR",
         "level": 2,
-        "proficient": false,
-        "total": 5
+        "proficient": false
       },
       {
         "name": "Arrancar",
         "attribute": "FOR",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
-        "name": "Arremeso",
+        "name": "Arremesso",
         "attribute": "FOR",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Destravar",
         "attribute": "FOR",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Desprender",
         "attribute": "FOR",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Levantamento",
         "attribute": "FOR",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Armas Pesadas",
         "attribute": "FOR",
         "level": 5,
-        "proficient": true,
-        "total": 11
+        "proficient": true
       },
       {
         "name": "Reflexo",
         "attribute": "DES",
         "level": 6,
-        "proficient": true,
-        "total": 16
+        "proficient": true
       },
       {
         "name": "Defletir",
         "attribute": "DES",
         "level": 1,
-        "proficient": false,
-        "total": 6
+        "proficient": false
       },
       {
         "name": "Pontaria",
         "attribute": "DES",
         "level": 5,
-        "proficient": false,
-        "total": 10
+        "proficient": false
       },
       {
         "name": "Manuseio",
         "attribute": "DES",
         "level": 1,
-        "proficient": false,
-        "total": 6
+        "proficient": false
       },
       {
         "name": "Acrobacia",
         "attribute": "DES",
         "level": 1,
-        "proficient": false,
-        "total": 6
+        "proficient": false
       },
       {
         "name": "Espionagem",
         "attribute": "DES",
         "level": 0,
-        "proficient": false,
-        "total": 5
+        "proficient": false
       },
       {
         "name": "Furtividade",
         "attribute": "DES",
         "level": 2,
-        "proficient": false,
-        "total": 7
+        "proficient": false
       },
       {
         "name": "Prestidigitação",
         "attribute": "DES",
         "level": 2,
-        "proficient": false,
-        "total": 7
+        "proficient": false
       },
       {
         "name": "Armas Avançadas",
         "attribute": "DES",
         "level": 5,
-        "proficient": true,
-        "total": 15
+        "proficient": true
       },
       {
         "name": "Saúde",
         "attribute": "FORT",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Firmeza",
         "attribute": "FORT",
         "level": 0,
-        "proficient": false,
-        "total": 3
+        "proficient": false
       },
       {
         "name": "Manobra",
         "attribute": "FORT",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Atletismo",
         "attribute": "FORT",
         "level": 2,
-        "proficient": false,
-        "total": 5
+        "proficient": false
       },
       {
         "name": "Defender",
         "attribute": "FORT",
         "level": 3,
-        "proficient": false,
-        "total": 6
+        "proficient": false
       },
       {
         "name": "Resistência",
         "attribute": "FORT",
         "level": 6,
-        "proficient": false,
-        "total": 12
+        "proficient": true
       },
       {
         "name": "Tolerar a Dor",
         "attribute": "FORT",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Determinação",
         "attribute": "FORT",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Contra-Ataque",
         "attribute": "FORT",
         "level": 8,
-        "proficient": true,
-        "total": 14
+        "proficient": true
       }
     ],
     "intellectual": [
@@ -254,190 +227,163 @@
         "name": "Tática",
         "attribute": "INT",
         "level": 3,
-        "proficient": false,
-        "total": 5
+        "proficient": false
       },
       {
         "name": "Pilotagem",
         "attribute": "INT",
         "level": 0,
-        "proficient": false,
-        "total": 2
+        "proficient": false
       },
       {
         "name": "Persuasão",
         "attribute": "INT",
         "level": 1,
-        "proficient": false,
-        "total": 3
+        "proficient": false
       },
       {
         "name": "Tecnologia",
         "attribute": "INT",
         "level": 1,
-        "proficient": false,
-        "total": 3
+        "proficient": false
       },
       {
         "name": "Negociação",
         "attribute": "INT",
         "level": 0,
-        "proficient": false,
-        "total": 2
+        "proficient": false
       },
       {
         "name": "Cartografia",
         "attribute": "INT",
         "level": 0,
-        "proficient": false,
-        "total": 2
+        "proficient": false
       },
       {
         "name": "Falsificação",
         "attribute": "INT",
         "level": 0,
-        "proficient": false,
-        "total": 2
+        "proficient": false
       },
       {
         "name": "Criptografia",
         "attribute": "INT",
         "level": 0,
-        "proficient": false,
-        "total": 2
+        "proficient": false
       },
       {
         "name": "Investigação",
         "attribute": "INT",
         "level": 7,
-        "proficient": false,
-        "total": 9
+        "proficient": false
       },
       {
         "name": "Ofício",
         "attribute": "SAB",
         "level": 5,
-        "proficient": false,
-        "total": 7
+        "proficient": false
       },
       {
         "name": "Domar",
         "attribute": "SAB",
         "level": 1,
-        "proficient": false,
-        "total": 3
+        "proficient": false
       },
       {
         "name": "Religião",
         "attribute": "SAB",
         "level": 1,
-        "proficient": false,
-        "total": 3
+        "proficient": false
       },
       {
         "name": "História",
         "attribute": "SAB",
         "level": 0,
-        "proficient": false,
-        "total": 2
+        "proficient": false
       },
       {
         "name": "Medicina",
         "attribute": "SAB",
         "level": 1,
-        "proficient": false,
-        "total": 3
+        "proficient": false
       },
       {
         "name": "Natureza",
         "attribute": "SAB",
         "level": 1,
-        "proficient": false,
-        "total": 3
+        "proficient": false
       },
       {
         "name": "Liderança",
         "attribute": "SAB",
         "level": 0,
-        "proficient": false,
-        "total": 2
+        "proficient": false
       },
       {
         "name": "Percepção",
         "attribute": "SAB",
         "level": 8,
-        "proficient": false,
-        "total": 10
+        "proficient": false
       },
       {
         "name": "Sobrevivência",
         "attribute": "SAB",
         "level": 1,
-        "proficient": false,
-        "total": 3
+        "proficient": false
       },
       {
         "name": "Empatia",
         "attribute": "ARC",
         "level": 5,
-        "proficient": true,
-        "total": 11
+        "proficient": true
       },
       {
         "name": "Intuição",
         "attribute": "ARC",
         "level": 3,
-        "proficient": false,
-        "total": 6
+        "proficient": false
       },
       {
         "name": "Presença",
         "attribute": "ARC",
         "level": 3,
-        "proficient": false,
-        "total": 6
+        "proficient": false
       },
       {
         "name": "Ocultismo",
         "attribute": "ARC",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Arcanismo",
         "attribute": "ARC",
         "level": 5,
-        "proficient": false,
-        "total": 8
+        "proficient": false
       },
       {
         "name": "Invocação",
         "attribute": "ARC",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Conjuração",
         "attribute": "ARC",
         "level": 1,
-        "proficient": false,
-        "total": 4
+        "proficient": false
       },
       {
         "name": "Canalização",
         "attribute": "ARC",
         "level": 5,
-        "proficient": true,
-        "total": 11
+        "proficient": true
       },
       {
         "name": "Intimidação",
         "attribute": "ARC",
         "level": 2,
-        "proficient": true,
-        "total": 8
+        "proficient": true
       }
     ]
   },
@@ -462,14 +408,14 @@
         "label": "Pontos de Sangue (vida)"
       },
       "PVO": {
-        "current": 3,
-        "max": 3,
+        "current": 4,
+        "max": 4,
         "temp": 0,
         "label": "PV Ofensivo (ações de ataque)"
       },
       "PVD": {
-        "current": 4,
-        "max": 4,
+        "current": 5,
+        "max": 5,
         "temp": 0,
         "label": "PV Defensivo (reações)"
       },
