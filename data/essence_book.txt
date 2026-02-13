@@ -1,103 +1,39 @@
-Essência Verdadeira — Referência rápida
+# Essência Verdadeira 2.0 (resumo no site)
 
-O que é Essência
-- Essência define quem você é e o poder que carrega desde o primeiro suspiro.
-- Pode ser herdada, própria, artificial; e há casos raros sem magia.
+## Essência Verdadeira
+**EV2 — Conexão**
+- Ganha 2 pontos de Essência.
 
-Pontos de Essência
-- Trilhas: Ofensiva / Defensiva / Aptidão Mágica.
-- Ganho:
-  • A cada 5 de Karma positivo: +1 Ponto de Essência.
-  • Treinamentos de Essência (quantidade variável).
-  • Roleplay: o mestre pode conceder até +1 no fim da sessão.
+**EV3 — Entendimento**
+- +10 níveis
+- +1 PV máximo
+- +10 PF máximo
+- +10 PS máximo
+- Recebe 2 pontos de Essência
+- **Ataques baseados em Essência**: +1 dado de dano
 
-Treinamento de Essência (Estágios EV)
-EV 1 — Conhecendo a si mesmo
-- Ritual “Pescaria da Alma”. Recompensa: +10 níveis.
+## Trilha Ofensiva
+**OF1 — Liberação de Energia**
+- +1 dado de dano em **ataques corpo a corpo** (incluindo armas)
 
-EV 2 — Conexão
-- Reflexão profunda; pode resolver conflitos por diálogo ou combate.
-- Desbloqueia uma magia derivada (definida pelo mestre).
+**OF2 — Liberação Instintiva**
+- +1 PV máximo
 
-EV 3 — Entendimento
-- Benefícios:
-  • +10 níveis.
-  • +1 PV, +10 PF e +10 PS máximos.
-  • +2 pontos de Essência Verdadeira para distribuir.
-  • Todos os ataques: +1 dado de dano.
+**OF3 — Liberação Fervente**
+- Adiciona **¼ de um atributo** (à escolha) em **todas as jogadas de dano**  
+  (Tatsumaki: Destreza)
 
-EV 4 — Liberação parcial
-- Benefícios:
-  • +5 pontos de atributo.
-  • +2 pontos de Essência para alocar.
-  • Desbloqueia uma transformação parcial (ou item/evolução de item).
+## Trilha Defensiva
+**DEF1 — Aura Defensiva (ativa)**
+- Defesa: **2d6 + ¼ Arcano**
+- Duração: **1d4**
+- Custo: **6 PF e 1 PV por turno ativo**
 
-EV 5 — Liberação total
-- Treino extremo: duelo contra a própria Essência. Dano refletido.
-- Se falhar: 5 dias exaustão + 2 semanas sem poderes; reteste só após 6 meses.
-- Se vencer (1x/dia por pouco tempo):
-  • +10 níveis.
-  • +20 PS, +10 PF, +1 PV.
-  • +5 pontos de atributo.
-  • +1 dado extra de dano em qualquer ataque físico ou mágico.
+**DEF2 — Aura Protetora**
+- Mantém a Aura Defensiva
+- +1 turno de duração (**1d4+1**)
+- +1 dado de defesa (**3d6 + ¼ Arcano**)
 
-Trilha Ofensiva (OF)
-OF 1 — Liberação de Energia
-- +1 dado de dano em qualquer ataque (físico ou mágico).
-
-OF 2 — Liberação Instintiva
-- +1 PV.
-- Todos os ataques: +1 dado extra de dano.
-
-OF 3 — Liberação Fervente
-- Adiciona 1/4 de um atributo à escolha em todas as jogadas de dano.
-
-OF 4 — Liberação Condensada (1x/dia)
-- Por 2 turnos: ignora resistências físicas e algumas mágicas.
-- +1d12 dano adicional do tipo de energia.
-
-OF 5 — Liberação Expandida
-- Nova habilidade 100% ofensiva (ou upgrade forte em uma existente).
-- Passivo: +2 dados extras de dano em todos os ataques.
-
-Trilha Defensiva (DEF)
-DEF 1 — Aura Defensiva
-- Defesa: 2d6 + 1/4 de Arcano.
-- Duração: 1d4 rodadas.
-- Custo: definido pelo mestre.
-
-DEF 2 — Aura Protetora
-- Mantém a Aura Defensiva.
-- +1 turno de duração.
-- +2 dados adicionais de defesa.
-
-DEF 3 — Aura Guardiã (passivo)
-- Escolhe 1 resistência passiva permanente (física ou mágica).
-
-DEF 4 — Aura de Aço
-- Por 1d4 turnos: ignora efeitos que ignorariam armadura.
-
-DEF 5 — Aura Bastião
-- Nova habilidade 100% defensiva.
-- +2 dados de defesa adicionais ao efeito da Aura Defensiva.
-
-Aptidão Mágica (APT)
-APT 1 — Controle Inicial
-- Vantagem em testes de perícia relacionados ao uso de magia.
-
-APT 2 — Controle Parcial
-- Todas as habilidades custam -1 PF.
-
-APT 3 — Controle Mediano
-- +2 em acertos relacionados a magia.
-- 2x por combate: pode ignorar a reação de inimigos (1x/dia).
-
-APT 4 — Controle Avançado
-- Escolhe até 2 habilidades existentes para receber até 3 novos efeitos cada.
-- Aumenta dano/defesa dessas habilidades.
-- Proficiência: acerto passa a ser 1/4 do atributo em vez de 1/8.
-
-APT 5 — Controle Refinado
-- Reduz custo de habilidades em -2 PF.
-- Habilidades: +2 dados de dano.
-- Pode criar/escolher uma magia adicional.
+## Aptidão Mágica
+**APT1 — Controle Inicial**
+- +1 dado de dano em ataques relacionados à magia

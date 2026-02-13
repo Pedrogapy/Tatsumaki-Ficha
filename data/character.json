@@ -1088,62 +1088,18 @@
     ],
     "karma_positive": 14,
     "essence_passives": [
-      {
-        "name": "Liberação de Energia",
-        "type": "Passiva",
-        "stage": "Ofensiva 1",
-        "effects": [
-          "+1 dado de dano em qualquer ataque (mágico ou físico)."
-        ]
-      },
-      {
-        "name": "Liberação Instintiva",
-        "type": "Passiva",
-        "stage": "Ofensiva 2",
-        "effects": [
-          "+1 PV máximo.",
-          "+1 dado extra de dano em todos os ataques."
-        ]
-      },
-      {
-        "name": "Aura Defensiva",
-        "type": "Ativa",
-        "stage": "Defensiva 1",
-        "effects": [
-          "Defesa = 2d6 + 1/4 do Arcano.",
-          "Duração: 1d4 rodadas. (1x por dia; custo definido pelo mestre)"
-        ]
-      },
-      {
-        "name": "Aura Protetora",
-        "type": "Passiva",
-        "stage": "Defensiva 2",
-        "effects": [
-          "Mantém Aura Defensiva.",
-          "+1 turno de duração.",
-          "+2 dados na defesa da Aura."
-        ]
-      },
-      {
-        "name": "Entendimento",
-        "type": "Passiva",
-        "stage": "EV 3",
-        "effects": [
-          "+1 dado de dano adicional em todos os ataques."
-        ]
-      },
-      {
-        "name": "Controle Inicial",
-        "type": "Passiva",
-        "stage": "Aptidão Mágica 1",
-        "effects": [
-          "Vantagem em testes de perícia relacionados ao uso de magia."
-        ]
-      }
+      "EV2 — Conexão: ganha 2 pontos de Essência.",
+      "EV3 — Entendimento: +10 níveis; +1 PV máx; +10 PF máx; +10 PS máx; recebe 2 pontos de Essência; ataques baseados em Essência causam +1 dado de dano.",
+      "OF1 — Liberação de Energia: +1 dado de dano em ataques corpo a corpo (incluindo armas).",
+      "OF2 — Liberação Instintiva: +1 PV máximo.",
+      "OF3 — Liberação Fervente: adiciona ¼ de um atributo à escolha em todas as jogadas de dano (Tatsumaki: Destreza).",
+      "DEF1 — Aura Defensiva (ativa): Defesa 2d6 + ¼ Arcano; duração 1d4; custo 6 PF e 1 PV por turno ativo.",
+      "DEF2 — Aura Protetora: mantém a Aura; +1 turno de duração; +1 dado de defesa (vira 3d6 + ¼ Arcano; duração 1d4+1).",
+      "APT1 — Controle Inicial: +1 dado de dano em ataques relacionados à magia."
     ],
     "essence_levels_default": {
       "ev": 3,
-      "off": 2,
+      "off": 3,
       "def": 2,
       "apt": 1
     }

@@ -1037,7 +1037,7 @@ function rebuildCtx(){
 // PV extra por passiva de Essência (OF 2): +1 PV máximo
 function syncPvFromEssence(){
   const e = getEssence();
-  const extra = (e.off >= 2) ? 1 : 0;
+  const extra = (e.off >= 2 ? 1 : 0) + (e.ev >= 3 ? 1 : 0);
 
   const baseTotal = (BASE_MAX.pvo || 0) + (BASE_MAX.pvd || 0);
   const total = Math.max(0, baseTotal + extra);
@@ -1061,6 +1061,19 @@ function syncPvFromEssence(){
 }
 
 
+function syncTracksFromEssence(){
+  const e = getEssence();
+  // EV3: +10 PS/PF máximos
+  const psBonus = (e.ev >= 3) ? 10 : 0;
+  const pfBonus = (e.ev >= 3) ? 10 : 0;
+
+  MAX.ps = (BASE_MAX.ps || 0) + psBonus;
+  MAX.pf = (BASE_MAX.pf || 0) + pfBonus;
+
+  state.ps = Math.min(state.ps, MAX.ps);
+  state.pf = Math.min(state.pf, MAX.pf);
+}
+
 // ------------------------------
 // State + persistence
 // ------------------------------
@@ -1075,7 +1088,7 @@ let state = {
   pf: 100,
   round: 1,
   // configurable (kept as 2 to match your current behavior)
-  globalDamageBonusDice: 3,
+  globalDamageBonusDice: 0,
 
   // Shadowheart — alvo infernal + arsenal
   infernalTarget: false,
@@ -1091,11 +1104,17 @@ let state = {
   nextDamageCrit: false, // definido automaticamente quando um acerto for CRÍTICO (19–20 ou melhor)
   postureBreakUsed: false, // 1x por adversário (controle manual: "Novo adversário")
 
+  // Tags para a próxima rolagem de dano (livro 2.0)
+  damageFlags: {
+    essenceBased: false,
+    magicBased: false
+  },
+
   // Etapa 10 — níveis de Essência (EV/Of/Def/Apt) e preferências
-  // Defaults: Tatsumaki (EV3, OF2, DEF1, APT1)
+  // Defaults: Tatsumaki (EV3, OF3, DEF2, APT1)
   essence: {
     ev: 3,
-    off: 2,
+    off: 3,
     def: 2,
     apt: 1,
     stackMode: "literal", // conservative | literal
@@ -1113,7 +1132,7 @@ let state = {
   ui: {
     passivesAlwaysOn: true,
     skillMode: "normal",
-    autoMagicAdv: true,
+    autoMagicAdv: false,
     // Etapa 16 — Biblioteca de habilidades
     abilitySearch: "",
     abilityTypeFilter: "all", // all | Ativa | Passiva
@@ -1146,7 +1165,8 @@ function saveState(){
       infernalExtraDamageDie: state.infernalExtraDamageDie,
       weapon: state.weapon,
       logLines: state.logLines,
-      ui: state.ui
+      ui: state.ui,
+      damageFlags: state.damageFlags
     };
     localStorage.setItem(saveKey(), JSON.stringify(payload));
   }catch(_){}
@@ -1190,6 +1210,9 @@ function loadState(){
       if(!Array.isArray(state.ui.favorites)) state.ui.favorites = [];
       if(!state.ui.weaponBases || typeof state.ui.weaponBases !== 'object') state.ui.weaponBases = {};
       if(typeof state.ui._favSeeded !== 'boolean') state.ui._favSeeded = false;
+    }
+    if(s.damageFlags && typeof s.damageFlags === 'object'){
+      state.damageFlags = { ...state.damageFlags, ...s.damageFlags };
     }
     return true;
   }catch(_){
@@ -1250,57 +1273,35 @@ function getEssence(){
 
 function computeEssenceDamageDice(){
   const e = getEssence();
+  return {
+    meleeBonusDice: (e.off >= 1 ? 1 : 0),      // OF1
+    essenceBonusDice: (e.ev >= 3 ? 1 : 0),     // EV3
+    magicBonusDice: (e.apt >= 1 ? 1 : 0)       // APT1
+  };
+}
 
-  // EV 3: +1 dado (todos os ataques)
-  // EV 5: +1 dado (qualquer ataque físico ou mágico)
-  const evDice = (e.ev >= 3 ? 1 : 0) + (e.ev >= 5 ? 1 : 0);
 
-  // Ofensiva
-  // OF 1: +1 dado (todos os ataques)
-  // OF 2: +1 dado extra (todos os ataques)
-  // OF 5: +2 dados extras (passivo)
-  let offDice = 0;
-  if(e.off >= 1) offDice += 1;
-  if(e.off >= 2) offDice += 1;
-  if(e.off >= 5) offDice += 2;
-
-  const literal = evDice + offDice;
-  const conservative = Math.max(evDice, offDice);
-  const recommended = (e.stackMode === 'literal') ? literal : conservative;
-
-  return { evDice, offDice, literal, conservative, recommended };
 }
 
 
 function syncPassiveEssenceRules(){
-  // Regra: EV, Ofensiva e Aptidão são sempre passivas (sempre ativas).
-  // Isso implica empilhar EV + Ofensiva no bônus global de dano.
-  const e = getEssence();
-  if(!state.essence) state.essence = {};
-  // Mantém o seletor, mas por padrão empilha (literal).
-  state.essence.stackMode = (state.ui?.passivesAlwaysOn === false) ? e.stackMode : "literal";
-
-  // PV extra (OF 2): +1 PV máximo
+  // Livro 2.0:
+  // - EV3: +1 dado só em ataques BASEADOS EM ESSÊNCIA (toggle)
+  // - OF1: +1 dado só em ataques CORPO A CORPO (aplicado automaticamente em dano de arma melee)
+  // - APT1: +1 dado só em dano MÁGICO (toggle)
+  // - OF2 e EV3: +PV máximo (sync)
   syncPvFromEssence();
+  syncTracksFromEssence();
+  state.globalDamageBonusDice = 0;
+}
 
-  // Bônus de dados global (quando passivas sempre ativas): soma EV + Ofensiva
-  if(state.ui?.passivesAlwaysOn !== false){
-    const diceInfo = computeEssenceDamageDice();
-    const passiveDice = diceInfo.literal;
-    if(Number.isFinite(passiveDice)) state.globalDamageBonusDice = clampInt(passiveDice, 0, 10);
-  }
 
-  // Aptidão 1: vantagem automática em perícias mágicas
-  if(!state.ui) state.ui = {};
-  if(e.apt >= 1) state.ui.autoMagicAdv = true;
 }
 
 function applyRecommendedDamageDice(){
-  const r = computeEssenceDamageDice();
-  state.globalDamageBonusDice = clampInt(r.recommended, 0, 10);
-  log(`Essência: bônus global de dano definido para ${state.globalDamageBonusDice} dado(s) (${getEssence().stackMode}).`);
-  render();
+  log('Essência (2.0): bônus de dano não é global. Use os toggles "Dano mágico" / "Dano baseado em essência" quando for rolar dano.');
 }
+
 
 function setAutoMagicAdv(v){
   state.ui.autoMagicAdv = !!v;
@@ -1342,10 +1343,9 @@ function essenceHintAPT(apt){
 
 function auraParams(){
   const e = getEssence();
-  // Base: 2d6 + Arcano/4, duração 1d4
-  // DEF 2: +2 dados e +1 turno
-  // DEF 5: +2 dados adicionais na Aura (além do que já tiver)
-  const dice = 2 + (e.def >= 2 ? 2 : 0) + (e.def >= 5 ? 2 : 0);
+  // DEF1: 2d6 + Arcano/4, duração 1d4
+  // DEF2: +1 dado e +1 turno
+  const dice = 2 + (e.def >= 2 ? 1 : 0);
   const durExpr = (e.def >= 2) ? '1d4+1' : '1d4';
   return { dice, durExpr, defLevel: e.def };
 }
@@ -1356,15 +1356,10 @@ function activateAura(){
     log('Aura Defensiva indisponível (precisa DEF 1+).');
     return;
   }
-
-  const costEl = document.getElementById('auraCostPF');
-  const cost = clampInt(costEl ? costEl.value : 3, 0, 99);
-  if(!spend('PF', cost)) return;
-
   const p = auraParams();
   const dur = evalExpr(p.durExpr, ctx).total;
-  state.effects.aura = { rounds: dur, dice: p.dice };
-  log(`Aura Defensiva ativada por ${dur} rodada(s).`);
+  state.effects.aura = { rounds: dur, dice: p.dice, upkeepPF: 6, upkeepPV: 1 };
+  log(`Aura Defensiva ativada por ${dur} rodada(s). Custo: 6 PF + 1 PV por turno ativo.`);
   render();
 }
 
@@ -1403,13 +1398,14 @@ function renderEssencePassives(){
   }
 
   const e = getEssence();
-  const diceInfo = computeEssenceDamageDice();
   const applied = [];
-  if(e.ev >= 3) applied.push('EV 3: +1 dado (dano)');
-  if(e.off >= 1) applied.push('OF 1+: +1 dado (dano)');
-  if(e.off >= 2) applied.push('OF 2: +1 dado (dano) +1 PV máximo');
-  if(e.def >= 1) applied.push('DEF 1+: Aura Defensiva disponível');
-  if(e.def >= 2) applied.push('DEF 2: Aura +1 turno e +2 dados');
+  if(e.ev >= 2) applied.push('EV2: +2 pontos de Essência');
+  if(e.ev >= 3) applied.push('EV3: +10 PS/PF máx; +1 PV máx; +1 dado em dano de Essência (toggle)');
+  if(e.off >= 1) applied.push('OF1: +1 dado em ataques corpo a corpo');
+  if(e.off >= 2) applied.push('OF2: +1 PV máximo');
+  if(e.off >= 3) applied.push('OF3: +¼ Destreza em todo dano');
+  if(e.def >= 1) applied.push('DEF1: Aura Defensiva (2d6+¼Arc, 1d4, 6PF+1PV/turno)');
+  if(e.def >= 2) applied.push('DEF2: Aura +1 turno e +1 dado');
   if(e.apt >= 1 && state.ui?.autoMagicAdv) applied.push('APT 1: auto vantagem (magia)');
 
   const top = document.createElement('div');
@@ -1455,8 +1451,9 @@ function renderEssencePassives(){
   root.appendChild(footer);
 }
 function renderEssenceUi(){
-  // PV máximo pode depender de Essência (OF 2)
+  // Máximos podem depender de Essência (EV/OF)
   syncPvFromEssence();
+  syncTracksFromEssence();
 
   if(state.ui?.passivesAlwaysOn !== false){
     syncPassiveEssenceRules();
@@ -1494,15 +1491,12 @@ function renderEssenceUi(){
   if(defH) defH.textContent = essenceHintDEF(e.def);
   if(aptH) aptH.textContent = essenceHintAPT(e.apt);
 
-  // recommended
-  const r = computeEssenceDamageDice();
-  if(recEl) recEl.textContent = String(r.recommended);
+  // recomendado (livro 2.0): não existe bônus global fixo
+  if(recEl) recEl.textContent = "—";
 
-  // sync auto magic adv
-  const autoEl = document.getElementById('essenceAutoMagicAdv');
-  if(autoEl) autoEl.checked = !!state.ui.autoMagicAdv;
-
-  // DEF passive
+  // o campo de bônus global virou obsoleto
+  if(dmgEl) dmgEl.value = "0";
+// DEF passive
   const resEl = document.getElementById('defPassiveRes');
   if(resEl){
     resEl.value = String(state.essence?.defPassiveRes || '');
@@ -3780,10 +3774,30 @@ function nextRound(){
 
 
   if(state.effects.aura){
-    state.effects.aura.rounds--;
-    if(state.effects.aura.rounds <= 0){
-      log("Aura Defensiva expirou.");
+    // Manutenção por turno ativo: 6 PF + 1 PV
+    const needPF = Number(state.effects.aura.upkeepPF ?? 6);
+    const needPV = Number(state.effects.aura.upkeepPV ?? 1);
+
+    const okPF = (needPF <= 0) ? true : spend('PF', needPF);
+
+    // PV: tenta PVD primeiro (defensivo), depois PVO
+    let okPV = true;
+    if(needPV > 0){
+      if(state.pvd >= needPV){ state.pvd -= needPV; okPV = true; }
+      else if(state.pvo >= needPV){ state.pvo -= needPV; okPV = true; }
+      else { okPV = false; }
+    }
+
+    if(!okPF || !okPV){
+      log(`Aura Defensiva encerrada (sem recursos para manter: precisa ${needPF} PF + ${needPV} PV).`);
       state.effects.aura = null;
+    }else{
+      log(`Aura Defensiva mantida (-${needPF} PF, -${needPV} PV).`);
+      state.effects.aura.rounds--;
+      if(state.effects.aura.rounds <= 0){
+        log("Aura Defensiva expirou.");
+        state.effects.aura = null;
+      }
     }
   }
   render();
@@ -3974,6 +3988,26 @@ function currentWeapon(){
   return SHADOWHEART_WEAPONS[state.weapon?.currentId] || SHADOWHEART_WEAPONS.personificacao;
 }
 
+function isWeaponMeleeAttack(w){
+  if(!w) return false;
+  // armas marcadas como ranged não são corpo a corpo
+  if(w.ranged) return false;
+
+  // Serpente de Ferro: longa distância não conta como corpo a corpo
+  if(w.id === "serpente"){
+    const range = state.weapon?.modes?.serpente_range || "curta";
+    if(range === "longa") return false;
+  }
+
+  // Voto de Andrakar: no modo escudo não é ataque
+  if(w.id === "voto"){
+    const form = state.weapon?.modes?.voto_form || "escudo";
+    if(form !== "lanca") return false;
+  }
+
+  return true;
+}
+
 function spendPV(amount){
   if(!amount) return true;
   const pool = (state.weapon?.pvPool === "pvd") ? "pvd" : "pvo";
@@ -4107,7 +4141,13 @@ function rollWeaponDamage(opts = {}){
   }
 
 const target = state.infernalTarget ? "infernal" : (state.target || "alvo");
-  const out = damageFor(target, base);
+  // aplica tags do livro 2.0
+  const meleeAttack = isWeaponMeleeAttack(w);
+  const out = damageFor(target, base, {
+    melee: meleeAttack,
+    essenceBased: state.damageFlags?.essenceBased,
+    magicBased: state.damageFlags?.magicBased
+  });
 
   if(opts.extraExpr){
     // dano adicional (ex: queimadura / disparo de energia)
@@ -4131,35 +4171,44 @@ const target = state.infernalTarget ? "infernal" : (state.target || "alvo");
 }
 
 
-function damageFor(target, baseExpr){
+function damageFor(target, baseExpr, opts = {}){
   let totalExpr = baseExpr;
   const notes = [];
+  const e = getEssence();
 
-  // ==============================
-  // PASSIVA — Bônus fixo de dano
-  // "Adiciona ¼ de um atributo à sua escolha em todas as jogadas de dano"
-  // Escolha do personagem neste site: Destreza.
-  // Centralizei aqui para garantir que TODA rolagem que é tratada como dano
-  // (inclusive as que usam input de dano base da arma) receba o bônus.
-  const passiveQuarterAttrExpr = '+@attributes.Destreza.quarter';
-  totalExpr += passiveQuarterAttrExpr;
-  notes.push('Passiva: +¼ Destreza');
-
-  // PASSIVAS — Caça Infernal (Shadowheart)
-  if(state.infernalTarget){
-    // vantagem é aplicada nos acertos (rolagens de ataque) no painel de arma.
-    // aqui aplico o bônus de dano extra contra alvo infernal.
-    if(state.infernalExtraDamageDie){
-      totalExpr = addDiceToFirstDiceTerm(totalExpr, 1);
-      notes.push('Infernal: +1 dado');
-    }
+  // OF3 — Liberação Fervente: +¼ atributo (Tatsumaki: Destreza)
+  if(e.off >= 3){
+    totalExpr += "+@attributes.Destreza.quarter";
+    notes.push("OF3: +¼ Destreza");
   }
 
+  // Shadowheart — bônus vs alvo infernal (dado extra)
+  if(state.infernalTarget && state.infernalExtraDamageDie){
+    totalExpr = addDiceToFirstDiceTerm(totalExpr, 1);
+    notes.push("Infernal: +1 dado");
+  }
 
-  // bônus global de dano (mantive como 2 para não mudar o que você já estava usando)
-  totalExpr = addDiceToFirstDiceTerm(totalExpr, state.globalDamageBonusDice);
-  if(state.globalDamageBonusDice) notes.push(`Essência +${state.globalDamageBonusDice} dado(s)`);
+  // OF1 — +1 dado em ataques corpo a corpo (incluindo armas)
+  if(opts.melee && e.off >= 1){
+    totalExpr = addDiceToFirstDiceTerm(totalExpr, 1);
+    notes.push("OF1: +1 dado (melee)");
+  }
 
+  // EV3 — +1 dado em ataques BASEADOS EM ESSÊNCIA (toggle)
+  const essenceBased = (typeof opts.essenceBased === "boolean") ? opts.essenceBased : !!state.damageFlags?.essenceBased;
+  if(essenceBased && e.ev >= 3){
+    totalExpr = addDiceToFirstDiceTerm(totalExpr, 1);
+    notes.push("EV3: +1 dado (essência)");
+  }
+
+  // APT1 — +1 dado em dano MÁGICO (toggle)
+  const magicBased = (typeof opts.magicBased === "boolean") ? opts.magicBased : !!state.damageFlags?.magicBased;
+  if(magicBased && e.apt >= 1){
+    totalExpr = addDiceToFirstDiceTerm(totalExpr, 1);
+    notes.push("APT1: +1 dado (mágico)");
+  }
+
+  // Efeitos por alvo
   if(state.effects.sanguenta && state.effects.sanguenta.target === target){
     totalExpr += "+1d8";
     notes.push("Sanguenta");
@@ -4170,20 +4219,20 @@ function damageFor(target, baseExpr){
     notes.push(`Plasma (+1d12, ignora 1 resistência) — ${flag}`);
   }
 
-  // Crítico (passiva: 19–20) — apenas para espadas
+  // Crítico carregado (passiva: 19–20) — apenas para espadas
   if(state.nextDamageCrit && isSwordWeapon(currentWeapon())){
     totalExpr = multiplyDiceCounts(totalExpr, 2);
-    notes.push('CRÍTICO: dados dobrados');
+    notes.push("CRÍTICO: dados dobrados");
     state.nextDamageCrit = false;
     saveState();
   }
-
 
   const res = evalExpr(totalExpr, ctx);
   const line = `${res.detail}${notes.length ? " | " + notes.join(", ") : ""}`;
   log(line);
   return { expr: totalExpr, total: res.total, detail: line, notes };
 }
+
 
 // ------------------------------
 // UI rendering
@@ -4315,6 +4364,14 @@ function renderCombatActions(){
           <span class="chipLabel">Alvo infernal</span>
           <input id="infernalToggle" type="checkbox" ${state.infernalTarget ? "checked" : ""} />
         </label>
+        <label class="chip">
+          <span class="chipLabel">Dano mágico</span>
+          <input id="magicDmgToggle" type="checkbox" ${state.damageFlags?.magicBased ? "checked" : ""} />
+        </label>
+        <label class="chip">
+          <span class="chipLabel">Dano de Essência</span>
+          <input id="essenceDmgToggle" type="checkbox" ${state.damageFlags?.essenceBased ? "checked" : ""} />
+        </label>
         ${isSwordWeapon(w) ? `<label class="chip">
           <span class="chipLabel">Próx. dano crítico</span>
           <input id="nextCritToggle" type="checkbox" ${state.nextDamageCrit ? "checked" : ""} />
@@ -4355,7 +4412,9 @@ function renderCombatActions(){
           ${isSwordWeapon(w) ? `<div>• Crítico em 19–20 (ou melhor)</div>
           <div>• Aspecto 2: alvo -2 em esquiva/contra-ataque</div>
           <div>• Quebrar postura 1x por adversário</div>` : ``}
-          <div>• +¼ Destreza em todo dano (passiva global)</div>
+          <div>• OF3: +¼ Destreza em todo dano</div>
+          <div>• EV3: +1 dado em dano de Essência (toggle)</div>
+          <div>• APT1: +1 dado em dano mágico (toggle)</div>
         </div>
       </div>
     </div>
@@ -4590,6 +4649,20 @@ function renderCombatActions(){
     state.infernalTarget = !!e.target.checked;
     saveState(); renderCombatActions(); render();
   });
+
+
+  arsenal.querySelector("#magicDmgToggle")?.addEventListener("change", (e)=>{
+    if(!state.damageFlags) state.damageFlags = { essenceBased:false, magicBased:false };
+    state.damageFlags.magicBased = !!e.target.checked;
+    saveState(); renderCombatActions(); render();
+  });
+
+  arsenal.querySelector("#essenceDmgToggle")?.addEventListener("change", (e)=>{
+    if(!state.damageFlags) state.damageFlags = { essenceBased:false, magicBased:false };
+    state.damageFlags.essenceBased = !!e.target.checked;
+    saveState(); renderCombatActions(); render();
+  });
+
 
   arsenal.querySelector("#nextCritToggle")?.addEventListener("change", (e)=>{
     state.nextDamageCrit = !!e.target.checked;
@@ -4895,11 +4968,21 @@ async function init(){
   };
   MAX = { ...BASE_MAX };
 
+  // aplica bônus de essência (EV3/OF2) aos máximos
+  syncPvFromEssence();
+  syncTracksFromEssence();
+
   // Default current from character
   state.ps = tracks.PS?.current ?? MAX.ps;
   state.pf = tracks.PF?.current ?? MAX.pf;
   state.pvo = tracks.PVO?.current ?? MAX.pvo;
   state.pvd = tracks.PVD?.current ?? MAX.pvd;
+
+  // clampa após aplicar bônus de essência
+  state.ps = Math.min(state.ps, MAX.ps);
+  state.pf = Math.min(state.pf, MAX.pf);
+  state.pvo = Math.min(state.pvo, MAX.pvo);
+  state.pvd = Math.min(state.pvd, MAX.pvd);
 
   // Restore save if exists
   loadState();
