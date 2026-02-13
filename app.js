@@ -1064,8 +1064,8 @@ function syncPvFromEssence(){
 function syncTracksFromEssence(){
   const e = getEssence();
   // EV3: +10 PS/PF máximos
-  const psBonus = (e.ev >= 3) ? 10 : 0;
-  const pfBonus = (e.ev >= 3) ? 10 : 0;
+  const psBonus = 0; // bônus de EV já incluso no máximo base
+  const pfBonus = 0; // bônus de EV já incluso no máximo base
 
   MAX.ps = (BASE_MAX.ps || 0) + psBonus;
   MAX.pf = (BASE_MAX.pf || 0) + pfBonus;
@@ -1302,7 +1302,7 @@ function applyRecommendedDamageDice(){
 
 
 function setAutoMagicAdv(v){
-  state.ui.autoMagicAdv = !!v;
+  false = !!v;
   const a = document.getElementById('autoMagicAdv');
   const b = document.getElementById('essenceAutoMagicAdv');
   if(a) a.checked = !!v;
@@ -1404,7 +1404,7 @@ function renderEssencePassives(){
   if(e.off >= 3) applied.push('OF3: +¼ Destreza em todo dano');
   if(e.def >= 1) applied.push('DEF1: Aura Defensiva (2d6+¼Arc, 1d4, 6PF+1PV/turno)');
   if(e.def >= 2) applied.push('DEF2: Aura +1 turno e +1 dado');
-  if(e.apt >= 1 && state.ui?.autoMagicAdv) applied.push('APT 1: auto vantagem (magia)');
+  if(e.apt >= 1) applied.push('APT1: +1 dado em dano mágico (toggle)');
 
   const top = document.createElement('div');
   top.className = 'muted';
@@ -1442,11 +1442,6 @@ function renderEssencePassives(){
   });
 
   root.appendChild(box);
-
-  const footer = document.createElement('div');
-  footer.className = 'muted small';
-  footer.textContent = `Bônus global de dano (passivo): ${diceInfo.literal} dado(s) [EV=${diceInfo.evDice} + OF=${diceInfo.offDice}]`;
-  root.appendChild(footer);
 }
 function renderEssenceUi(){
   // Máximos podem depender de Essência (EV/OF)
@@ -2828,7 +2823,7 @@ function capturePreset(){
     globalDamageBonusDice: clampInt(state.globalDamageBonusDice, 0, 10),
     ui: {
       skillMode: String(state.ui.skillMode || 'normal'),
-      autoMagicAdv: !!state.ui.autoMagicAdv
+      autoMagicAdv: !!false
     },
     luckMode,
     sfx: readSfxSettings()
@@ -2846,7 +2841,7 @@ function applyPreset(p){
   }
   if(p.ui && typeof p.ui === 'object'){
     if('skillMode' in p.ui) state.ui.skillMode = String(p.ui.skillMode || 'normal');
-    if('autoMagicAdv' in p.ui) state.ui.autoMagicAdv = !!p.ui.autoMagicAdv;
+    if('autoMagicAdv' in p.ui) false = !!p.ui.autoMagicAdv;
   }
   if(p.luckMode){
     const el = document.getElementById('luckMode');
@@ -2857,7 +2852,7 @@ function applyPreset(p){
 
   // mantém consistência do toggle de auto-vantagem (perícias/magia)
   try{
-    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!state.ui.autoMagicAdv);
+    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!false);
   }catch(_){/* ignore */}
 
   saveState();
@@ -2920,7 +2915,7 @@ function applySessionSnapshot(j){
 
   // sincroniza toggles
   try{
-    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!state.ui.autoMagicAdv);
+    if(typeof setAutoMagicAdv === 'function') setAutoMagicAdv(!!false);
   }catch(_){/* ignore */}
 
   saveState();
