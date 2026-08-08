@@ -282,3 +282,128 @@ textarea { resize: vertical; line-height: 1.55; }
   .skill-test-button { font-size: .64rem; padding: .38rem .2rem; }
   .test-advantage-grid { grid-template-columns: 1fr; }
 }
+
+
+/* Essência v5 */
+.combat-rule-note {
+  margin: -4px 0 18px;
+  color: var(--muted);
+  font-size: .82rem;
+}
+.essence-combat-card,
+.essence-summary-card,
+.essence-ability-banner {
+  margin-bottom: 18px;
+}
+.essence-passive-list {
+  display: grid;
+  gap: 10px;
+}
+.essence-passive-row {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,.018);
+}
+.essence-passive-row > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.essence-passive-row p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.essence-passive-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+.essence-passive-chip {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.025);
+  border-radius: 999px;
+  padding: 6px 9px;
+  font-size: .74rem;
+  color: var(--text);
+}
+.essence-damage-reminder {
+  display: grid;
+  gap: 5px;
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent);
+  background: rgba(255,255,255,.02);
+  border-radius: 8px;
+}
+.essence-damage-reminder strong {
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.essence-damage-reminder span,
+.essence-damage-reminder small {
+  color: var(--muted);
+  font-size: .76rem;
+}
+.essence-active-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.essence-technique {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 13px;
+  background: rgba(255,255,255,.018);
+}
+.essence-technique.active {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+}
+.essence-technique > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.essence-technique p {
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 7px 0;
+}
+.essence-technique small {
+  display: block;
+  color: var(--muted);
+  margin: 4px 0;
+}
+.essence-effect-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+.essence-effect-status span {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: .8rem;
+}
+.daily-reset-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+/* Todas as habilidades do Tatsumaki sao habilidades de Essencia. */
+.essence-tag { border-color: rgba(138, 180, 112, .45); background: rgba(95, 135, 73, .12); }

@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "character": "Tatsumaki Shadowheart Gojo",
+  "trueEssenceLevel": 5,
+  "roundRules": {
+    "restoreAllPvAtEndOfRound": true,
+    "restoreAllPvAtEndOfCombat": true
+  },
+  "passives": [
+    {
+      "path": "Essência Verdadeira",
+      "minimumLevel": 5,
+      "name": "Ataques de Essência",
+      "effect": "+1 dado de dano adicional em ataques baseados em Essência"
+    },
+    {
+      "path": "Essência Verdadeira",
+      "minimumLevel": 5,
+      "name": "Liberação da Essência",
+      "effect": "+1 dado extra de dano em qualquer ataque físico ou mágico"
+    },
+    {
+      "path": "Defensiva",
+      "minimumLevel": 3,
+      "name": "Aura Guardiã",
+      "effect": "Resistência passiva permanente",
+      "resistance": "Dano Cortante"
+    },
+    {
+      "path": "Aptidão Mágica",
+      "minimumLevel": 1,
+      "name": "Controle Inicial",
+      "effect": "+1 dado de dano adicional em ataques relacionados à magia"
+    },
+    {
+      "path": "Aptidão Mágica",
+      "minimumLevel": 2,
+      "name": "Controle Parcial",
+      "effect": "-1 P.F no custo de todas as habilidades",
+      "minimumCost": 0
+    },
+    {
+      "path": "Ofensiva",
+      "minimumLevel": 1,
+      "name": "Liberação de Energia",
+      "effect": "+1 dado de dano em ataques corpo a corpo, inclusive armas"
+    },
+    {
+      "path": "Ofensiva",
+      "minimumLevel": 2,
+      "name": "Liberação Instintiva",
+      "effect": "+1 P.V total"
+    },
+    {
+      "path": "Ofensiva",
+      "minimumLevel": 3,
+      "name": "Liberação Fervente",
+      "effect": "+1/4 de Fortitude em todas as jogadas de dano",
+      "attribute": "FORT"
+    }
+  ],
+  "activeAbilities": [
+    {
+      "id": "aura-defensiva",
+      "path": "Defensiva",
+      "minimumLevel": 1,
+      "name": "Aura Defensiva",
+      "effect": "2d6 + 1/4 Arcano de defesa",
+      "duration": "1d4",
+      "perTurnCost": {
+        "pf": 6,
+        "pvAttack": 1
+      },
+      "upgrades": [
+        {
+          "minimumLevel": 2,
+          "name": "Aura Protetora",
+          "effect": "+1 dado de defesa e +1 turno",
+          "defense": "3d6 + 1/4 Arcano",
+          "duration": "1d4+1"
+        }
+      ]
+    },
+    {
+      "id": "aura-aco",
+      "path": "Defensiva",
+      "minimumLevel": 4,
+      "name": "Aura de Aço",
+      "duration": 2,
+      "effect": "Resistência à maioria dos danos exceto Dano Verdadeiro; não ignorável por habilidades comuns"
+    },
+    {
+      "id": "liberacao-condensada",
+      "path": "Ofensiva",
+      "minimumLevel": 4,
+      "name": "Liberação Condensada",
+      "duration": "2 ou 1d4",
+      "usesPerDay": 1,
+      "effect": "Ignora resistências físicas e algumas mágicas; +1d12 de dano do tipo de energia"
+    }
+  ],
+  "futureMechanics": [
+    {
+      "id": "shikai-azrakiel",
+      "status": "não implementar ainda",
+      "note": "Transformação da espada. Ao ativar, rolar 1d10 para definir efeito; se o usuário rejeitar o efeito, o alvo sofre 2d8 de Dano Verdadeiro."
+    }
+  ],
+  "abilityClassification": {
+    "allAbilitiesAreEssence": true,
+    "defaultTags": [
+      "essence"
+    ],
+    "note": "Todas as habilidades do Tatsumaki contam como habilidades baseadas em Essência. Tags adicionais (physical, magic, melee etc.) não substituem Essência e seus bônus acumulam quando aplicáveis."
+  }
+}

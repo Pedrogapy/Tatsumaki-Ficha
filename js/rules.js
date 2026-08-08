@@ -53,6 +53,228 @@
     return total;
   }
 
+
+  function essenceLevel(data, path) {
+    return Math.max(0, Math.floor(number(data.essence?.levels?.[path])));
+  }
+
+  function essencePvBonus(data) {
+    return essenceLevel(data, 'offense') >= 2 ? 1 : 0;
+  }
+
+  function essencePfDiscount(data) {
+    return essenceLevel(data, 'magic') >= 2 ? 1 : 0;
+  }
+
+  function effectiveAbilityCost(cost = {}, data = {}) {
+    const effective = clone(cost || {});
+    if (number(effective.pf) > 0) {
+      effective.pf = Math.max(0, number(effective.pf) - essencePfDiscount(data));
+      if (effective.pf === 0) delete effective.pf;
+    }
+    return effective;
+  }
+
+  function normalizeAbilityTag(tag) {
+    const raw = String(tag || '').trim().toLowerCase();
+    const aliases = {
+      'essência': 'essence',
+      'essencia': 'essence',
+      'mágico': 'magic',
+      'magico': 'magic',
+      'mágica': 'magic',
+      'magica': 'magic',
+      'físico': 'physical',
+      'fisico': 'physical',
+      'física': 'physical',
+      'fisica': 'physical',
+      'corpo a corpo': 'melee',
+      'arma': 'weapon',
+      'distância': 'ranged',
+      'distancia': 'ranged'
+    };
+    return aliases[raw] || raw;
+  }
+
+  function abilityTags(ability = {}) {
+    const tags = Array.isArray(ability.tags) ? ability.tags : [];
+    // Regra atual do Tatsumaki: TODAS as habilidades contam como habilidades de Essência.
+    return [...new Set(['essence', ...tags.map(normalizeAbilityTag).filter(Boolean)])];
+  }
+
+  function ensureAbilityTags(data) {
+    let changed = false;
+    (data.abilities || []).forEach((ability) => {
+      const current = Array.isArray(ability.tags) ? ability.tags.map(normalizeAbilityTag).filter(Boolean) : [];
+      const next = [...new Set(['essence', ...current])];
+      if (JSON.stringify(current) !== JSON.stringify(next)) {
+        ability.tags = next;
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
+  function abilityDamageModifiers(ability, data, rules) {
+    if (!ability?.damage) return [];
+    const tags = abilityTags(ability);
+    const all = essencePassives(data, rules);
+    return all.filter((item) => {
+      if (item.kind === 'damage-flat') return true;
+      if (item.kind !== 'damage') return false;
+      if (item.id === 'true-essence-die') return tags.includes('essence');
+      if (item.id === 'true-physical-magic-die') return tags.includes('physical') || tags.includes('magic');
+      if (item.id === 'magic-extra-die') return tags.includes('magic');
+      if (item.id === 'offense-melee-die') return tags.includes('melee');
+      return false;
+    });
+  }
+
+  function essencePassives(data, rules) {
+    const result = [];
+    const trueLevel = essenceLevel(data, 'true');
+    const defenseLevel = essenceLevel(data, 'defense');
+    const magicLevel = essenceLevel(data, 'magic');
+    const offenseLevel = essenceLevel(data, 'offense');
+
+    if (trueLevel >= 5) {
+      result.push({
+        id: 'true-physical-magic-die',
+        path: 'Essência Verdadeira',
+        name: 'Liberação da Essência',
+        kind: 'damage',
+        text: '+1 dado extra de dano em qualquer ataque físico ou mágico.',
+        scope: 'Ataque físico ou mágico'
+      });
+      result.push({
+        id: 'true-essence-die',
+        path: 'Essência Verdadeira',
+        name: 'Ataques de Essência',
+        kind: 'damage',
+        text: '+1 dado de dano adicional em ataques baseados em Essência.',
+        scope: 'Ataque baseado em Essência'
+      });
+    }
+
+    if (defenseLevel >= 3) {
+      result.push({
+        id: 'guardian-resistance',
+        path: 'Defensiva',
+        name: 'Aura Guardiã',
+        kind: 'resistance',
+        text: 'Resistência passiva permanente: Dano Cortante.',
+        value: 'Dano Cortante'
+      });
+    }
+
+    if (magicLevel >= 1) {
+      result.push({
+        id: 'magic-extra-die',
+        path: 'Aptidão Mágica',
+        name: 'Controle Inicial',
+        kind: 'damage',
+        text: '+1 dado de dano adicional em ataques relacionados à magia.',
+        scope: 'Ataque mágico'
+      });
+    }
+    if (magicLevel >= 2) {
+      result.push({
+        id: 'magic-pf-discount',
+        path: 'Aptidão Mágica',
+        name: 'Controle Parcial',
+        kind: 'cost',
+        text: '-1 P.F no custo de todas as habilidades, mínimo 0.',
+        value: 1
+      });
+    }
+
+    if (offenseLevel >= 1) {
+      result.push({
+        id: 'offense-melee-die',
+        path: 'Ofensiva',
+        name: 'Liberação de Energia',
+        kind: 'damage',
+        text: '+1 dado de dano adicional em ataques corpo a corpo, inclusive com armas.',
+        scope: 'Ataque corpo a corpo'
+      });
+    }
+    if (offenseLevel >= 2) {
+      result.push({
+        id: 'offense-pv',
+        path: 'Ofensiva',
+        name: 'Liberação Instintiva',
+        kind: 'resource',
+        text: '+1 P.V total permanente enquanto este estágio estiver desbloqueado.',
+        value: 1
+      });
+    }
+    if (offenseLevel >= 3) {
+      const bonus = quarter(data, rules, 'FORT');
+      result.push({
+        id: 'offense-fort-damage',
+        path: 'Ofensiva',
+        name: 'Liberação Fervente',
+        kind: 'damage-flat',
+        text: `+¼ de Fortitude em todas as jogadas de dano: +${bonus}.`,
+        value: bonus,
+        attribute: 'FORT'
+      });
+    }
+    return result;
+  }
+
+  function essenceDamageModifiers(data, rules) {
+    return essencePassives(data, rules).filter(item => item.kind === 'damage' || item.kind === 'damage-flat');
+  }
+
+  function essenceActiveAbilities(data, rules) {
+    const defenseLevel = essenceLevel(data, 'defense');
+    const offenseLevel = essenceLevel(data, 'offense');
+    const list = [];
+
+    if (defenseLevel >= 1) {
+      const upgraded = defenseLevel >= 2;
+      const dice = upgraded ? 3 : 2;
+      list.push({
+        id: 'aura-defensiva',
+        name: upgraded ? 'Aura Protetora' : 'Aura Defensiva',
+        baseName: 'Aura Defensiva',
+        path: 'Defensiva',
+        duration: upgraded ? '1d4+1' : '1d4',
+        defense: `${dice}d6 + ${quarter(data, rules, 'ARC')}`,
+        defenseFormula: `${dice}d6 + ¼ Arcano`,
+        perTurnCost: { pf: 6, pvAttack: 1 },
+        summary: upgraded
+          ? `Defesa de ${dice}d6 + ¼ Arcano. Duração 1d4+1 turnos. Custa 6 P.F e 1 P.V por turno ativo.`
+          : `Defesa de ${dice}d6 + ¼ Arcano. Duração 1d4 turnos. Custa 6 P.F e 1 P.V por turno ativo.`
+      });
+    }
+
+    if (defenseLevel >= 4) {
+      list.push({
+        id: 'aura-aco',
+        name: 'Aura de Aço',
+        path: 'Defensiva',
+        duration: '2',
+        summary: 'Por 2 turnos, resistência à maioria dos tipos de dano, exceto Dano Verdadeiro. Habilidades comuns não ignoram esta resistência.'
+      });
+    }
+
+    if (offenseLevel >= 4) {
+      list.push({
+        id: 'liberacao-condensada',
+        name: 'Liberação Condensada',
+        path: 'Ofensiva',
+        duration: 'choice:2|1d4',
+        usesPerDay: 1,
+        damageBonus: '1d12',
+        summary: 'Por 2 ou 1d4 turnos, ignora resistências físicas e algumas mágicas e concede +1d12 de dano do tipo de energia utilizada. 1 uso por dia.'
+      });
+    }
+
+    return list;
+  }
+
   function resourceFormulaBase(data, rules, key) {
     const bonus = Math.max(0, number(data.resources?.[key]?.maxBonus));
 
@@ -90,6 +312,7 @@
         0,
         Math.floor(Math.max(eighth(data, rules, 'FOR'), eighth(data, rules, 'DES')))
         + 2
+        + essencePvBonus(data)
         + bonus
       );
     }
@@ -352,6 +575,9 @@
     skillTotal, resourceFormulaBase, resourceTrueDamage, resourceCoreMax,
     resourceCapacity, resourceCurrent, splitPv, pvTotalMax, pvPoolMax,
     pvPoolCurrent, abilityPvCosts, perception, luck, armorClass,
+    essenceLevel, essencePvBonus, essencePfDiscount, effectiveAbilityCost,
+    normalizeAbilityTag, abilityTags, ensureAbilityTags, abilityDamageModifiers,
+    essencePassives, essenceDamageModifiers, essenceActiveAbilities,
     applySheetFormulas, normalizeCharacterData, repairMojibakeString, repairMojibakeDeep,
     slugify, rollDiceExpression, rollD20Check, formatCost
   };

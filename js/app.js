@@ -85,6 +85,174 @@
     return RPG.resourceCurrent(state.data, state.rules, key);
   }
 
+  function effectiveAbilityCost(ability) {
+    return RPG.effectiveAbilityCost(ability?.cost || {}, state.data);
+  }
+
+  function effectiveCostLabel(ability) {
+    const originalPf = Math.max(0, num(ability?.cost?.pf));
+    const effective = effectiveAbilityCost(ability);
+    const label = RPG.formatCost(effective);
+    const discount = RPG.essencePfDiscount(state.data);
+    if (originalPf > 0 && discount > 0) return `${label} · Controle Parcial: −${Math.min(discount, originalPf)} P.F`;
+    return label;
+  }
+
+  function restoreAllPv(showNotice = false) {
+    const pv = state.data.resources.pv ||= {};
+    const hadSpent = num(pv.attackLost) > 0 || num(pv.reactionLost) > 0;
+    pv.attackLost = 0;
+    pv.reactionLost = 0;
+    if (showNotice && hadSpent) notify('Todos os P.V foram restaurados.');
+  }
+
+  function ensureEssenceCombatState() {
+    state.combat.essenceEffects ||= {};
+    state.data.essence ||= { levels: {}, stages: {}, note: '' };
+    state.data.essence.dailyUses ||= {};
+  }
+
+  function essenceDefinition(id) {
+    return RPG.essenceActiveAbilities(state.data, state.rules).find(item => item.id === id);
+  }
+
+  function activeEssenceEffect(id) {
+    ensureEssenceCombatState();
+    return state.combat.essenceEffects[id] || null;
+  }
+
+  function canPayEssenceCost(cost) {
+    const effective = RPG.effectiveAbilityCost(cost || {}, state.data);
+    const pvCost = RPG.abilityPvCosts(effective);
+    return (
+      Math.max(0, num(effective.pf)) <= currentResource('pf') &&
+      pvCost.attack <= RPG.pvPoolCurrent(state.data, state.rules, 'attack') &&
+      pvCost.reaction <= RPG.pvPoolCurrent(state.data, state.rules, 'reaction')
+    );
+  }
+
+  function payEssenceCost(cost) {
+    const effective = RPG.effectiveAbilityCost(cost || {}, state.data);
+    if (num(effective.pf)) spendResource('pf', effective.pf);
+    const pvCost = RPG.abilityPvCosts(effective);
+    if (pvCost.attack) spendPv('attack', pvCost.attack);
+    if (pvCost.reaction) spendPv('reaction', pvCost.reaction);
+    return effective;
+  }
+
+  function activateEssenceEffect(id) {
+    ensureEssenceCombatState();
+    if (!state.combat.active) {
+      notify('Inicie o combate para ativar esta técnica da Essência.', 'error');
+      return false;
+    }
+    const def = essenceDefinition(id);
+    if (!def) return false;
+
+    if (id === 'liberacao-condensada') {
+      const used = Math.max(0, num(state.data.essence.dailyUses[id]));
+      if (used >= 1) {
+        notify('Liberação Condensada já foi usada hoje.', 'error');
+        return false;
+      }
+    }
+
+    if (def.perTurnCost && !canPayEssenceCost(def.perTurnCost)) {
+      notify('Recursos insuficientes para ativar esta técnica.', 'error');
+      return false;
+    }
+
+    let durationExpression = def.duration || '1';
+    if (durationExpression === 'choice:2|1d4') {
+      const rollDuration = confirm('Liberação Condensada: OK para rolar 1d4 de duração. Cancelar para usar duração fixa de 2 turnos.');
+      durationExpression = rollDuration ? '1d4' : '2';
+    }
+
+    let duration = 1;
+    try { duration = Math.max(1, RPG.rollDiceExpression(durationExpression).result); }
+    catch { duration = Math.max(1, num(durationExpression) || 1); }
+
+    if (def.perTurnCost) payEssenceCost(def.perTurnCost);
+    state.combat.essenceEffects[id] = {
+      id,
+      name: def.name,
+      turns: duration,
+      durationExpression,
+      defense: def.defense || '',
+      damageBonus: def.damageBonus || '',
+      activatedAtRound: num(state.combat.round),
+      activatedAtTurn: num(state.combat.turn)
+    };
+
+    if (id === 'liberacao-condensada') {
+      state.data.essence.dailyUses[id] = Math.max(0, num(state.data.essence.dailyUses[id])) + 1;
+    }
+
+    notify(`${def.name} ativada por ${duration} turno${duration === 1 ? '' : 's'}.`);
+    return true;
+  }
+
+  function endEssenceEffect(id, message = '') {
+    ensureEssenceCombatState();
+    const effect = state.combat.essenceEffects[id];
+    if (!effect) return;
+    delete state.combat.essenceEffects[id];
+    if (message) notify(message);
+  }
+
+  function tickEssenceEffects() {
+    ensureEssenceCombatState();
+    const definitions = Object.fromEntries(RPG.essenceActiveAbilities(state.data, state.rules).map(item => [item.id, item]));
+
+    Object.keys(state.combat.essenceEffects).forEach(id => {
+      const effect = state.combat.essenceEffects[id];
+      effect.turns = Math.max(0, num(effect.turns) - 1);
+
+      if (effect.turns <= 0) {
+        delete state.combat.essenceEffects[id];
+        notify(`${effect.name || id} terminou.`);
+        return;
+      }
+
+      const def = definitions[id];
+      if (def?.perTurnCost) {
+        if (!canPayEssenceCost(def.perTurnCost)) {
+          delete state.combat.essenceEffects[id];
+          notify(`${effect.name || id} foi encerrada por falta de recursos.`, 'error');
+          return;
+        }
+        payEssenceCost(def.perTurnCost);
+      }
+    });
+  }
+
+  function essencePassivesHtml(compact = false) {
+    const passives = RPG.essencePassives(state.data, state.rules);
+    if (!passives.length) return '<span class="muted">Nenhuma passiva de Essência ativa.</span>';
+    return `<div class="${compact ? 'essence-passive-chips' : 'essence-passive-list'}">
+      ${passives.map(item => compact
+        ? `<span class="essence-passive-chip" title="${esc(item.text)}">${esc(item.name)}: ${esc(item.kind === 'damage-flat' ? `+${item.value} dano` : item.kind === 'resource' ? '+1 P.V' : item.kind === 'cost' ? '−1 P.F' : item.kind === 'resistance' ? item.value : '+1 dado')}</span>`
+        : `<div class="essence-passive-row"><div><span class="tag">${esc(item.path)}</span><strong>${esc(item.name)}</strong></div><p>${esc(item.text)}</p></div>`
+      ).join('')}
+    </div>`;
+  }
+
+  function essenceDamageReminderHtml(ability = null) {
+    const modifiers = ability
+      ? RPG.abilityDamageModifiers(ability, state.data, state.rules)
+      : RPG.essenceDamageModifiers(state.data, state.rules);
+    const condensed = activeEssenceEffect('liberacao-condensada');
+    if (!modifiers.length && !condensed) return '';
+    const tags = ability ? RPG.abilityTags(ability) : [];
+    return `<div class="essence-damage-reminder">
+      <strong>${ability ? 'Bônus automáticos desta habilidade' : 'Modificadores de dano'}</strong>
+      ${ability && tags.includes('essence') ? '<span><b>Essência:</b> esta habilidade conta como habilidade de Essência.</span>' : ''}
+      ${modifiers.map(item => `<span>${esc(item.text)}</span>`).join('')}
+      ${condensed ? `<span><b>Liberação Condensada ativa:</b> +1d12 de dano do tipo de energia e ignora resistências físicas e algumas mágicas por ${num(condensed.turns)} turno${num(condensed.turns) === 1 ? '' : 's'}.</span>` : ''}
+      <small>${ability ? 'Todas as habilidades do Tatsumaki têm a tag Essência por padrão. Tags adicionais como Mágica, Física e Corpo a corpo acumularão os respectivos bônus quando forem definidas.' : 'Os bônus por tipo se acumulam quando o ataque se enquadra.'}</small>
+    </div>`;
+  }
+
   function attributeTotal(abbr) {
     return RPG.attributeTotal(state.data.attributes?.[abbr]);
   }
@@ -181,6 +349,7 @@
         </div>
         <div class="resource-breakdown">
           <span>Base: MAX(⅛ FOR, ⅛ DES) + 2</span>
+          ${RPG.essencePvBonus(state.data) ? `<span>Liberação Instintiva +${RPG.essencePvBonus(state.data)} P.V</span>` : ''}
           ${maxBonus ? `<span>Bônus total +${maxBonus}</span>` : ''}
         </div>
         <div class="meter"><span style="width:${percent}%"></span></div>
@@ -320,12 +489,13 @@
     const exhausted = limit && uses >= limit;
     return `<article class="ability-card ${cd ? 'cooling' : ''}">
       <div class="ability-top">
-        <div><span class="tag">${esc(ability.category)}</span><h3>${esc(ability.name)}</h3></div>
+        <div><span class="tag">${esc(ability.category)}</span><span class="tag essence-tag">Essência</span><h3>${esc(ability.name)}</h3></div>
         ${cd ? `<span class="cooldown">${cd} turno${cd === 1 ? '' : 's'}</span>` : ''}
       </div>
       <p>${esc(ability.summary)}</p>
+      ${ability.damage ? essenceDamageReminderHtml(ability) : ''}
       <div class="ability-meta">
-        <span>${esc(RPG.formatCost(ability.cost))}</span>
+        <span>${esc(effectiveCostLabel(ability))}</span>
         ${ability.damage ? `<span>${esc(ability.damage)}</span>` : ''}
         ${limit ? `<span>Usos: ${uses}/${limit}</span>` : ''}
       </div>
@@ -358,6 +528,31 @@
 
       <section class="resources-grid combat-grid">
         ${resourceCard('ps', true)}${pvCard(true)}${resourceCard('pf', true)}
+      </section>
+      <p class="combat-rule-note">P.V de Ataque e Reação são restaurados automaticamente ao iniciar uma nova rodada e ao encerrar o combate.</p>
+
+      <section class="card essence-combat-card">
+        <div class="card-title"><div><span class="eyebrow">ESSÊNCIA</span><h3>Passivas e técnicas</h3></div></div>
+        ${essencePassivesHtml(true)}
+        ${essenceDamageReminderHtml()}
+        <div class="essence-active-grid">
+          ${RPG.essenceActiveAbilities(state.data, state.rules).map(def => {
+            const activeEffect = activeEssenceEffect(def.id);
+            const usedToday = num(state.data.essence?.dailyUses?.[def.id]);
+            const disabledDaily = def.usesPerDay && usedToday >= def.usesPerDay;
+            const effectiveCost = def.perTurnCost ? RPG.effectiveAbilityCost(def.perTurnCost, state.data) : null;
+            return `<article class="essence-technique ${activeEffect ? 'active' : ''}">
+              <div><span class="tag">${esc(def.path)}</span><strong>${esc(def.name)}</strong></div>
+              <p>${esc(def.summary)}</p>
+              ${def.defense ? `<small>Defesa atual: ${esc(def.defense)}</small>` : ''}
+              ${effectiveCost ? `<small>Custo por turno: ${esc(RPG.formatCost(effectiveCost))}${RPG.essencePfDiscount(state.data) ? ' (Controle Parcial aplicado)' : ''}</small>` : ''}
+              ${def.usesPerDay ? `<small>Uso diário: ${usedToday}/${def.usesPerDay}</small>` : ''}
+              ${activeEffect
+                ? `<div class="essence-effect-status"><span>${num(activeEffect.turns)} turno${num(activeEffect.turns) === 1 ? '' : 's'} restante${num(activeEffect.turns) === 1 ? '' : 's'}</span><button class="ghost-btn small" data-action="end-essence-effect" data-effect="${esc(def.id)}">Encerrar</button></div>`
+                : `<button class="secondary-btn small" data-action="activate-essence-effect" data-effect="${esc(def.id)}" ${disabledDaily ? 'disabled' : ''}>Ativar</button>`}
+            </article>`;
+          }).join('')}
+        </div>
       </section>
 
       <section class="combat-tools-grid">
@@ -420,11 +615,17 @@
   function renderAbilities() {
     appEl.innerHTML = `
       <section class="section-heading"><div><span class="eyebrow">ARSENAL</span><h2>Habilidades</h2></div><input id="abilitySearch" class="search-input" placeholder="Buscar habilidade…"></section>
+      <section class="card essence-ability-banner">
+        <div class="card-title"><div><span class="eyebrow">MODIFICADORES SEMPRE ATIVOS</span><h3>Essência aplicada às habilidades</h3></div></div>
+        ${essencePassivesHtml(true)}
+        ${essenceDamageReminderHtml()}
+      </section>
       <section class="ability-grid" id="abilitiesList">
         ${(state.data.abilities || []).map(a => `<article class="ability-card searchable" data-search="${esc(`${a.name} ${a.category} ${a.summary}`.toLowerCase())}">
-          <div class="ability-top"><div><span class="tag">${esc(a.category)}</span><h3>${esc(a.name)}</h3></div><span>${esc(a.type || '')}</span></div>
+          <div class="ability-top"><div><span class="tag">${esc(a.category)}</span><span class="tag essence-tag">Essência</span><h3>${esc(a.name)}</h3></div><span>${esc(a.type || '')}</span></div>
           <p>${esc(a.summary)}</p>
-          <div class="ability-meta"><span>${esc(RPG.formatCost(a.cost))}</span>${a.cooldown ? `<span>Recarga: ${a.cooldown}</span>` : ''}${a.damage ? `<span>${esc(a.damage)}</span>` : ''}</div>
+          ${a.damage ? essenceDamageReminderHtml(a) : ''}
+          <div class="ability-meta"><span>${esc(effectiveCostLabel(a))}</span>${a.cooldown ? `<span>Recarga: ${a.cooldown}</span>` : ''}${a.damage ? `<span>${esc(a.damage)}</span>` : ''}</div>
         </article>`).join('')}
       </section>`;
   }
@@ -453,8 +654,38 @@
     };
     const levels = state.data.essence?.levels || {};
     const stages = state.data.essence?.stages || {};
+    ensureEssenceCombatState();
+    const activeDefs = RPG.essenceActiveAbilities(state.data, state.rules);
     appEl.innerHTML = `
-      <section class="section-heading"><div><span class="eyebrow">PROGRESSÃO</span><h2>Essência</h2></div><small>Os níveis são editáveis; o estágio atual é destacado automaticamente.</small></section>
+      <section class="section-heading"><div><span class="eyebrow">PROGRESSÃO</span><h2>Essência</h2></div><small>Passivas desbloqueadas afetam automaticamente os cálculos que têm regra inequívoca.</small></section>
+
+      <section class="card essence-summary-card">
+        <div class="card-title"><div><span class="eyebrow">EFEITOS ATIVOS</span><h3>Passivas do personagem</h3></div></div>
+        ${essencePassivesHtml(false)}
+      </section>
+
+      <section class="card essence-summary-card">
+        <div class="card-title"><div><span class="eyebrow">TÉCNICAS</span><h3>Habilidades da Essência</h3></div></div>
+        <div class="essence-active-grid">
+          ${activeDefs.map(def => {
+            const activeEffect = activeEssenceEffect(def.id);
+            const usedToday = num(state.data.essence?.dailyUses?.[def.id]);
+            const effectiveCost = def.perTurnCost ? RPG.effectiveAbilityCost(def.perTurnCost, state.data) : null;
+            return `<article class="essence-technique ${activeEffect ? 'active' : ''}">
+              <div><span class="tag">${esc(def.path)}</span><strong>${esc(def.name)}</strong></div>
+              <p>${esc(def.summary)}</p>
+              ${def.defense ? `<small>Defesa atual: ${esc(def.defense)}</small>` : ''}
+              ${effectiveCost ? `<small>Custo por turno: ${esc(RPG.formatCost(effectiveCost))}${RPG.essencePfDiscount(state.data) ? ' · -1 P.F já aplicado' : ''}</small>` : ''}
+              ${def.usesPerDay ? `<small>Uso diário: ${usedToday}/${def.usesPerDay}</small>` : ''}
+              ${activeEffect
+                ? `<div class="essence-effect-status"><span>Ativa · ${num(activeEffect.turns)} turno${num(activeEffect.turns) === 1 ? '' : 's'}</span><button class="ghost-btn small" data-action="end-essence-effect" data-effect="${esc(def.id)}">Encerrar</button></div>`
+                : `<button class="secondary-btn small" data-action="activate-essence-effect" data-effect="${esc(def.id)}" ${!state.combat.active || (def.usesPerDay && usedToday >= def.usesPerDay) ? 'disabled' : ''}>${state.combat.active ? 'Ativar' : 'Inicie um combate'}</button>`}
+            </article>`;
+          }).join('')}
+        </div>
+        ${RPG.essenceLevel(state.data, 'offense') >= 4 ? `<div class="daily-reset-row"><span>Liberação Condensada é limitada a 1 uso por dia.</span><button class="ghost-btn small" data-action="reset-essence-daily" data-effect="liberacao-condensada">Restaurar uso diário</button></div>` : ''}
+      </section>
+
       <section class="essence-grid">
         ${Object.keys(labels).map(key => {
           const level = num(levels[key]);
@@ -464,7 +695,7 @@
           </article>`;
         }).join('')}
       </section>
-      <section class="card note-card"><h3>Observações</h3><textarea data-path="essence.note" rows="5">${esc(state.data.essence?.note || '')}</textarea></section>`;
+      <section class="card note-card"><h3>Observações</h3><textarea data-path="essence.note" rows="18">${esc(state.data.essence?.note || '')}</textarea></section>`;
   }
 
   function renderKarma() {
@@ -529,6 +760,18 @@
     state.combat.uses ||= {};
     state.combat.conditions ||= [];
     state.combat.rollHistory ||= [];
+    state.combat.essenceEffects ||= {};
+    state.data.essence ||= { levels: {}, stages: {}, note: '' };
+    state.data.essence.dailyUses ||= {};
+    const abilityEssenceTagsUpdated = RPG.ensureAbilityTags(state.data);
+    let essenceLevelUpdated = false;
+    if (state.character.slug === 'tatsumaki-shadowheart-gojo' && num(state.data.essence.levels?.true) !== 5) {
+      state.data.essence.levels ||= {};
+      state.data.essence.levels.true = 5;
+      state.dirty = true;
+      essenceLevelUpdated = true;
+    }
+    RPG.applySheetFormulas(state.data, state.rules);
     systemName.textContent = state.system.name || 'RPG';
     renderCharacterSelect();
     DB.updateUrlCharacter(state.character.slug);
@@ -545,7 +788,7 @@
       setSaveStatus('Conectado ao banco', 'saved');
     }
 
-    if (resourceModelUpdated || textRepairs > 0) {
+    if (resourceModelUpdated || textRepairs > 0 || essenceLevelUpdated || abilityEssenceTagsUpdated) {
       state.dirty = true;
       clearTimeout(state.saveTimer);
       state.saveTimer = setTimeout(saveNow, 120);
@@ -651,8 +894,9 @@
     }
 
     if (!chaosAlternative) {
-      const pfCost = Math.max(0, num(cost.pf));
-      const pvCost = RPG.abilityPvCosts(cost);
+      const effectiveCost = RPG.effectiveAbilityCost(cost, state.data);
+      const pfCost = Math.max(0, num(effectiveCost.pf));
+      const pvCost = RPG.abilityPvCosts(effectiveCost);
       if (pfCost > currentResource('pf')) {
         notify('P.F insuficiente para usar esta habilidade.', 'error');
         return false;
@@ -669,8 +913,9 @@
 
     if (chaosCost) state.combat.chaosPoints -= chaosCost;
     if (!chaosAlternative) {
-      if (num(cost.pf)) spendResource('pf', cost.pf);
-      const pvCost = RPG.abilityPvCosts(cost);
+      const effectiveCost = RPG.effectiveAbilityCost(cost, state.data);
+      if (num(effectiveCost.pf)) spendResource('pf', effectiveCost.pf);
+      const pvCost = RPG.abilityPvCosts(effectiveCost);
       if (pvCost.attack) spendPv('attack', pvCost.attack);
       if (pvCost.reaction) spendPv('reaction', pvCost.reaction);
     }
@@ -687,6 +932,7 @@
       state.combat.transformationTurns -= 1;
       if (state.combat.transformationTurns <= 0) endTransformationState();
     }
+    tickEssenceEffects();
   }
 
   function endTransformationState() {
@@ -731,7 +977,7 @@
   }
 
   function freshCombat() {
-    return { active:false, round:1, turn:1, chaosPoints:0, activePosture:null, activeTransformation:null, transformationTurns:0, transformationTempPs:0, cooldowns:{}, uses:{}, conditions:[], notes:'', rollHistory:[] };
+    return { active:false, round:1, turn:1, chaosPoints:0, activePosture:null, activeTransformation:null, transformationTurns:0, transformationTempPs:0, essenceEffects:{}, cooldowns:{}, uses:{}, conditions:[], notes:'', rollHistory:[] };
   }
 
   function openAttribute(abbr) {
@@ -953,14 +1199,40 @@
       markDirty(); renderCombat(); return;
     }
     if (action === 'end-combat') {
-      if (!confirm('Encerrar o combate e limpar recargas, condições e transformações? O dano e recursos gastos serão mantidos.')) return;
+      if (!confirm('Encerrar o combate? Recargas, condições, transformações e efeitos ativos serão limpos. Todos os P.V serão restaurados; P.S e P.F gastos permanecem.')) return;
       if (state.combat.activeTransformation) endTransformationState();
+      restoreAllPv(false);
       const history = state.combat.rollHistory || [];
       state.combat = { ...freshCombat(), active: false, rollHistory: history };
-      markDirty(); renderCombat(); return;
+      markDirty(); renderCombat(); notify('Combate encerrado. Todos os P.V foram restaurados.'); return;
     }
     if (action === 'next-turn') { state.combat.turn = num(state.combat.turn) + 1; tickCombat(); markDirty(); renderCombat(); return; }
-    if (action === 'next-round') { state.combat.round = num(state.combat.round) + 1; state.combat.turn = 1; tickCombat(); markDirty(); renderCombat(); return; }
+    if (action === 'next-round') {
+      restoreAllPv(false);
+      state.combat.round = num(state.combat.round) + 1;
+      state.combat.turn = 1;
+      tickCombat();
+      markDirty();
+      renderCombat();
+      notify('Nova rodada: todos os P.V foram restaurados.');
+      return;
+    }
+
+    if (action === 'activate-essence-effect') {
+      if (activateEssenceEffect(btn.dataset.effect)) { markDirty(); render(); }
+      return;
+    }
+    if (action === 'end-essence-effect') {
+      const def = essenceDefinition(btn.dataset.effect);
+      endEssenceEffect(btn.dataset.effect, `${def?.name || 'Efeito'} encerrada.`);
+      markDirty(); render(); return;
+    }
+    if (action === 'reset-essence-daily') {
+      ensureEssenceCombatState();
+      state.data.essence.dailyUses[btn.dataset.effect] = 0;
+      markDirty(); renderEssence(); notify('Uso diário restaurado.');
+      return;
+    }
 
     if (action === 'use-ability' || action === 'use-ability-chaos') {
       const ability = state.data.abilities.find(a => a.id === btn.dataset.ability);
