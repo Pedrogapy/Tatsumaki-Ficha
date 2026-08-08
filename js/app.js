@@ -8,6 +8,11 @@
   const attributeDialog = document.getElementById('attributeDialog');
   const settingsDialog = document.getElementById('settingsDialog');
   const newCharacterDialog = document.getElementById('newCharacterDialog');
+  const testDialog = document.getElementById('testDialog');
+  const testDialogTitle = document.getElementById('testDialogTitle');
+  const testDialogFormula = document.getElementById('testDialogFormula');
+  const testResult = document.getElementById('testResult');
+  let pendingTest = null;
 
   let state = {
     system: null,
@@ -206,11 +211,14 @@
       const quarter = RPG.fraction(total, state.rules.attributeQuarterDivisor || 4);
       const eighth = RPG.fraction(total, state.rules.attributeEighthDivisor || 8);
       return `
-        <button class="attribute-card" data-action="edit-attribute" data-attribute="${abbr}">
-          <span>${esc(attr.name)}</span>
-          <strong>${total}</strong>
-          <small>¼ ${quarter} · ⅛ ${eighth}</small>
-        </button>`;
+        <article class="attribute-card">
+          <button type="button" class="attribute-edit-button" data-action="edit-attribute" data-attribute="${abbr}">
+            <span>${esc(attr.name)}</span>
+            <strong>${total}</strong>
+            <small>¼ ${quarter} · ⅛ ${eighth}</small>
+          </button>
+          <button type="button" class="attribute-test-button" data-action="roll-attribute" data-attribute="${abbr}">Testar · 1d20 + ${eighth}</button>
+        </article>`;
     }).join('');
 
     const grouped = Object.groupBy ? Object.groupBy(d.skills || [], s => s.attribute) : (d.skills || []).reduce((acc, skill) => {
@@ -220,14 +228,16 @@
       <section class="skill-group card">
         <div class="card-title"><h3>${esc(d.attributes?.[abbr]?.name || abbr)}</h3><span>${abbr}</span></div>
         <div class="skill-table">
-          <div class="skill-head"><span>Perícia</span><span>Nível</span><span>Pro.</span><span>Total</span></div>
+          <div class="skill-head"><span>Perícia</span><span>Nível</span><span>Pro.</span><span>Total</span><span>Teste</span></div>
           ${skills.map(skill => {
             const index = d.skills.indexOf(skill);
+            const finalValue = RPG.skillTotal(skill, d, state.rules);
             return `<div class="skill-row">
               <span>${esc(skill.name)}</span>
               <input type="number" min="0" data-skill-index="${index}" data-skill-field="level" value="${num(skill.level)}">
               <input type="checkbox" data-skill-index="${index}" data-skill-field="proficient" ${skill.proficient ? 'checked' : ''}>
-              <strong>+${RPG.skillTotal(skill, d, state.rules)}</strong>
+              <strong>+${finalValue}</strong>
+              <button type="button" class="skill-test-button" data-action="roll-skill" data-skill-index="${index}">Rolar</button>
             </div>`;
           }).join('')}
         </div>
@@ -504,6 +514,7 @@
   }
 
   function applySnapshot(snapshot) {
+    const textRepairs = RPG.repairMojibakeDeep(snapshot);
     state.system = snapshot.system;
     state.characters = snapshot.characters || [];
     state.character = snapshot.character;
@@ -534,10 +545,11 @@
       setSaveStatus('Conectado ao banco', 'saved');
     }
 
-    if (resourceModelUpdated) {
+    if (resourceModelUpdated || textRepairs > 0) {
       state.dirty = true;
       clearTimeout(state.saveTimer);
-      state.saveTimer = setTimeout(saveNow, 100);
+      state.saveTimer = setTimeout(saveNow, 120);
+      if (textRepairs > 0) notify(`Escrita corrigida automaticamente em ${textRepairs} campo${textRepairs === 1 ? '' : 's'}.`);
     }
   }
 
@@ -558,6 +570,45 @@
     if (input.type === 'checkbox') return input.checked;
     if (input.type === 'number') return input.value === '' ? 0 : Number(input.value);
     return input.value;
+  }
+
+  function openCheckDialog(label, modifier, formula, source = '') {
+    pendingTest = { label, modifier: Math.trunc(num(modifier)), formula, source };
+    testDialogTitle.textContent = label;
+    testDialogFormula.textContent = formula;
+    const normal = testDialog.querySelector('input[name="testAdvantage"][value="0"]');
+    if (normal) normal.checked = true;
+    testResult.classList.add('hidden');
+    testResult.innerHTML = '';
+    if (!testDialog.open) testDialog.showModal();
+  }
+
+  function performPendingTest() {
+    if (!pendingTest) return;
+    const selected = testDialog.querySelector('input[name="testAdvantage"]:checked');
+    const advantage = Math.max(-2, Math.min(2, num(selected?.value)));
+    const roll = RPG.rollD20Check(pendingTest.modifier, advantage);
+    const sign = pendingTest.modifier >= 0 ? '+' : '−';
+    testResult.innerHTML = `
+      <span class="test-result-label">${esc(pendingTest.label)}</span>
+      <strong>${roll.result}</strong>
+      <div class="test-result-breakdown">
+        <span>Dados: ${roll.rolls.map(value => value === roll.chosen ? `<b>${value}</b>` : value).join(' · ')}</span>
+        <span>Escolhido: ${roll.chosen}</span>
+        <span>Modificador: ${sign}${Math.abs(pendingTest.modifier)}</span>
+      </div>`;
+    testResult.classList.remove('hidden');
+    state.combat.rollHistory ||= [];
+    state.combat.rollHistory.unshift({
+      ...roll,
+      label: pendingTest.label,
+      source: pendingTest.source,
+      expression: `${pendingTest.label}: ${roll.expression}`,
+      at: new Date().toISOString()
+    });
+    state.combat.rollHistory = state.combat.rollHistory.slice(0, 30);
+    markDirty();
+    notify(`${pendingTest.label}: ${roll.result}`);
   }
 
   function spendResource(key, amount) {
@@ -751,6 +802,8 @@
     catch { notify('Não foi possível copiar automaticamente.', 'error'); }
   });
   document.getElementById('exportJsonBtn').addEventListener('click', downloadJson);
+  document.getElementById('rollTestBtn').addEventListener('click', performPendingTest);
+  testDialog.addEventListener('close', () => { pendingTest = null; });
 
   document.getElementById('createCharacterBtn').addEventListener('click', async () => {
     const name = document.getElementById('newCharacterName').value.trim();
@@ -870,6 +923,22 @@
     const action = btn.dataset.action;
 
     if (action === 'edit-attribute') return openAttribute(btn.dataset.attribute);
+    if (action === 'roll-attribute') {
+      const abbr = btn.dataset.attribute;
+      const attr = state.data.attributes?.[abbr];
+      if (!attr) return;
+      const modifier = RPG.eighth(state.data, state.rules, abbr);
+      openCheckDialog(`${attr.name} (${abbr})`, modifier, `1d20 + ⅛ do atributo = 1d20 + ${modifier}`, `attribute:${abbr}`);
+      return;
+    }
+    if (action === 'roll-skill') {
+      const index = Number(btn.dataset.skillIndex);
+      const skill = state.data.skills?.[index];
+      if (!skill) return;
+      const modifier = RPG.skillTotal(skill, state.data, state.rules);
+      openCheckDialog(skill.name, modifier, `1d20 + valor final da perícia = 1d20 + ${modifier}`, `skill:${index}`);
+      return;
+    }
     if (action === 'resource-change') { spendResource(btn.dataset.resource, btn.dataset.delta); markDirty(); return renderCombat(); }
     if (action === 'resource-heal') { healResource(btn.dataset.resource, btn.dataset.delta); markDirty(); return renderCombat(); }
     if (action === 'true-damage-change') { changeTrueDamage(btn.dataset.delta); markDirty(); return renderCombat(); }

@@ -237,6 +237,75 @@
     return changed;
   }
 
+  const CP1252_REVERSE = new Map([
+    [0x20AC,0x80],[0x201A,0x82],[0x0192,0x83],[0x201E,0x84],[0x2026,0x85],[0x2020,0x86],[0x2021,0x87],
+    [0x02C6,0x88],[0x2030,0x89],[0x0160,0x8A],[0x2039,0x8B],[0x0152,0x8C],[0x017D,0x8E],[0x2018,0x91],
+    [0x2019,0x92],[0x201C,0x93],[0x201D,0x94],[0x2022,0x95],[0x2013,0x96],[0x2014,0x97],[0x02DC,0x98],
+    [0x2122,0x99],[0x0161,0x9A],[0x203A,0x9B],[0x0153,0x9C],[0x017E,0x9E],[0x0178,0x9F]
+  ]);
+  const MOJIBAKE_PATTERN = /(?:Ã[\u00A0-\u00BF]|Â[\u00A0-\u00BF]|â[€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ])/;
+
+  function repairMojibakeString(input) {
+    let value = String(input ?? '');
+    for (let pass = 0; pass < 3 && MOJIBAKE_PATTERN.test(value); pass += 1) {
+      const bytes = [];
+      let convertible = true;
+      for (const ch of value) {
+        const cp = ch.codePointAt(0);
+        if (cp <= 0xFF) bytes.push(cp);
+        else if (CP1252_REVERSE.has(cp)) bytes.push(CP1252_REVERSE.get(cp));
+        else { convertible = false; break; }
+      }
+      if (!convertible) break;
+      try {
+        const decoded = new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
+        if (!decoded || decoded === value) break;
+        value = decoded;
+      } catch { break; }
+    }
+    return value;
+  }
+
+  function repairMojibakeDeep(root) {
+    let changes = 0;
+    const walk = (value) => {
+      if (typeof value === 'string') {
+        const repaired = repairMojibakeString(value);
+        if (repaired !== value) changes += 1;
+        return repaired;
+      }
+      if (Array.isArray(value)) {
+        for (let i = 0; i < value.length; i += 1) value[i] = walk(value[i]);
+        return value;
+      }
+      if (value && typeof value === 'object') {
+        Object.keys(value).forEach(key => { value[key] = walk(value[key]); });
+      }
+      return value;
+    };
+    walk(root);
+    return changes;
+  }
+
+  function rollD20Check(modifier = 0, advantageLevel = 0) {
+    const mod = Math.trunc(number(modifier));
+    const advantage = Math.max(-2, Math.min(2, Math.trunc(number(advantageLevel))));
+    const count = 1 + Math.abs(advantage);
+    const rolls = Array.from({ length: count }, () => 1 + Math.floor(Math.random() * 20));
+    const chosen = advantage > 0 ? Math.max(...rolls) : advantage < 0 ? Math.min(...rolls) : rolls[0];
+    const result = chosen + mod;
+    const mode = advantage === 2 ? '2 vantagens' : advantage === 1 ? '1 vantagem' : advantage === -1 ? '1 desvantagem' : advantage === -2 ? '2 desvantagens' : 'normal';
+    return {
+      expression: `1d20 ${mod >= 0 ? '+' : '−'} ${Math.abs(mod)} (${mode})`,
+      result,
+      rolls,
+      chosen,
+      modifier: mod,
+      advantage,
+      details: [`d20: [${rolls.join(', ')}]`, `Escolhido: ${chosen}`, `Modificador: ${mod >= 0 ? '+' : ''}${mod}`, `Modo: ${mode}`]
+    };
+  }
+
   function slugify(text) {
     return String(text || '')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -283,7 +352,7 @@
     skillTotal, resourceFormulaBase, resourceTrueDamage, resourceCoreMax,
     resourceCapacity, resourceCurrent, splitPv, pvTotalMax, pvPoolMax,
     pvPoolCurrent, abilityPvCosts, perception, luck, armorClass,
-    applySheetFormulas, normalizeCharacterData,
-    slugify, rollDiceExpression, formatCost
+    applySheetFormulas, normalizeCharacterData, repairMojibakeString, repairMojibakeDeep,
+    slugify, rollDiceExpression, rollD20Check, formatCost
   };
 })();

@@ -4,11 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0a0b0f" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
   <title>Ficha RPG • Tatsumaki</title>
-  <link rel="stylesheet" href="./css/styles.css?v=20260808194833" />
+  <link rel="stylesheet" href="./css/styles.css?v=20260808-tests-v1" />
 </head>
 <body>
   <div id="connectionBanner" class="connection-banner hidden"></div>
@@ -131,12 +128,36 @@
     </form>
   </dialog>
 
+  <dialog id="testDialog" class="dialog test-dialog">
+    <form method="dialog" class="dialog-card test-dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">TESTE</span>
+          <h2 id="testDialogTitle">Teste</h2>
+          <p id="testDialogFormula"></p>
+        </div>
+        <button value="cancel" class="icon-btn" aria-label="Fechar">×</button>
+      </div>
+      <div class="test-advantage-grid" id="testAdvantageGrid">
+        <label class="test-advantage-option"><input type="radio" name="testAdvantage" value="-2"><span><strong>2 desvantagens</strong><small>3d20, usa o menor</small></span></label>
+        <label class="test-advantage-option"><input type="radio" name="testAdvantage" value="-1"><span><strong>1 desvantagem</strong><small>2d20, usa o menor</small></span></label>
+        <label class="test-advantage-option"><input type="radio" name="testAdvantage" value="0" checked><span><strong>Normal</strong><small>1d20</small></span></label>
+        <label class="test-advantage-option"><input type="radio" name="testAdvantage" value="1"><span><strong>1 vantagem</strong><small>2d20, usa o maior</small></span></label>
+        <label class="test-advantage-option"><input type="radio" name="testAdvantage" value="2"><span><strong>2 vantagens</strong><small>3d20, usa o maior</small></span></label>
+      </div>
+      <div id="testResult" class="test-result hidden"></div>
+      <div class="dialog-footer">
+        <button value="cancel" class="secondary-btn">Fechar</button>
+        <button type="button" id="rollTestBtn" class="primary-btn">Rolar teste</button>
+      </div>
+    </form>
+  </dialog>
   <div id="toast" class="toast hidden" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=20260808194833"></script>
-  <script src="./js/rules.js?v=20260808194833"></script>
-  <script src="./js/db.js?v=20260808194833"></script>
-  <script src="./js/app.js?v=20260808194833"></script>
+  <script src="./js/config.js?v=20260808-tests-v1"></script>
+  <script src="./js/rules.js?v=20260808-tests-v1"></script>
+  <script src="./js/db.js?v=20260808-tests-v1"></script>
+  <script src="./js/app.js?v=20260808-tests-v1"></script>
 </body>
 </html>
