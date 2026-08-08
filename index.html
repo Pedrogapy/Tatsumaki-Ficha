@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a0b0f" />
+  <title>Ficha RPG • Tatsumaki</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div id="connectionBanner" class="connection-banner hidden"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">TS</div>
+      <div>
+        <strong id="systemName">Thaloria RPG</strong>
+        <span>Ficha web</span>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <select id="characterSelect" aria-label="Selecionar personagem"></select>
+      <button class="icon-btn" id="newCharacterBtn" title="Nova ficha" aria-label="Nova ficha">＋</button>
+    </div>
+
+    <div class="topbar-actions">
+      <span id="saveStatus" class="save-status">Carregando…</span>
+      <button class="icon-btn" id="shareBtn" title="Copiar link" aria-label="Copiar link">↗</button>
+      <button class="icon-btn subtle" id="settingsBtn" title="Configurações avançadas" aria-label="Configurações avançadas">⚙</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Seções da ficha">
+    <button data-tab="sheet" class="active">Ficha</button>
+    <button data-tab="combat">Combate</button>
+    <button data-tab="abilities">Habilidades</button>
+    <button data-tab="inventory">Inventário</button>
+    <button data-tab="essence">Essência</button>
+    <button data-tab="karma">Karma</button>
+    <button data-tab="archive">Arquivo</button>
+  </nav>
+
+  <main id="app" class="app-shell">
+    <div class="loading-card">Carregando ficha…</div>
+  </main>
+
+  <dialog id="attributeDialog" class="dialog">
+    <form method="dialog" class="dialog-card" id="attributeForm">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">ATRIBUTO</span>
+          <h2 id="attributeDialogTitle">Atributo</h2>
+        </div>
+        <button value="cancel" class="icon-btn" aria-label="Fechar">×</button>
+      </div>
+      <div id="attributeParts" class="modifier-list"></div>
+      <button type="button" id="addModifierBtn" class="secondary-btn">Adicionar modificador</button>
+      <div class="dialog-footer">
+        <button value="cancel" class="secondary-btn">Fechar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="dialog">
+    <form method="dialog" class="dialog-card settings-card" id="settingsForm">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">ÁREA AVANÇADA</span>
+          <h2>Regras do sistema</h2>
+          <p>Essas regras ficam escondidas durante o uso normal e valem para todas as fichas.</p>
+        </div>
+        <button value="cancel" class="icon-btn" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="form-grid compact">
+        <label>Divisor de 1/4
+          <input type="number" min="1" step="1" data-rule="attributeQuarterDivisor" />
+        </label>
+        <label>Divisor de 1/8
+          <input type="number" min="1" step="1" data-rule="attributeEighthDivisor" />
+        </label>
+        <label>Margem crítica padrão
+          <input type="number" min="1" step="1" data-rule="criticalMargin" />
+        </label>
+      </div>
+
+      <div class="settings-section">
+        <h3>Cálculo de perícia</h3>
+        <label class="check-row"><input type="checkbox" data-rule="skill.includeLevel" /> Somar nível da perícia</label>
+        <label class="check-row"><input type="checkbox" data-rule="skill.includePoints" /> Somar pontos extras</label>
+        <label class="check-row"><input type="checkbox" data-rule="skill.proficiencyAddsSameFraction" /> Proficiência soma novamente a fração do atributo</label>
+      </div>
+
+      <div class="settings-section danger-zone">
+        <h3>Manutenção</h3>
+        <p>O acesso ao banco usa a chave presente no link. Não publique essa chave dentro do código do repositório.</p>
+        <button type="button" id="exportJsonBtn" class="secondary-btn">Exportar ficha em JSON</button>
+      </div>
+
+      <div class="dialog-footer">
+        <button value="cancel" class="primary-btn">Concluir</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="newCharacterDialog" class="dialog">
+    <form method="dialog" class="dialog-card" id="newCharacterForm">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">NOVA FICHA</span>
+          <h2>Criar personagem</h2>
+        </div>
+        <button value="cancel" class="icon-btn" aria-label="Fechar">×</button>
+      </div>
+      <label>Nome
+        <input id="newCharacterName" required maxlength="80" placeholder="Nome do personagem" />
+      </label>
+      <label>Identificador do link
+        <input id="newCharacterSlug" maxlength="80" placeholder="gerado-automaticamente" />
+      </label>
+      <label class="check-row"><input type="checkbox" id="duplicateCurrent" /> Duplicar a ficha atual em vez de criar uma ficha limpa</label>
+      <div class="dialog-footer">
+        <button value="cancel" class="secondary-btn">Cancelar</button>
+        <button type="button" id="createCharacterBtn" class="primary-btn">Criar ficha</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/rules.js"></script>
+  <script src="./js/db.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

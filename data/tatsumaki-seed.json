@@ -1,0 +1,1178 @@
+{
+  "system": {
+    "slug": "thaloria",
+    "name": "Thaloria RPG",
+    "rules": {
+      "schemaVersion": 1,
+      "attributeQuarterDivisor": 4,
+      "attributeEighthDivisor": 8,
+      "skill": {
+        "baseFraction": "eighth",
+        "proficiencyAddsSameFraction": true,
+        "includeLevel": true,
+        "includePoints": true
+      },
+      "resourceCurrentFormula": "max + temporary - lost",
+      "criticalMargin": 19,
+      "showAdvancedByDefault": false,
+      "notes": "Regras globais do sistema. Alterações aqui valem para todas as fichas do mesmo sistema."
+    }
+  },
+  "character": {
+    "slug": "tatsumaki-shadowheart-gojo",
+    "name": "Tatsumaki ShadowHeart Gojo",
+    "data": {
+      "schemaVersion": 1,
+      "identity": {
+        "name": "Tatsumaki ShadowHeart Gojo",
+        "race": "Humano110",
+        "class": "Espadachim5",
+        "profession": "Artesão5 Ferreiro2",
+        "weight": 110,
+        "age": 22,
+        "height": 1.9,
+        "experience": "5650 + 535",
+        "classPoints": 0,
+        "professionPoints": 0,
+        "focusDice": 104,
+        "bloodDice": 154,
+        "affinityPoints": "",
+        "origin": "",
+        "affinity": "1 inspiração",
+        "lifestyle": ""
+      },
+      "attributes": {
+        "FOR": {
+          "name": "Força",
+          "abbr": "FOR",
+          "parts": [
+            {
+              "label": "Base",
+              "value": 24,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 1",
+              "value": 8,
+              "enabled": true
+            }
+          ]
+        },
+        "ARC": {
+          "name": "Arcano",
+          "abbr": "ARC",
+          "parts": [
+            {
+              "label": "Base",
+              "value": 20,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 1",
+              "value": 4,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 2",
+              "value": 1,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 3",
+              "value": 4,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 4",
+              "value": 2,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 5",
+              "value": 1,
+              "enabled": true
+            }
+          ]
+        },
+        "DES": {
+          "name": "Destreza",
+          "abbr": "DES",
+          "parts": [
+            {
+              "label": "Base",
+              "value": 27,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 1",
+              "value": 5,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 2",
+              "value": 8,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 3",
+              "value": 2,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 4",
+              "value": 2,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 5",
+              "value": 4,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 6",
+              "value": 1,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 7",
+              "value": 6,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 8",
+              "value": 2,
+              "enabled": true
+            }
+          ]
+        },
+        "SAB": {
+          "name": "Sabedoria",
+          "abbr": "SAB",
+          "parts": [
+            {
+              "label": "Base",
+              "value": 16,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 1",
+              "value": 2,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 2",
+              "value": 6,
+              "enabled": true
+            }
+          ]
+        },
+        "FORT": {
+          "name": "Fortitude",
+          "abbr": "FORT",
+          "parts": [
+            {
+              "label": "Base",
+              "value": 20,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 1",
+              "value": 6,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 2",
+              "value": 2,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 3",
+              "value": 4,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 4",
+              "value": 4,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 5",
+              "value": 4,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 6",
+              "value": 4,
+              "enabled": true
+            },
+            {
+              "label": "Bônus 7",
+              "value": 4,
+              "enabled": true
+            }
+          ]
+        },
+        "INT": {
+          "name": "Inteligência",
+          "abbr": "INT",
+          "parts": [
+            {
+              "label": "Base",
+              "value": 16,
+              "enabled": true
+            }
+          ]
+        }
+      },
+      "resources": {
+        "ps": {
+          "label": "P.S",
+          "lost": 703,
+          "max": 399,
+          "temporary": 910
+        },
+        "pv": {
+          "label": "P.V",
+          "lost": 0,
+          "max": 9,
+          "temporary": 0
+        },
+        "pf": {
+          "label": "P.F",
+          "lost": 10,
+          "max": 113,
+          "temporary": 0
+        }
+      },
+      "derived": {
+        "armorClass": {
+          "value": 26,
+          "parts": [
+            {
+              "label": "Padrão",
+              "value": 10
+            },
+            {
+              "label": "Extras",
+              "value": 2
+            },
+            {
+              "label": "Escudo",
+              "value": 0
+            },
+            {
+              "label": "Destreza",
+              "value": 14
+            },
+            {
+              "label": "Armadura",
+              "value": 0
+            }
+          ]
+        },
+        "perception": 8,
+        "luck": 8,
+        "movement": 36,
+        "initiative": 14,
+        "criticalMargin": 19
+      },
+      "skills": [
+        {
+          "name": "Lutar",
+          "attribute": "FOR",
+          "level": 3,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Agarrar",
+          "attribute": "FOR",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Quebrar",
+          "attribute": "FOR",
+          "level": 2,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Arrancar",
+          "attribute": "FOR",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Arremeso",
+          "attribute": "FOR",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Destravar",
+          "attribute": "FOR",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Desprender",
+          "attribute": "FOR",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Levantamento",
+          "attribute": "FOR",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Armas Pesadas",
+          "attribute": "FOR",
+          "level": 5,
+          "proficient": true,
+          "points": 0
+        },
+        {
+          "name": "Reflexo",
+          "attribute": "DES",
+          "level": 6,
+          "proficient": true,
+          "points": 0
+        },
+        {
+          "name": "Defletir",
+          "attribute": "DES",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Pontaria",
+          "attribute": "DES",
+          "level": 5,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Manuseio",
+          "attribute": "DES",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Acrobacia",
+          "attribute": "DES",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Espionagem",
+          "attribute": "DES",
+          "level": 0,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Furtividade",
+          "attribute": "DES",
+          "level": 2,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Prestidigitação",
+          "attribute": "DES",
+          "level": 2,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Armas Avançadas",
+          "attribute": "DES",
+          "level": 12,
+          "proficient": true,
+          "points": 0
+        },
+        {
+          "name": "Saúde",
+          "attribute": "FORT",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Firmeza",
+          "attribute": "FORT",
+          "level": 0,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Manobra",
+          "attribute": "FORT",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Atletismo",
+          "attribute": "FORT",
+          "level": 2,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Defender",
+          "attribute": "FORT",
+          "level": 3,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Resistência",
+          "attribute": "FORT",
+          "level": 6,
+          "proficient": true,
+          "points": 0
+        },
+        {
+          "name": "Tolerar a Dor",
+          "attribute": "FORT",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Determinação",
+          "attribute": "FORT",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Contra-Ataque",
+          "attribute": "FORT",
+          "level": 12,
+          "proficient": true,
+          "points": 0
+        },
+        {
+          "name": "Tática",
+          "attribute": "INT",
+          "level": 3,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Pilotagem",
+          "attribute": "INT",
+          "level": 0,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Persuasão",
+          "attribute": "INT",
+          "level": 4,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Tecnologia",
+          "attribute": "INT",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Negociação",
+          "attribute": "INT",
+          "level": 0,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Cartografia",
+          "attribute": "INT",
+          "level": 0,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Falsificação",
+          "attribute": "INT",
+          "level": 0,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Criptografia",
+          "attribute": "INT",
+          "level": 0,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Investigação",
+          "attribute": "INT",
+          "level": 7,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Ofício",
+          "attribute": "SAB",
+          "level": 5,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Domar",
+          "attribute": "SAB",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Religião",
+          "attribute": "SAB",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "História",
+          "attribute": "SAB",
+          "level": 0,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Medicina",
+          "attribute": "SAB",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Natureza",
+          "attribute": "SAB",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Liderança",
+          "attribute": "SAB",
+          "level": 0,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Percepção",
+          "attribute": "SAB",
+          "level": 10,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Sobrevivência",
+          "attribute": "SAB",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Empatia",
+          "attribute": "ARC",
+          "level": 8,
+          "proficient": true,
+          "points": 0
+        },
+        {
+          "name": "Intuição",
+          "attribute": "ARC",
+          "level": 8,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Presença",
+          "attribute": "ARC",
+          "level": 3,
+          "proficient": true,
+          "points": 0
+        },
+        {
+          "name": "Ocultismo",
+          "attribute": "ARC",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Arcanismo",
+          "attribute": "ARC",
+          "level": 5,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Invocação",
+          "attribute": "ARC",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Conjuração",
+          "attribute": "ARC",
+          "level": 1,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Canalização",
+          "attribute": "ARC",
+          "level": 10,
+          "proficient": false,
+          "points": 0
+        },
+        {
+          "name": "Intimidação",
+          "attribute": "ARC",
+          "level": 2,
+          "proficient": true,
+          "points": 0
+        }
+      ],
+      "inventory": [
+        {
+          "id": "460d25fa-dcf7-43bb-b388-5f102aeb9ff3",
+          "name": "3 Thalens",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "4f39e9c0-7369-40e8-9329-d332e54a80ce",
+          "name": "Colar com Essencia de Jade",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "019f7aa1-6353-40dd-9fc8-871e153106f4",
+          "name": "Fera Drakoriana Colar (Real)",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "d8ba1f29-60cb-473b-b50c-c9675ffa2d31",
+          "name": "5 pedrasDeResistencia Artefato",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "860b17e7-d6ab-4ce6-a007-c7f2d4472263",
+          "name": "5 Madeiras",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "be0fcd64-8710-4bbe-bea6-89f683df4b28",
+          "name": "colar de absorção de dano magico",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "a78d16fb-4bfa-45e4-b15e-3fe83b2266d8",
+          "name": "Roupa que dá Resistência a danos físicos, reduzindo-os em 1/4 da Fortitude + 1/4 da Força, de forma passiva. = 18",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "6e2d756f-605c-4041-ac4a-763c24b97588",
+          "name": "Cartão de Crédito da Rei Happy (8k de crédito) - 50 thalens 5% desconto",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "f6674cee-238e-43ce-ab91-f8ade2dc4b90",
+          "name": "7 ponto de audiencia",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "084cba6e-0213-471e-97e4-6c88c6f2c45e",
+          "name": "Mapa Thaloria",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "e6efa788-9efe-4fd3-932d-d03717191062",
+          "name": "Cartão de Débito (500 Thalens)",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "3eec2e0d-0905-45cb-b715-6d779b9d9993",
+          "name": "Depósito ocorreu dia 9 de dezembro (10% de lucro ao mês)",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "4974a939-1ec7-4251-bf21-da8a7cdc892f",
+          "name": "Revolver 6 balas",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "eb7dc64a-5eab-47dd-a77c-42ef2029ed89",
+          "name": "5 chaveiros de concha branca",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "e29e982c-6170-4da3-8818-b41f2a06052c",
+          "name": "Ponta de Garra de kaiju (lyra me deu)",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "40d36af3-1cf1-4625-bbae-f0940fff96ce",
+          "name": "2 pedras de encantamento",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "03578a88-6f02-42b7-a8d8-11626d40bc15",
+          "name": "Cranio do Destruição",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        },
+        {
+          "id": "782bbb67-6e7a-45e2-9288-417af70beb01",
+          "name": "5 Kg de Metal Solar",
+          "quantity": "",
+          "space": 0,
+          "notes": ""
+        }
+      ],
+      "importantItems": [],
+      "karma": {
+        "positive": 30,
+        "negative": 5,
+        "die": "d8",
+        "note": "Sem dor sem ganho"
+      },
+      "essence": {
+        "levels": {
+          "true": 5,
+          "offense": 4,
+          "defense": 4,
+          "magic": 2,
+          "broken": 0,
+          "annihilation": 0,
+          "shred": 0,
+          "control": 0
+        },
+        "stages": {
+          "true": [
+            "Conhecendo a si mesmo",
+            "Conexão",
+            "Entendimento",
+            "Liberação Parcial",
+            "Liberação da Essência",
+            "Você",
+            "O Ser",
+            "Conexão Definitiva",
+            "Essência Definitiva",
+            "Essência Verdadeira"
+          ],
+          "offense": [
+            "Liberação de Energia",
+            "Liberação Instintiva",
+            "Liberação Fervente",
+            "Liberação Condensada",
+            "Liberação Expandida",
+            "Liberação Refinada",
+            "Liberação Avançada",
+            "Liberação Ascendente",
+            "Liberação Suprema",
+            "Liberação Maxima"
+          ],
+          "defense": [
+            "Aura Defensiva",
+            "Aura Protetora",
+            "Aura Guardiã",
+            "Aura de Aço",
+            "Aura Bastião",
+            "Aura Imóvel",
+            "Aura Inquebrável",
+            "Aura Divina",
+            "Aura Absoluta",
+            "Aura do Véu Eterno"
+          ],
+          "magic": [
+            "Controle Inicial",
+            "Controle Parcial",
+            "Controle Mediano",
+            "Controle Avançado",
+            "Controle Refinado",
+            "Contole Complexo",
+            "Controle de Mestre",
+            "Controle Superior",
+            "Controle Perfeito",
+            "Controle Absoluto"
+          ],
+          "broken": [
+            "Eu já te Conheço",
+            "É só o Começo",
+            "Do que Adianta Resistir?",
+            "O Tempo",
+            "Está",
+            "Esgotado.",
+            "Mente Quebrada",
+            "Já é Tarde",
+            "Apenas um Agora",
+            "Eu quem Decido."
+          ],
+          "annihilation": [
+            "Golpe Brutal",
+            "Quebra Ossos",
+            "Garras Ferozes",
+            "Essência Sanguinaria",
+            "Quem Liga?",
+            "É Apenas uma Vida.",
+            "Morte!",
+            "Carnificina!",
+            "Genocídio!",
+            "Aniquilação!"
+          ],
+          "shred": [
+            "Aura Defensiva?",
+            "Proteção?",
+            "Quem Precisa Disso?",
+            "Aura Monstruosa",
+            "Agora",
+            "A Retalhação Começa!",
+            "Contra Ataque Letal",
+            "Defesa Zero",
+            "Você é Patético",
+            "O Fim."
+          ],
+          "control": [
+            "Fome",
+            "Descontrole",
+            "É ele ou Você",
+            "Rastrear",
+            "Medo",
+            "Presa",
+            "Caçada!",
+            "Sem Misericórdia!",
+            "Diversão!",
+            "Eu Preciso de Mais!"
+          ]
+        },
+        "note": "Essencia Verdadeira = 5\n\nTodos os seus ataques baseados em Essência causam +1 dado de dano adicional\n Obtém +1 dado extra de dano em qualquer ataque físico ou mágico\n\nEssência Verdadeira - Defensiva\n\nAura Defensiva: Estágio 1 – Defensiva\nEfeito: Garante uma defesa equivalente a 2d6 + ¼ do atributo Arcano. \nDuração: 1d4 rodadas. \nCusto: 6 P.F e 1 P.V por turno ativo.\n\nAura Protetora – Estágio 2 (Defensiva)\nEfeitos: - Mantém o mesmo efeito da Aura Defensiva. - Acrescenta +1 turno de duração. - Concede +1 dados adicionais de defesa.\n\nAura Guardiã – Estágio 3 (Defensiva)\n- Escolhe 1 tipo de resistência passiva permanente (física ou mágica) = Dano Cortante\n\nAura de Aço – Estágio 4 (Defensiva)\n- Por 2 turnos, o usuário adquire resistência à maioria dos tipos de dano, exceto Dano Verdadeiro. Essa resistência não pode ser ignorada por habilidades comuns, ficando sujeita apenas a efeitos ou condições específicas do adversário.\n\nAptidão Mágica\n\nControle Inicial – Estágio 1 (Aptidão Mágica)\n- O usuário recebe +1 dado de dano adicional em ataques relacionados à magia.\n\nControle Parcial – Estágio 2 (Aptidão Mágica)\n- Todas as habilidades passam a custar -1 P.F em sua utilização.\n\nEssência Verdadeira - Ofensivo\n\nLiberação de Energia - Estágio I (Ofensivo)\n- Você adiciona +1 dado de dano adicional a todos os seus ataques corpo a corpo, incluindo aqueles realizados com armas.\n\nLiberação Instintiva - Estágio 2 (Ofensiva)\n- O usuário recebe +1 P.V.\n\nLiberação Fervente – Estágio 3 (Ofensiva)\n- Adiciona ¼ de um atributo à sua escolha em todas as jogadas de dano. = Fortitude\n\nLiberação Condensada – Estágio 4 (Ofensiva)\n- Por 2 ou 1d4 turnos, ignora resistências físicas e algumas resistências mágicas dos inimigos. \n- Concede +1d12 de dano adicional do tipo de energia utilizada. \n- Pode ser usado 1 vez por dia."
+      },
+      "abilities": [
+        {
+          "id": "atrofia",
+          "name": "Técnica – Atrofia",
+          "category": "Espadachim",
+          "type": "Ação",
+          "cost": {
+            "pv": 1
+          },
+          "cooldown": 3,
+          "damage": "3d8 + 1/4 Destreza",
+          "test": "Resistência contra CD baseada no acerto",
+          "summary": "Golpe preciso que libera Essência no corpo do alvo, causando contração muscular. Em falha, o alvo sofre o dano completo e fica Caído."
+        },
+        {
+          "id": "parry",
+          "name": "Técnica – Parry",
+          "category": "Espadachim",
+          "type": "Reação",
+          "cost": {
+            "pv": 1
+          },
+          "cooldown": 4,
+          "summary": "Contra ataque físico: teste 1d2. Sucesso anula o dano e permite contra-ataque básico; falha recebe o dano completo."
+        },
+        {
+          "id": "surpresa",
+          "name": "Surpresa!",
+          "category": "Espadachim",
+          "type": "Ação",
+          "cost": {
+            "pvAttack": 3
+          },
+          "cooldown": 0,
+          "usesPerCombat": 1,
+          "summary": "Ao acertar, quebra uma defesa ativa, reduz resistência, transforma imunidade em resistência ou resistência em dano normal. Uma vez por alvo e por combate."
+        },
+        {
+          "id": "bate-volta",
+          "name": "Bate e Volta",
+          "category": "Espadachim",
+          "type": "Reação",
+          "cost": {
+            "pv": 1
+          },
+          "cooldown": 3,
+          "damage": "Dano do projétil + 1/4 Destreza",
+          "summary": "Teste de Defletir contra ataque à distância. Sucesso anula e reflete o projétil. Crítico faz o inimigo perder 1 P.V. de ataque adicional."
+        },
+        {
+          "id": "corte-dimensional",
+          "name": "Corte Dimensional",
+          "category": "Caos",
+          "type": "Ação",
+          "cost": {
+            "chaos": 4
+          },
+          "cooldown": 2,
+          "damage": "5d12 + 1/4 Arcano + Presença",
+          "summary": "Fenda espacial de acerto garantido dependendo da Essência do adversário. Ignora defesas, resistências e imunidades comuns."
+        },
+        {
+          "id": "tomada-decisao",
+          "name": "Tomada de Decisão",
+          "category": "Caos",
+          "type": "Reação",
+          "cost": {
+            "pf": 12,
+            "pvAttack": 1,
+            "chaosAlternative": 2
+          },
+          "cooldown": 3,
+          "summary": "Após ver o resultado, desfaz uma ação como se ela nunca tivesse ocorrido. O P.V. de ataque usado não volta."
+        },
+        {
+          "id": "refracao",
+          "name": "Refração",
+          "category": "Caos",
+          "type": "Reação",
+          "cost": {
+            "pf": 14,
+            "pv": 2,
+            "chaosAlternative": 4
+          },
+          "cooldown": 4,
+          "damage": "1d4 + 1 refrações, cada uma +1d8",
+          "summary": "Adicionada a outro ataque compatível; replica o golpe em impactos fractais menores."
+        },
+        {
+          "id": "catastrofes",
+          "name": "Teoria das Catástrofes",
+          "category": "Caos",
+          "type": "Reação",
+          "cost": {
+            "chaos": 2,
+            "pvReaction": 2
+          },
+          "cooldown": 0,
+          "summary": "Após um desastre do inimigo, amplia progressivamente a margem de desastre até +5 durante o combate."
+        },
+        {
+          "id": "mente-vazia",
+          "name": "Mente Vazia",
+          "category": "Caos",
+          "type": "Ação",
+          "cost": {
+            "chaos": 4,
+            "pvAttack": 2
+          },
+          "cooldown": 3,
+          "damage": "3d10 + 1/4 Arcano + Presença",
+          "summary": "Teste de Presença. Falha faz o alvo perder o turno de ataque; sucesso perde 1 P.V. de ataque e sofre metade do dano."
+        },
+        {
+          "id": "plasma-melhorado",
+          "name": "Plasma Melhorado",
+          "category": "Caos",
+          "type": "Ação bônus",
+          "cost": {
+            "chaos": 2
+          },
+          "cooldown": 3,
+          "duration": "1d4+1",
+          "summary": "Enquanto transformado, a lâmina ignora resistência/imunidade cortante e recebe +1d12 de dano."
+        },
+        {
+          "id": "shikai-azrakiel",
+          "name": "Shikai – Azrakiel",
+          "category": "Azrakiel",
+          "type": "Transformação",
+          "cost": {
+            "pf": 12,
+            "pvAttack": 2
+          },
+          "cooldown": 2,
+          "duration": "1d4+2",
+          "summary": "Marca inimigos com Chamas do Caos. A cada turno role 1d10 para um efeito caótico; se não usar o efeito, marcados sofrem 2d8 de Dano Verdadeiro."
+        },
+        {
+          "id": "rompe-montanhas",
+          "name": "Rompe Montanhas",
+          "category": "Azrakiel",
+          "type": "Ação",
+          "cost": {
+            "pv": 2
+          },
+          "cooldown": 0,
+          "usesPerSession": 1,
+          "damage": "4d12 + 1/4 Destreza + Armas Avançadas",
+          "summary": "Ataque que ignora escudos, imunidades e resistências, mas ainda pode ser desviado."
+        },
+        {
+          "id": "sentenca-rei",
+          "name": "Sentença do Rei",
+          "category": "Artefato",
+          "type": "Ação",
+          "cost": {
+            "pf": 10,
+            "pv": 1
+          },
+          "cooldown": 0,
+          "usesPerDay": 1,
+          "summary": "1d10 define a porcentagem inicial de corrupção da essência do alvo, bloqueando uma quantidade equivalente durante o combate."
+        },
+        {
+          "id": "colar-resistencia",
+          "name": "Colar de Resistência Mágica",
+          "category": "Item",
+          "type": "Reação",
+          "cost": {
+            "pf": 3
+          },
+          "cooldown": 0,
+          "usesPerCombat": 3,
+          "summary": "Protege 2d12 + 1/4 Arcano contra magia normal, ou 2d8 + 1/4 Arcano contra magia de essência/arcana."
+        }
+      ],
+      "postures": [
+        {
+          "id": "rapido-impactante",
+          "name": "Rápido e Impactante",
+          "summary": "+2 CA, vantagem em Reflexo, +3 no acerto de Contra-Ataque. Passo Relâmpago permite deslocamento instantâneo de até 20m.",
+          "activationCost": {
+            "pvAttack": 2
+          }
+        },
+        {
+          "id": "impenetravel-destruidor",
+          "name": "Impenetrável e Destruidor",
+          "summary": "+1d8 defesa física em bloqueios, +1d8 dano corpo a corpo, vantagens físicas; desvantagem e -5 em Destreza; sem esquiva/Reflexo. Muralha 1x por combate.",
+          "activationCost": {}
+        }
+      ],
+      "transformations": [
+        {
+          "id": "mascara-caos",
+          "name": "Máscara do Caos",
+          "caBonus": 2,
+          "duration": "1d4+2",
+          "usesPerCombat": 1,
+          "summary": "+30 P.S temporários, vantagem em Intimidação, +1d8 dano de Caos, escudo natural 2d8. Gera Pontos de Caos."
+        },
+        {
+          "id": "personificacao-caos",
+          "name": "Personificação do Caos",
+          "caBonus": 2,
+          "duration": "1d4+1",
+          "usesPerSession": 1,
+          "summary": "+60 P.S temporários, resistência física, vantagens físicas, +3 Contra-Ataque, reflete 25% do dano e +1 dado em ataques."
+        }
+      ],
+      "library": [
+        {
+          "title": "Habilidades Exclusivas",
+          "content": "\nDano Corpo a Corpo = 1d8\n\nPersonificação do Caos\n\nNível: 2\n---\n\nAtributos,\nDano: 3d10 + (1/4 da Destreza do usuário)\nTipo: Espada Longa / Arma Pesada\nCategoria de Perícia: Armas Avançadas ou Armas Pesadas (de acordo com o estilo de combate do usuário)\n\nAprimoramento — Olhos de Caçador\nA manifestação do Caos também intensifica os sentidos predatórios de Tatsumaki. Seus olhos passam a enxergar as fraquezas e intenções de criaturas corrompidas com clareza sobrenatural.\n\nEfeito\nCriaturas da categoria Chama Profana ou inferior sofrem desvantagem em testes de combate contra Tatsumaki, representando o medo e a pressão psicológica causados por sua presença.\n\n---\n\n Adaptabilidade Versátil\n\nDurante o combate, quanto mais o portador enfrenta um inimigo, mais adaptado ele se torna aos movimentos, padrões e fraquezas do adversário.\nO tempo necessário para alcançar essa adaptabilidade é determinado pelo Mestre, de acordo com o nível de dificuldade do inimigo.\n\n---\n\n Rastro\n\nComo um verdadeiro caçador de criaturas infernais, o portador pode rastrear inimigos com facilidade, seguindo rastros deixados no ambiente ou percebendo silhuetas e resquícios de energia.\nConcede vantagem em testes de Investigação relacionados a rastreamento, além da capacidade de enxergar o rastro energético de alvos recentes.\n\n---\n\n Identificar Fraqueza\n\nOs olhos permitem analisar e expor pontos fracos de criaturas infernais e, em alguns casos, até de seres conscientes.\nAo identificar uma fraqueza, o usuário recebe dano extra contra o alvo e pode ignorar uma resistência aleatória da criatura, conforme a interpretação do Mestre e o poder do inimigo.\n\n---\n\n Chifre da Salvação,\nQuando a presença do Caos se manifesta plenamente através da essência de Tatsumaki, sua aura se torna dominante no campo de batalha. A força dessa energia desperta temor nas criaturas corrompidas, principalmente naquelas cuja existência já está ligada às chamas sombrias do caos.\n\nDiante dessa presença esmagadora, criaturas inferiores passam a reconhecer instintivamente a autoridade do Caos, submetendo-se à vontade de Tatsumaki.\n\n---\n\nBenefícios,\nCriaturas classificadas nas categorias Brasa Sombria e Fagulha Corrompida podem ser subjugadas ou comandadas por Tatsumaki.\n\nPara isso, deve ser realizado um teste de Presença contra a criatura alvo.\nSe bem-sucedido, a criatura fica sob o comando de Tatsumaki, obedecendo suas ordens durante o combate ou até que o efeito seja quebrado.\n\n Conjunto de Habilidades — Manipulação Sanguínea, B+ (tipo sanguineo)\n---\n\nAbsorver Sangue,\n“O sangue é vida, e a vida retorna a quem o domina.”\n\nO usuário regenera a própria vida criando mais sangue e o absorvendo.\n\nEfeito: Recupera 25% da Vida Máxima.,\nUso: Apenas 1 vez por combate.,\nCusto: 1 P.V.,\nCondição: Deve haver sangue inimigo no chão.,\nPerícia: —,\n\n---\n\nChão de Espinhos,\n“Do sangue nasce a dor, e da dor florescem os espinhos.”\n\nInvoca estacas de sangue solidificado sob os inimigos, perfurando-os e aplicando veneno.\n\nEfeito: Cria um campo de espinhos com 6 metros de diâmetro, atingindo até 3 alvos.,\nTeste: Os alvos devem realizar um Teste de Resistência para evitar o envenenamento.,\nDano:,\n\n  \nAlvo único: 2d12 + ¼ do Arcano\nMúltiplos alvos: 4d6 + ¼ do Arcano,\nVeneno: 1d4 + ¼ do Arcano por turno (se falhar no teste),\n,\nCusto: 5 P.S. e 1 P.V.,\nPerícia: Conjuração (Arcanismo),\n\n---\n\nMar de Hemoglobina,\n“O campo de batalha se torna um oceano vermelho, e todos afundam sob minha vontade.”\n\nTransmuta o solo coberto de sangue em uma área densa e viscosa, capaz de prender e sufocar inimigos.\n\nEfeito: O sangue se torna uma área controlável. Inimigos afundam, perdendo turnos ou metade da movimentação, e podem sofrer 1 P.V de dano por turno.,\nTeste: Firmeza ou Resistência para evitar o efeito.,\nÁrea: 1 metro de diâmetro por 1 P.S gasto.,\nCondição: Só funciona se houver sangue cobrindo o solo.,\nCusto: 1 P.V + 1 P.S por metro desejado.,\nPerícia: Canalização (Arcano),\nLimite: Não afeta inimigos que voam.,\n\n---\n\nRessonância Sanguínea,\n“Nenhuma distância separa quem compartilha o mesmo sangue.”\n\nPermite rastrear qualquer inimigo a partir de uma gota de seu sangue.\n\nEfeito: Localiza e acompanha a posição do inimigo.,\nContramedida: O inimigo pode realizar um Teste de Presença para tentar ocultar sua energia vital, desde que perceba o rastreamento.,\nCusto: 1 P.V em combate | 3 P.F fora de combate.,\nPerícia: —,\n\n---\n\nRefluxo Carmesim,\n“Devolvo o sangue que me negaste… em forma de ruína.”\n\nFaz o sangue derramado do inimigo retornar violentamente ao seu corpo, gerando uma explosão interna que o arremessa para longe.\n\nEfeito: O sangue retorna ao corpo do inimigo, causando dano físico e empurrão.,\nTeste: Firmeza para resistir e permanecer de pé.,\nDano:\n \nBase: 3d8 + ¼ do Arcano\nBônus (se cair): +2d8,\n,\nEstado: Se falhar, o inimigo fica Derrubado.,\nCusto: 1 P.V e uma quantidade considerável de sangue inimigo no chão.,\nPerícia: Presença (Arcanismo),\n\n---\n\nArma Sanguenta,\n“Meu sangue é minha lâmina, e minha lâmina é sede.”\n\nImbuí a arma com sangue, intensificando seu corte e energia. Pode ser usado em aliados.\n\nEfeito: Concede +1d8 de dano adicional à arma encantada.,\nDuração: 1d4 + 1 rodadas.,\nCusto: 4 P.S e 1 P.V.,\nPerícia: —,\n\n---\n\nChamas de Ferro,\n“O ferro do sangue queima como o próprio inferno.”\n\nInflama o ferro presente no sangue, criando faíscas carmesins que queimam tudo ao redor.\n\nCondição: O inimigo deve possuir ferimentos abertos, e o usuário deve misturar seu próprio sangue ao do alvo.,\nEfeito: O sangue ferve internamente, ignorando resistências e causando dano contínuo de fogo.,\nDano: 2d8 + ¼ do Arcano por 1d4 + 1 rodadas.,\nCusto: 8 P.S e 1 P.V.,\nPerícia: Canalização (Arcano),\n\n---\n\nSangue Perfurante,\n“A pressão do sangue supera o aço.”\n\nCondensa e dispara sangue sob extrema pressão, atravessando defesas e perfurando o alvo.\n\nEfeito: Projétil de sangue concentrado e letal.,\nDano: 3d8 + ¼ do Arcano.,\nCusto: 4 P.S e 1 P.V.,\nPerícia: Pontaria,\n\n\n⚡ Conjunto de Habilidades — Energia & Essência\n\n---\n\nGranada de Energia\n\n“Uma centelha contida, pronta para despedaçar tudo em sua explosão.”\n\nO usuário condensa energia pura em uma pequena esfera instável e a arremessa, provocando uma explosão devastadora.\n\nEfeito: Cria uma explosão de energia em área com 9 metros de diâmetro, causando destruição massiva.\nDano: 3d8 + 1/4 do Arcano\nBônus: Causa o dobro de dano em estruturas.\nCusto: 1 P.V e 5 P.F\nPerícia: Pontaria ou Arremesso (Destreza ou Força)\n\n---\n\nArma de Plasma\n\n“Quando a lâmina queima mais que o sol, até o aço teme o corte.”\n\nImbui a arma — ou as mãos do usuário — com energia plasmática intensa, gerando calor extremo que atravessa resistências.\n\nEfeito: Reforça o ataque físico com energia concentrada, capaz de ignorar resistências à escolha do usuário.\nDano Extra: 1d12 (dano de energia/plasma)\nCusto: 1 P.V e 8 P.F\n\n---\n\n---\n\nLaser Concentrado\n\n“Toda destruição de um campo... comprimida em um único ponto.”\n\nO usuário canaliza energia em um ponto específico (geralmente na ponta do dedo ou lâmina), disparando um feixe devastador que perfura qualquer defesa.\n\nEfeito: Dispara um feixe de energia altamente penetrante em um único alvo.\nPropriedade: Ignora Bloqueio e Reações (dependendo do nível do inimigo).\nDano: 3d12 +1/4 do Arcano\nCusto: 2 P.V e 10 P.F ou 1 P.V e 2 PTE\nPerícia: Pontaria (Destreza)\n\n---\n\nGrito Infernal\n\n“Do abismo, meu brado ecoa — e os mortais tremem ao ouvi-lo.”\n\nLibera um grito ensurdecedor e demoníaco que abala a mente e o corpo dos inimigos.\n\nEfeito: Causa dano sônico e desestabiliza o equilíbrio dos afetados.\nCondição: Os alvos devem realizar um Teste de Resistência ou Firmeza.\nEfeitos Possíveis:\n\n  \nFalha parcial: Atordoamento ou perda de equilíbrio.\nFalha crítica: Surdez temporária ou permanente.\nCusto: 1 P.V e 6 P.F\nPerícia: Presença (Arcano)\n\n---\n\nMandíbula Voraz\n\n“Minha fome não é por carne, mas pela energia que vocês ousam invocar.”\n\nCria uma mandíbula monstruosa — física ou espiritual — que devora a energia dos ataques inimigos, revertendo-a em vigor para o usuário.\n\nEfeito: Anula um ataque inimigo baseado em energia ou essência, absorvendo seu poder.\nBônus: Recupera P.F proporcionalmente ao dano e ao custo do ataque anulado.\nCusto: 1 P.V e 10 P.S\nPerícia: Defender (Fortitude)\n\n---\n\nLinguagem\n\n“O sangue fala, e agora eu entendo todas as suas vozes.”\n\nPermite compreender e se comunicar na língua de qualquer criatura cuja essência tenha sido absorvida.\n\nEfeito: Aprende permanentemente a linguagem da criatura de quem extraiu a essência.\nCusto: 4 P.F e 1 P.V *\n\n--- \nGetsuga Tenshō\n\n“Minha lâmina carrega o peso de um mundo — e o corta em dois.”\n\nTatsumaki sobrecarrega sua espada com energia destrutiva, desferindo um corte colossal que varre tudo à frente.\n\nEfeito: Dispara uma rajada de energia em área, devastando tudo em linha reta.\nPropriedades:\n\n  \nIgnora diversas resistências.\nAfeta múltiplos inimigos em área de impacto frontal.\nDano: 5d12 + 1/2 Arcano\nCusto: 16 P.F e 2 P.V \nPerícia: Armas Avançadas (Destreza)\n\n---\n\nOnda Sonora\n\n“O som é minha lâmina invisível, e o silêncio... sua consequência.”\n\nEmite uma poderosa onda sonora de alta frequência que danifica e desorienta o inimigo.\n\nEfeito: Causa sangramento pelos olhos e ouvidos, além de risco de paralisia momentânea.\nTeste: Resistência ou Firmeza para evitar ficar inconsciente ou perder o equilíbrio.\nDano: 2d12 +1/4 do Arcano\nCusto: 8 P.F e 1 P.V\nPerícia: Canalização (Arcano)\n\n-----------\n\nCero,\nUma explosão devastadora de energia concentrada, alimentada pela força do caos e pelo poder de Tatsumaki. Este feixe de energia pode assumir diferentes níveis de destruição dependendo da forma da usuária.\n\nEm sua forma básica, o Cero é um disparo concentrado de energia destrutiva. Porém, quando imbuído pela energia do caos, ele se transforma em uma explosão massiva capaz de devastar grandes áreas.\n\n---\n\nForma Base,\nNa forma normal, o Cero é um feixe de energia direta disparado contra os inimigos.\n\nBenefícios:\n\nNão pode ser bloqueado, apenas desviado.,\nPode atingir até 3 inimigos ao mesmo tempo, caso estejam na mesma linha de ataque.,\n\nDano:\n3d8 + 1/4 Arcano + Presença\n\nCusto:\n10 P.F e 1 P.V\n\nTempo de Recarga:\n3 turnos.\n\nForma do Caos (Transformado)\nQuando Tatsumaki canaliza a energia do caos, o Cero se transforma em um ataque extremamente destrutivo, liberando uma explosão massiva de energia.\n\nBenefícios:\n\nAtinge todos os inimigos em um diâmetro de até 36 metros.\nNão atinge aliados.\nNão pode ser bloqueado nem desviado.\nTatsumaki pode controlar o tamanho da área afetada, escolhendo o raio da explosão.\n\nDano:\n3d12 + 1/4 Arcano + Presença\n\nCusto:\n3 Pontos de Caos\n\nTempo de Recarga:\n3 turnos.\n\n------------------------------------------------------ a partir daqui são os níveis de essencia (passivas) do personagem adquiridas por fora:\n\nEstilo Ofensivo - Estágio I\n\nLiberação de Energia: Ao escolher este caminho, sua essência começa a se fundir de forma natural e passiva com seus ataques. Cada golpe, seja físico ou mágico, carrega um fragmento de sua vontade e poder interior, deixando rastros da sua energia por onde passa.\n\nEfeito:\nVocê adiciona +1 dado de dano a qualquer ataque realizado (mágico ou físico).\nEsse bônus representa a manifestação sutil, mas constante, de sua essência ofensiva.\n\nLiberação Instintiva - Estágio 2 (Ofensiva)\nCom uma conexão mais profunda com sua essência, seus ataques mágicos\ndeixam de ser técnicas elaboradas para se tornarem instintos naturais. Eles fluem\ncom precisão, ferocidade e uma força quase automática. Nesse estágio, é como se\nsua própria essência lutasse ao seu lado — um reflexo direto de sua vontade,\nampliando cada investida.\nEfeitos:\n- O usuário recebe +1 P.V.\n- Todos os seus ataques passam a causar +1 dado extra de dano, como se a\nessência executasse um golpe adicional junto ao seu.\nPré-Requisitos:\n2 Ponto de Essência\n10 Pontos de Karma Positivos\n2º treinamento de essência\n\nAura Defensiva: Estágio 1 – Defesa\nNeste estágio inicial, a essência do usuário começa a se manifestar fisicamente, condensando-se em uma aura visível e densa ao redor do corpo. Essa aura atua como um escudo, capaz de bloquear tanto ataques físicos quanto mágicos, oferecendo uma camada robusta de proteção durante o combate.\n\nEfeito: Garante uma defesa equivalente a 2d6 + ¼ do atributo Arcano.\nDuração: 1d4 rodadas (uso de uma vez por dia).\nCusto: Determinado pelo mestre com base na intensidade e uso contínuo.\n\nEssa forma de defesa é ideal para usuários focados em resistência e controle de campo, mantendo-se firmes mesmo diante de ataques devastadores. \n\nAura Protetora – Estágio 2 (Defensiva)\nSua essência cria uma aura protetora que envolve todo o seu corpo, ampliando\nainda mais sua defesa contra ataques inimigos. Esse poder é uma evolução direta\ndo estágio anterior, a \"Aura Defensiva\", servindo como um escudo geral\naprimorado, que reforça as capacidades defensivas em diversos aspectos.\nEfeitos:\n- Mantém o mesmo efeito da Aura Defensiva.\n- Acrescenta +1 turno de duração.\n- Concede +2 dados adicionais de defesa.\n\nEntendimento: 3º Estágio – Essência Verdadeira\n- Todos os seus ataques causam **+1 dado de dano adicional (ex: de 1d8 para2d8), representando o ápice da conexão entre você e sua essência.\n\nControle Inicial – Estágio 1 (Aptidão Mágica)\nEste é o primeiro passo na harmonia entre sua essência e sua magia. Um elo\ndesperto, ainda em crescimento, mas que já permite uma compreensão mais\nrefinada do fluxo mágico que percorre seu ser. Ao seguir esse caminho, o usuário\ncomeça a canalizar sua energia de forma mais eficiente, aprimorando o domínio\nsobre sua própria magia.\nEfeito:\nO usuário recebe vantagem em testes de perícia relacionados ao uso de magia.\n\nAura Guardiã – Estágio 3 (Defensiva)\nNeste estágio, sua essência desenvolve uma adaptação passiva, protegendo-oconstantemente sem a necessidade de ativação ou gasto de P.F. Aaura agorafornece uma resistência contínua, escolhida pelo usuário, que pode ser contradano físico (ex.: cortante, concussão, perfurante) ou contra umtipo específicodemagia. Efeitos: - Escolhe 1 tipo de resistência passiva permanente (física ou mágica). Pré-Requisitos:\n3 Pontos de Essência\n15 Pontos de Karma Positivos\n3º treinamento de essência\n\nAura de Aço – Estágio 4 (Defensiva)\nSua essência torna-se tão rígida quanto aço, condensando sua defesa ao limite. Nesse estado, nem mesmo técnicas ou efeitos capazes de ignorar armaduras\nconseguem superá-la. É o auge da solidez, tornando o cultivador uma verdadeiramuralha viva. Efeitos: - Por 2 turnos, o usuário adquire resistência à maioria dos tipos de dano, excetoDano Verdadeiro. Essa resistência não pode ser ignorada por habilidades comuns, ficando sujeita apenas a efeitos ou condições específicas do adversário. - Durante esse período, o usuário se torna extremamente resistente."
+        },
+        {
+          "title": "Personificação do Caos",
+          "content": "Máscara do Caos, + 2CA\nA Máscara do Caos é uma manifestação incompleta e parcial do poder primordial do Caos. Nessa forma, Tatsumaki acessa apenas uma pequena fração dessa energia, resultando em uma transformação instável, porém extremamente poderosa.\n\nAo ativar a Máscara do Caos, Tatsumaki libera sua energia caótica, permitindo o uso de habilidades amplificadas e o acúmulo de Pontos de Caos, que substituem o uso de P.F. (Pontos de Foco) em determinadas habilidades.\n\n---\n\nAtivação,\nA ativação da Máscara do Caos consome 1 turno completo, durante o qual:\n\nTatsumaki não pode atacar nem contra-atacar.\nTatsumaki pode apenas realizar ações defensivas, como esquivar ou se reposicionar.\nTodos os seus P.V. de Ataque são consumidos durante a ativação.\n\nApós esse turno, a transformação é concluída.\n\n---\n\nPontos de Caos = 2\nEnquanto estiver na forma da Máscara do Caos, Tatsumaki passa a gerar Pontos de Caos, que podem ser utilizados no lugar de P.F. em habilidades específicas.\n\nGanho de Pontos de Caos:\n\nGanha 1 Ponto de Caos sempre que acertar uma habilidade em um inimigo.,\nPode usar Intimidação até 2 vezes por combate para gerar Pontos de Caos adicionais (a critério do sistema ou mestre).,\n\n---\n\nBenefícios da Máscara do Caos,\nEnquanto estiver transformado, Tatsumaki recebe os seguintes efeitos:\n\nGanha +30 P.S. Temporários,\nRecebe Vantagem em testes de Intimidação,\nSeus ataques causam +1d8 de dano adicional de Energia do Caos,\nRecebe um Escudo Natural, reduzindo dano recebido em 2d8,\n\nObservação:\nO Escudo Natural não reduz Dano Verdadeiro.\n\nDuração,\nA transformação dura: 1d4 + 2 turnos\n\nLimitações,\nPode ser utilizada apenas 1 vez por combate,\nRequer 1 turno completo de ativação,\nÉ uma forma incompleta e instável do poder do Caos \n\nLiberação Parcial: Personificação do Caos, + 2CA\nA Personificação do Caos é a manifestação parcial mais avançada do poder do Caos atualmente acessível por Tatsumaki. Nessa forma, ele se torna um avatar incompleto dessa força primordial, liberando uma porcentagem muito maior de energia caótica do que na Máscara do Caos.\n\nEssa transformação concede um poder devastador, elevando drasticamente sua força, resistência e capacidade ofensiva. No entanto, é extremamente desgastante e perigosa para o usuário.\n\nCaso seja utilizada mais de uma vez na mesma sessão, Tatsumaki sofrerá Exaustão Total ao término da transformação, colapsando imediatamente e ficando incapacitado, sem possibilidade de se levantar por conta própria até receber assistência externa.\n\n---\n\nAtivação,\nPara ativar a Personificação do Caos:\n\nTatsumaki perde todos os seus P.V. de Ataque e P.V. de Defesa,\nA transformação consome 1 turno completo,\nDurante esse turno, ele não pode realizar ações ofensivas nem defensivas,\nOs efeitos da transformação começam no turno seguinte,\n\n---\n\nAura do Caos,\nAo concluir a transformação, Tatsumaki libera um grito caótico primordial, manifestando sua presença absoluta no campo de batalha.\n\nEfeito:\n\nAfeta todos os inimigos em um raio de 18 metros,\nInimigos devem realizar um Teste de Presença contra a Presença de Tatsumaki,\nEm caso de falha, o alvo recebe a condição:,\n\nAmedrontado pelo Caos\n\nSofre Desvantagem em ações contra Tatsumaki no próximo turno,\nAliados não são afetados.\n\n---\n\nPostura da Personificação do Caos,\nNesta forma, Tatsumaki abandona completamente a evasão e defesa convencional, assumindo uma postura de destruição absoluta.\n\nRestrições:\n\nNão pode realizar Esquivas,\nNão pode realizar Bloqueios,\n\nCompensação:\n\nPode realizar Contra-ataques,\nParte do dano recebido é automaticamente refletido ao atacante,\n\n---\n\nBenefícios da Transformação,\nEnquanto estiver na Personificação do Caos, Tatsumaki recebe:\n\n+60 P.S. Temporários,\nResistência a todo dano físico,\nVantagem em testes de Força ou Destreza,\nVantagem em testes de Fortitude,\n+3 em testes de Contra-ataque,\nReflete 25% do dano recebido de volta ao atacante,\n+1 dado de dano adicional em todos os ataques,\nSucesso automático em testes para:,\n\n  \nArrombar portas não mágicas\nLevantar estruturas não mágicas,\nQuebrar objetos físicos comuns,\n,\n\n---\n\nPassiva do Caos: Ataque Manifestado,\nO próprio Caos manifesta sua vontade através de Tatsumaki.\n\nEfeito:\n\nTatsumaki recebe +1 P.V. de Ataque adicional por turno,\nEste ataque é considerado uma manifestação direta do Caos,\nO Mestre controla este ataque adicional,\n\n---\n\nDuração,\nA transformação dura: 1d4 + 1 turnos\n\n---\n\nConsequências e Limitações,\nPode ser usada normalmente 1 vez por sessão sem penalidade extrema,\nSe usada mais de uma vez na mesma sessão:,\n\nExaustão Total:\n\nTatsumaki colapsa imediatamente,\nFica incapacitado,\nNão pode se levantar sozinho,\nPermanece vulnerável até receber ajuda\n\n"
+        },
+        {
+          "title": "Habilidades do Caos",
+          "content": "Corte Dimensional — Conceito (Bifurcação)\nTatsumaki canaliza a energia do Caos para induzir uma bifurcação em um ponto do espaço. Ao realizar o corte, a área atingida entra em dois estados ao mesmo tempo por um breve instante. Devido à energia do Caos e à diferença entre o ponto inicial e o ponto final do corte, o espaço é separado, criando uma fenda linear.\n\nEssa fenda ignora barreiras e defesas comuns, podendo atravessar proteções físicas e energéticas. Em casos raros, também pode permitir escapar de espaços criados artificialmente, como prisões dimensionais ou barreiras mágicas.\n\nCorte:\nUm corte impossível de defender por meios normais ou esquivar fisicamente. O acerto é garantido, dependendo da essência do adversário. Ignora resistências e imunidades comuns.\n\nDano:\n5d12 + 1/4 Arcano + Presença\n\nCusto:\n4 Pontos de Caos\n\nTempo de Recarga:\n2 Turnos\n\n*- Corte Dimensional virou Mugetsu quando usado como Gestsuga Tensho com energia do Caos (ja resolvido)*\n\nTomada de Decisão — Conceito (Caos Determinístico)\nNo momento de tomar uma decisão, Tatsumaki é capaz de enxergar a consequência imediata de sua ação através do Caos. Ao realizar uma ação que consome 1 P.V. de Ataque, imediatamente após ver o resultado, Tatsumaki pode desfazer essa ação, como se tivesse visto o resultado antes e decidido não executá-la.\n\nA ação é anulada completamente, como se nunca tivesse acontecido. O P.V. de Ataque gasto não é recuperado.\n\n---\n\nBenefício:\nPode anular completamente uma ação realizada, incluindo ataques recebidos, fazendo com que o ataque nunca tenha existido ou acontecido. O dano, efeitos e consequências são anulados por completo.\n\n---\n\nCusto: 12 P.F. e 1 P.V. de Ataque\nou 2 Pontos de Caos (se estiver transformado)\n\nTempo de Recarga: 3 Turnos\n\n\nRefração — Conceito (Fractal)\nRefração é uma habilidade que pode ser adicionada a outra habilidade antes de seu uso, seja uma habilidade própria ou, se conceitualmente possível, a habilidade de um aliado. Esta habilidade utiliza um P.V. de Reação para ser ativada.\n\nAo atingir o alvo, o golpe sofre uma refração fractal, fazendo com que ele se replique em diversas versões menores e mais fracas do golpe original. Isso faz com que o mesmo ataque atinja o alvo múltiplas vezes em sequência, como microcortes dentro do corte principal.\n\n---\n\nEfeito:\nO ataque se replica em múltiplos impactos menores, causando dano adicional vindo do próprio Caos. Funciona com ataques físicos e alguns ataques mágicos compatíveis.\n\n---\n\nDano:\nRole 1d4 + 1 para determinar quantas refrações ocorrerão.\n\nPara cada refração, o ataque causa:\n+1d8 de dano adicional\n\nOs efeitos do ataque original também podem ser aplicados nas refrações, se aplicável.\n\nCusto: 14 P.F. e 2 P.V.\nou 4 Pontos de Caos\n\nTempo de Recarga: 4 Turnos\n\nTeoria das Catástrofes — Conceito (Teoria das Catástrofes)\nQuando um inimigo sofre um desastre em uma rolagem, Tatsumaki pode aplicar o conceito da Teoria das Catástrofes sobre ele, marcando sua existência com instabilidade crescente.\n\nA partir desse momento, a chance do inimigo sofrer novos desastres aumenta progressivamente, tornando suas ações cada vez mais instáveis.\n\n---\n\nEfeito:\nQuando o inimigo tirar um desastre, Tatsumaki pode ativar esta habilidade e marcar esse inimigo.\n\nO valor necessário para o inimigo sofrer desastre aumenta em +1.\n\nCada vez que o inimigo sofrer um novo desastre, esse valor aumenta novamente em +1.\n\nExemplo:\nSe o desastre era apenas no resultado 1, passa a ser 1–2.\nDepois 1–3, e assim por diante.\n\n---\n\nLimite:\nPode aumentar até o máximo de +5 na margem de desastre\n\nO efeito dura durante todo o combate.\n\n---\n\nCondição:\nTatsumaki deve usar P.V. de Reação no momento em que o inimigo sofre o desastre para aplicar o efeito.\n\nO efeito só pode ser aplicado a um inimigo por vez.\n\n---\n\nCusto: 2 Pontos de Caos\ne 2 P.V. de Reação\n\nMente Vazia — Conceito (Ruído Branco)\nTatsumaki libera um grito carregado com energia do Caos, emitindo um ruído branco direcionado ao inimigo. Esse som interfere diretamente na mente do alvo, causando confusão momentânea e apagando sua intenção imediata.\n\nO inimigo pode esquecer por um instante o motivo de estar ali ou o que pretendia fazer em seguida.\n\n---\n\nEfeito:\nTatsumaki realiza um Teste de Presença contra a Presença do inimigo.\n\nFalha do inimigo:\nO alvo perde completamente seu turno de ataque.\n\nSucesso do inimigo:\nO alvo perde 1 P.V. de Ataque e sofre metade do dano da habilidade.\n\n---\n\nDano:\n3d10 + 1/4 Arcano + Presença\nTipo: Dano Psíquico\n\n---\n\nCusto: 4 Pontos de Caos\ne 2 Pontos de Ataque\n\n---\n\nTempo de Recarga: 3 Turnos\n\nPlasma Melhorado,\nAo canalizar a energia do caos, Tatsumaki pode imbuir sua lâmina com um plasma caótico extremamente instável. Essa energia envolve a arma com uma aura destrutiva capaz de atravessar defesas sobrenaturais e atingir diretamente a essência do inimigo.\n\nEnquanto ativa, a lâmina se torna mais letal, ignorando resistências naturais contra golpes cortantes e ampliando significativamente o dano causado.\n\n---\n\nBenefícios,\nA lâmina ignora imunidades ou resistências contra dano cortante do alvo.,\nConcede +1d12 de dano adicional em ataques realizados com a arma enquanto o efeito estiver ativo.,\n\n---\n\nCusto,\n2 Pontos de Caos\n(Só pode ser utilizado enquanto estiver transformado.)\n\n---\n\nDuração,\n1d4 + 1 turnos\n\n---\n\nTempo de Recarga,\n3 turnos\n\n"
+        },
+        {
+          "title": "Shikai Azrakiel",
+          "content": "\"CORTE TODA A LÓGICA, AZRAKIEL!!!!!!!\"\n\nShikai — Azrakiel\nEfeito:\nAo atingir um inimigo, ele fica marcado pelas Chamas do Caos.\n\nNo início de cada turno, role 1d10 para definir o efeito disponível naquele turno.\nO efeito pode ser ativado 1 vez durante o turno.\n\nCaso o efeito não seja usado, todos os alvos marcados sofrem:\n\n2d8 de Dano Verdadeiro (Fogo do Caos)\n\n---\n\n1d10 — Efeitos do Caos\n1 - Troca de posição entre dois indivíduos (marcados ou não).\n2 - O próximo ataque de um alvo marcado tem chance de atingir o aliado mais próximo.\n3 - Um alvo marcado tem desvantagem para conjurar magias neste turno.\n4 - Troca a ordem de dois personagens adjacentes na iniciativa (marcados ou não).\n5 - Confusão motora: um inimigo pode soltar sua arma e não pode usá-la neste turno.\n6 - Um alvo marcado recebe temporariamente o efeito ativo de outro alvo marcado.\n7 - Se um alvo marcado tirar um extremo, o resultado é reduzido para o valor mais alto que não seja extremo.\n8 - Se um alvo marcado receber um Buff, ele pode ser compartilhado com você por 1 turno.\n9 - Se um alvo não marcado for atingido pela Shikai, o alvo mais próximo recebe metade do dano.\n10 - Um alvo marcado troca os custos de P.F ↔ P.S durante o turno.\n\n---\n\nCusto:\n12 P.F\n2 P.V de Ataque\n\nDuração:\n1d4 + 2 turnos\n\nTempo de recarga:\n2 Turnos\n---\nRompe Montanhas\nUma técnica lendária de esgrima originalmente classificada como Grau 10, ensinada pela mestra Ayame. Pouquíssimos guerreiros foram capazes de aprender ou suportar o peso dessa técnica, pois ela exige um controle extremo do corpo e da lâmina.\n\nPara aqueles que a dominam atualmente, a técnica manifesta-se apenas em uma forma reduzida, equivalente a Grau 4. Mesmo assim, seu poder continua sendo devastador.\n\nQuando executada, o golpe concentra toda a força, velocidade e precisão do espadachim em um único ataque capaz de atravessar defesas aparentemente intransponíveis. É uma técnica extremamente perigosa tanto para quem a recebe quanto para quem a utiliza.\n\n---\n\nBenefícios\nO ataque ignora escudos, imunidades e resistências do alvo.\nApesar de sua força devastadora, o golpe ainda pode ser desviado.\n\n---\n\nDano\n4d12 + 1/4 Destreza + Armas Avançadas\n\n---\n\nCusto\n2 P.V para executar o ataque.\n\n---\n\nTempo de Recarga\n1 vez por sessão"
+        },
+        {
+          "title": "Yamato",
+          "content": "Yamato\nA Yamato é uma espada lendária que pertenceu a um dos maiores guerreiros da história de Thaloria, conhecido por servir como braço direito do Grande Rei Thalorius durante a Era de Ouro.\n\nForjada a partir de minérios de origem desconhecida, sua composição desafia qualquer conhecimento existente sobre metalurgia. Nenhum ferreiro foi capaz de reproduzir sua estrutura, tornando-a uma arma verdadeiramente única.\n\nSua lâmina possui um design incomum: um dos lados apresenta uma afiação serrilhada invertida, enquanto seu formato remete a uma imponente Ōdachi, conferindo-lhe uma aparência intimidadora e inconfundível.\n\nA Yamato é considerada indestrutível, sendo impossível quebrá-la ou danificá-la por meios convencionais, independentemente da força empregada.\n\nRecentemente, O Doutor fundiu à espada os misteriosos Fragmentos do Desespero, despertando um poder adormecido que transformou a Yamato em um dos artefatos mais cobiçados de todo o mundo. Sua existência desperta o interesse de reis, organizações secretas e, principalmente, das criaturas infernais, que reconhecem o imenso poder oculto em seu interior.\n\n---\n\nAtributos\nDano: 4d8 + 1/4 Força + 1/8 Arcano + Nível de Essência\n\nPerícia Necessária: Armas Pesadas\n\n---\n\nPropriedade Lendária — Fragmentos do Desespero\nA verdadeira natureza da Yamato permanece desconhecida.\n\nSempre que o portador acertar um ataque, poderá gastar 12 P.F. para despertar parte do poder oculto da espada.\n\nO alvo deverá realizar um Teste de Presença.\n\nSucesso: Resiste à influência da Yamato.\nFalha: A espada manifesta um de seus efeitos ocultos, cuja natureza depende do nível de afinidade do portador com a arma.\n\nNo momento, apenas uma pequena fração de seu verdadeiro poder foi despertada.\n\nÀ medida que Tatsumaki compreender a origem, a história e a essência da Yamato, novos poderes serão desbloqueados, revelando gradualmente o verdadeiro potencial da espada e dos Fragmentos do Desespero que habitam seu interior.\n\n---"
+        },
+        {
+          "title": "Bankais",
+          "content": "Sentença do Rei\nUma relíquia herdada de um antigo rei que acreditava no surgimento de uma nova geração de guerreiros. Este artefato carrega uma vontade soberana capaz de impor julgamento sobre seus inimigos. Entretanto, seu poder é perigoso e imprevisível, pois a cada uso ele se alimenta da essência daqueles que são marcados por sua sentença, tornando-se cada vez mais abrangente.\n\nApesar de sua força, a Sentença do Rei só pode ser invocada uma única vez por dia.\n\nBenefício:\nO usuário lança 1d10 contra um inimigo. O resultado representa a porcentagem inicial de corrupção na essência do alvo.\nEssa corrupção bloqueia permanentemente durante o combate uma quantidade equivalente da essência do inimigo, reduzindo sua capacidade de utilizar habilidades ou manter seu poder espiritual.\n\nO acerto da habilidade é garantido, embora sua eficácia possa variar dependendo da resistência ou natureza da essência do adversário.\n\nCusto:\n10 P.F e 1 P.V.\n\nTempo de recarga:\n1 uso por dia.\n"
+        },
+        {
+          "title": "Itens",
+          "content": "Sentença do Rei\nUma relíquia herdada de um antigo rei que acreditava no surgimento de uma nova geração de guerreiros. Este artefato carrega uma vontade soberana capaz de impor julgamento sobre seus inimigos. Entretanto, seu poder é perigoso e imprevisível, pois a cada uso ele se alimenta da essência daqueles que são marcados por sua sentença, tornando-se cada vez mais abrangente.\n\nApesar de sua força, a Sentença do Rei só pode ser invocada uma única vez por dia.\n\nBenefício:\nO usuário lança 1d10 contra um inimigo. O resultado representa a porcentagem inicial de corrupção na essência do alvo.\nEssa corrupção bloqueia permanentemente durante o combate uma quantidade equivalente da essência do inimigo, reduzindo sua capacidade de utilizar habilidades ou manter seu poder espiritual.\n\nO acerto da habilidade é garantido, embora sua eficácia possa variar dependendo da resistência ou natureza da essência do adversário.\n\nCusto:\n10 P.F e 1 P.V.\n\nTempo de recarga:\n1 uso por dia.\n\nColar de Resistência Mágica\nUm colar simples utilizado por combatentes que enfrentam usuários de magia. Apesar de não ser um artefato extremamente poderoso, ele foi criado com pedras encantadas básicas capazes de absorver parte da energia mágica durante o combate.\n\nEsse colar oferece uma proteção eficiente contra magias comuns e uma proteção menor contra magias baseadas em essência.\n\nDurante um combate, o colar pode ser ativado algumas vezes para reforçar a defesa do usuário contra ataques mágicos.\n\nBenefício:\nAo ser ativado, o colar concede proteção adicional contra magias, funcionando como uma barreira mágica temporária.\n\nContra magias normais: protege 2d12 + 1/4 Arcano de dano.\nContra magias de essência (ou arcanas): protege 2d8 + 1/4 Arcano de dano.\n\nEssa proteção funciona como redução adicional de dano mágico ao receber um ataque.\n\nCusto:\n3 P.F por ativação.\n\nUsos:\nO colar pode ser utilizado até 3 vezes por combate, sem custo de P.V.\n\nTempo de Recarga:\nApós os 3 usos, o colar entra em modo de recarga e só poderá ser utilizado novamente no próximo combate.\n"
+        },
+        {
+          "title": "Classe Espadachim",
+          "content": "Classe Espadachim:\n\nAspecto 4:\nA margem de acerto crítico do usuário é reduzida para 19.\n\nAspecto 2:\nOs inimigos sofrem –2 em testes de esquiva ou contra-ataque contra os ataques do usuário.\n\nAspecto 3:\nUma vez por combate, o usuário pode ignorar até 1 reação do inimigo.\n\nEspada de Estilo de Armas Avançadas\n\nO usuário recebe +5 de dano em todos os testes de dano realizados com essa espada.\n\nEstilo de Empunhadura Dupla (Duas Mãos)\n\nUma vez por adversário, o usuário pode quebrar a postura do inimigo de forma automática\n\n"
+        },
+        {
+          "title": "Técnicas de Espadachim",
+          "content": "Técnica – Atrofia\n\nTatsumaki dispara rapidamente na direção do inimigo e desfere um golpe preciso e não profundo com sua espada. No instante exato após o impacto, sua Essência é liberada dentro do corpo do alvo, forçando uma contração abrupta e dolorosa dos músculos.\nEssa contração repentina provoca dor intensa e perda momentânea de controle corporal, podendo derrubar o adversário.\n\nEfeito Mecânico\n\n- O alvo deve realizar um teste de Resistência contra a CD baseada no acerto de Tatsumaki.\n- Em caso de sucesso: sofre metade do dano.,\n- Em caso de falha: sofre o dano completo e recebe a condição Caído.,\n- A condição Caído ocorre devido à contração muscular forçada e à dor extrema.\n\nDano: 3d8 + 1/4 da Destreza do usuário\nCusto: 1 P.V\nTempo de Recarga: 3 turnos\nPerícia Utilizada: Armas Avançadas (Destreza)\n\nTécnica – Parry\n\nTatsumaki executa um bloqueio preciso no exato momento do impacto do ataque inimigo. Essa técnica exige leitura perfeita de tempo, força e ângulo. Um único erro pode resultar em dano total.\nA técnica só pode ser usada contra ataques físicos. Mesmo que o golpe possua magia envolvida, o que importa é que a forma de atingir o usuário seja física (arma, impacto corporal, projétil físico, etc.).\n\nEfeito Mecânico:\nQuando for alvo de um ataque físico, Tatsumaki pode gastar 1 P.V como Reação para ativar Parry.\nO jogador realiza um teste de 1d2 (cara ou coroa, 1 ou 2 previamente escolhido):\n\nSe for bem-sucedido:\nO dano é completamente anulado.\nTatsumaki pode realizar imediatamente um contra-ataque básico com sua espada (sem uso de técnicas ou magia).\n\nSe falhar:,\nTatsumaki sofre o dano completo do ataque.,\nO contra-ataque gerado por Parry é considerado um ataque corpo a corpo comum.\n\nCusto: 1 P.V (como Reação)\n\nTempo de Recarga: 4 turnos\n\nSurpresa!\nTatsumaki concentra sua essência em um único golpe, fortalecendo seu ataque ao ponto de romper diretamente as defesas fundamentais do inimigo.\n\nAo atingir o alvo, o golpe não apenas causa dano, mas também enfraquece permanentemente uma camada de proteção do inimigo, quebrando sua defesa em nível conceitual.\n\n---\n\nEfeito:\nAo acertar o inimigo, Tatsumaki pode escolher um dos efeitos:\n\nQuebrar uma defesa ativa do inimigo (ainda causando o dano normalmente)\nReduzir uma resistência em um nível\nTransformar uma imunidade em resistência\nTransformar uma resistência em dano normal\n\nO dano do ataque é sempre aplicado normalmente.\n\n---\n\nBenefício:\nA redução é permanente durante todo o combate.\n\nEste efeito só pode ser aplicado:\n\nUma vez por alvo\nUma vez por combate\n\n---\n\nCusto: 3 P.V. de Ataque\n\nLimitação: Após ser afetado, o inimigo não pode ser afetado novamente por esta habilidade no mesmo combate.\n\n---\n\nBate e Volta\nTatsumaki, ao ser atacado por um ataque à distância, utiliza sua essência junto de sua técnica com a espada para defletir o projétil e devolvê-lo ao inimigo, aumentando sua velocidade e força no processo.\n\nTatsumaki deve realizar um teste de Defletir contra o teste de acerto do inimigo.\n\nSucesso:\nAnula completamente o dano recebido e reflete o ataque de volta ao inimigo.\n\nDano:\nMesmo dano do projétil + ¼ da Destreza de Tatsumaki\n\nEfeito adicional:\nCaso obtenha um crítico no teste de Defletir, o inimigo perde 1 P.V de ataque adicional.\n\nCusto: 1 P.V\nTipo: Reação\n\nTempo de Recarga:\n3 turnos"
+        },
+        {
+          "title": "Posturas",
+          "content": "Postura – Rápido e Impactante\n\nEfeito da Postura:\nNesta postura, o usuário canaliza sua Essência para maximizar sua velocidade corporal. Seus movimentos tornam-se comparáveis a um projétil em disparo, podendo romper a barreira do som e gerar um estrondo audível no campo de batalha.\n\nEnquanto ativa, o usuário se torna altamente eficaz em movimentação, reflexo e contra-ataque.\n\nBenefícios Mecânicos:\n+2 em Classe de Armadura,\nTestes de Reflexo recebem Vantagem,\nContra-ataque recebe +3 em testes de acerto,\n\nPassiva – Passo Relâmpago\n\nO usuário domina um deslocamento extremamente preciso e veloz, podendo se mover instantaneamente até 20 metros como parte de sua ação de movimentação.\nAlém disso, fora de seu turno, pode gastar 1 P.V como reação para auxiliar um aliado próximo, permitindo que ele realize uma tentativa de esquiva adicional contra um ataque iminente (a critério do Mestre).\nPode causar uma vez por adversário, um ataque supresa (Depende do adversário).\n\nCusto: Precisa ser ativada durante seu tuno, sacrifando 2 P.V de ataque.\n\nPostura – Impenetrável e Destruidor\n\nNesta postura:\n\nO usuário não realiza esquivas.\nA movimentação ocorre em velocidade normal.\nSeus ataques são mais lentos que o comum.\nSeus golpes causam dano significativamente maior.\n\nEfeito da Postura:\n\nO usuário canaliza toda sua força física e Essência para a lâmina, tornando seus golpes mais devastadores e difíceis de deter.\nEm contrapartida, sua agilidade é severamente reduzida.\n\nBenefícios Mecânicos:\n\n- 1d8 + Defesa adicional contra golpes físicos (aplicável em bloqueios bem-sucedidos)\n- +1d8 de dano adicional em todos os ataques corpo a corpo\n- Vantagem em testes de Força relacionados a acerto\n- Vantagem em testes de Fortitude para resistir a efeitos físicos (incluindo tentativas de derrubar, empurrar ou esmagar)\n- Desvantagem em todos os testes relacionados à Destreza e -5 em todos os testes relacionados\n- Incapaz de realizar esquiva enquanto estiver na postura\n- Não pode utilizar a perícia Reflexo enquanto ativa\n\nHabilidade Especial – Muralha\n\nUma vez por combate, o usuário pode anular completamente um golpe físico recebido.\n\nAtaques mágicos não são anulados e causam dano normal.,\nAo ativar, o usuário recebe 15 P.S temporários.,\nA ativação ocorre como reação.\n\nCusto da Postura\n\nTodos os ataques realizados enquanto a postura estiver ativa consomem P.V normalmente exigidos para ataques, sem redução."
+        },
+        {
+          "title": "Essência • descrição detalhada",
+          "content": "Essencia Verdadeira = 5\n\nTodos os seus ataques baseados em Essência causam +1 dado de dano adicional\n Obtém +1 dado extra de dano em qualquer ataque físico ou mágico\n\nEssência Verdadeira - Defensiva\n\nAura Defensiva: Estágio 1 – Defensiva\nEfeito: Garante uma defesa equivalente a 2d6 + ¼ do atributo Arcano. \nDuração: 1d4 rodadas. \nCusto: 6 P.F e 1 P.V por turno ativo.\n\nAura Protetora – Estágio 2 (Defensiva)\nEfeitos: - Mantém o mesmo efeito da Aura Defensiva. - Acrescenta +1 turno de duração. - Concede +1 dados adicionais de defesa.\n\nAura Guardiã – Estágio 3 (Defensiva)\n- Escolhe 1 tipo de resistência passiva permanente (física ou mágica) = Dano Cortante\n\nAura de Aço – Estágio 4 (Defensiva)\n- Por 2 turnos, o usuário adquire resistência à maioria dos tipos de dano, exceto Dano Verdadeiro. Essa resistência não pode ser ignorada por habilidades comuns, ficando sujeita apenas a efeitos ou condições específicas do adversário.\n\nAptidão Mágica\n\nControle Inicial – Estágio 1 (Aptidão Mágica)\n- O usuário recebe +1 dado de dano adicional em ataques relacionados à magia.\n\nControle Parcial – Estágio 2 (Aptidão Mágica)\n- Todas as habilidades passam a custar -1 P.F em sua utilização.\n\nEssência Verdadeira - Ofensivo\n\nLiberação de Energia - Estágio I (Ofensivo)\n- Você adiciona +1 dado de dano adicional a todos os seus ataques corpo a corpo, incluindo aqueles realizados com armas.\n\nLiberação Instintiva - Estágio 2 (Ofensiva)\n- O usuário recebe +1 P.V.\n\nLiberação Fervente – Estágio 3 (Ofensiva)\n- Adiciona ¼ de um atributo à sua escolha em todas as jogadas de dano. = Fortitude\n\nLiberação Condensada – Estágio 4 (Ofensiva)\n- Por 2 ou 1d4 turnos, ignora resistências físicas e algumas resistências mágicas dos inimigos. \n- Concede +1d12 de dano adicional do tipo de energia utilizada. \n- Pode ser usado 1 vez por dia."
+        }
+      ]
+    },
+    "combat": {
+      "active": false,
+      "round": 1,
+      "turn": 1,
+      "chaosPoints": 0,
+      "activePosture": null,
+      "activeTransformation": null,
+      "transformationTurns": 0,
+      "cooldowns": {},
+      "uses": {},
+      "conditions": [],
+      "notes": "",
+      "rollHistory": []
+    }
+  }
+}
