@@ -47,11 +47,97 @@
     return total;
   }
 
-  function resourceCurrent(resource) {
-    const max = Number(resource?.max) || 0;
-    const temporary = Number(resource?.temporary) || 0;
-    const lost = Number(resource?.lost) || 0;
-    return Math.max(0, max + temporary - lost);
+  function resourceTrueDamage(resource, key = '') {
+    return key === 'ps' ? Math.max(0, Number(resource?.trueDamage) || 0) : 0;
+  }
+
+  function resourceCoreMax(resource, key = '') {
+    const baseMax = Math.max(0, Number(resource?.max) || 0);
+    return Math.max(0, baseMax - resourceTrueDamage(resource, key));
+  }
+
+  function resourceCapacity(resource, key = '') {
+    const temporary = Math.max(0, Number(resource?.temporary) || 0);
+    return resourceCoreMax(resource, key) + temporary;
+  }
+
+  function resourceCurrent(resource, key = '') {
+    const lost = Math.max(0, Number(resource?.lost) || 0);
+    return Math.max(0, resourceCapacity(resource, key) - lost);
+  }
+
+  function splitPv(total) {
+    const safeTotal = Math.max(0, Math.floor(Number(total) || 0));
+    return {
+      attack: Math.floor(safeTotal / 2),
+      reaction: Math.ceil(safeTotal / 2)
+    };
+  }
+
+  function pvPoolCurrent(resource, pool) {
+    const split = splitPv(resource?.max);
+    const max = pool === 'reaction' ? split.reaction : split.attack;
+    const lostKey = pool === 'reaction' ? 'reactionLost' : 'attackLost';
+    return Math.max(0, max - Math.max(0, Number(resource?.[lostKey]) || 0));
+  }
+
+  function abilityPvCosts(cost = {}) {
+    return {
+      attack: Math.max(0, Number(cost.pvAttack) || 0) + Math.max(0, Number(cost.pv) || 0),
+      reaction: Math.max(0, Number(cost.pvReaction) || 0) + Math.max(0, Number(cost.pvDefense) || 0)
+    };
+  }
+
+  function normalizeCharacterData(data) {
+    let changed = false;
+    data.resources ||= {};
+
+    const ps = data.resources.ps ||= { label: 'P.S', max: 0, lost: 0, temporary: 0 };
+    if (!Object.prototype.hasOwnProperty.call(ps, 'trueDamage')) {
+      ps.trueDamage = 0;
+      changed = true;
+    }
+
+    const pf = data.resources.pf ||= { label: 'P.F', max: 0, lost: 0, temporary: 0 };
+    if (!Object.prototype.hasOwnProperty.call(pf, 'temporary')) {
+      pf.temporary = 0;
+      changed = true;
+    }
+
+    const pv = data.resources.pv ||= { label: 'P.V', max: 0 };
+    if (!Object.prototype.hasOwnProperty.call(pv, 'attackLost')) {
+      pv.attackLost = Math.max(0, Number(pv.lost) || 0);
+      changed = true;
+    }
+    if (!Object.prototype.hasOwnProperty.call(pv, 'reactionLost')) {
+      pv.reactionLost = 0;
+      changed = true;
+    }
+    if (Number(pv.lost) !== 0) {
+      pv.lost = 0;
+      changed = true;
+    }
+
+    (data.abilities || []).forEach((ability) => {
+      if (!ability?.cost) return;
+      const cost = ability.cost;
+      if (Number(cost.pv) > 0) {
+        cost.pvAttack = (Number(cost.pvAttack) || 0) + Number(cost.pv);
+        delete cost.pv;
+        changed = true;
+      }
+      if (Number(cost.pvDefense) > 0) {
+        cost.pvReaction = (Number(cost.pvReaction) || 0) + Number(cost.pvDefense);
+        delete cost.pvDefense;
+        changed = true;
+      }
+    });
+
+    if ((Number(data.schemaVersion) || 1) < 2) {
+      data.schemaVersion = 2;
+      changed = true;
+    }
+    return changed;
   }
 
   function armorClass(data) {
@@ -92,8 +178,8 @@
 
   function formatCost(cost = {}) {
     const labels = {
-      pf: 'P.F', pv: 'P.V', pvAttack: 'P.V Ataque', pvReaction: 'P.V Reação',
-      pvDefense: 'P.V Defesa', chaos: 'Caos', chaosAlternative: 'Caos (alternativo)'
+      pf: 'P.F', pv: 'P.V Ataque', pvAttack: 'P.V Ataque', pvReaction: 'P.V Reação',
+      pvDefense: 'P.V Reação', chaos: 'Caos', chaosAlternative: 'Caos (alternativo)'
     };
     return Object.entries(cost)
       .filter(([, value]) => Number(value) > 0)
@@ -103,6 +189,8 @@
 
   window.RPG = {
     clone, getPath, setPath, attributeTotal, fraction, quarter, eighth,
-    skillTotal, resourceCurrent, armorClass, slugify, rollDiceExpression, formatCost
+    skillTotal, resourceTrueDamage, resourceCoreMax, resourceCapacity, resourceCurrent,
+    splitPv, pvPoolCurrent, abilityPvCosts, normalizeCharacterData,
+    armorClass, slugify, rollDiceExpression, formatCost
   };
 })();

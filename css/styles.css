@@ -79,6 +79,18 @@ textarea { resize: vertical; line-height: 1.55; }
 .resource-fields input { margin-top: .3rem; padding: .5rem; }
 .resource-controls { display: grid; grid-template-columns: repeat(6, 1fr); gap: .32rem; }
 .resource-controls button { border: 1px solid var(--line); background: #151821; color: var(--text); border-radius: 8px; padding: .5rem .2rem; font-size: .72rem; }
+.resource-breakdown { display: flex; flex-wrap: wrap; gap: .35rem .55rem; margin-top: .35rem; color: var(--muted); font-size: .7rem; }
+.resource-fields.four-fields { grid-template-columns: repeat(4, 1fr); }
+.pv-pools { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
+.pv-pool { padding: .65rem; border: 1px solid var(--line); border-radius: 10px; background: #0d0f14; }
+.pv-pool > div:first-child { display: flex; justify-content: space-between; gap: .5rem; align-items: center; }
+.pv-pool span, .pv-pool small { color: var(--muted); font-size: .72rem; }
+.pv-controls, .true-damage-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: .3rem; margin-top: .45rem; }
+.pv-controls button, .true-damage-controls button { border: 1px solid var(--line); background: #151821; color: var(--text); border-radius: 8px; padding: .42rem .2rem; font-size: .68rem; }
+.true-damage-box { border-top: 1px solid var(--line); margin-top: .75rem; padding-top: .65rem; }
+.true-damage-box > span { display: flex; justify-content: space-between; color: var(--muted); font-size: .75rem; }
+.true-damage-controls { grid-template-columns: repeat(6, 1fr); }
+.combat-grid { grid-template-columns: repeat(3, 1fr); }
 
 .two-column { display: grid; grid-template-columns: 1.2fr .8fr; gap: .9rem; align-items: start; margin-top: 1.6rem; }
 .attribute-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .65rem; }

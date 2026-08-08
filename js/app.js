@@ -76,7 +76,7 @@
   }
 
   function currentResource(key) {
-    return RPG.resourceCurrent(state.data.resources?.[key]);
+    return RPG.resourceCurrent(state.data.resources?.[key], key);
   }
 
   function attributeTotal(abbr) {
@@ -85,15 +85,25 @@
 
   function resourceCard(key, combat = false) {
     const r = state.data.resources[key];
-    const current = RPG.resourceCurrent(r);
+    const current = RPG.resourceCurrent(r, key);
     const baseMax = num(r.max);
-    const maxWithTemp = baseMax + num(r.temporary);
-    const percent = maxWithTemp > 0 ? Math.max(0, Math.min(100, current / maxWithTemp * 100)) : 0;
+    const temporary = Math.max(0, num(r.temporary));
+    const trueDamage = key === 'ps' ? Math.max(0, num(r.trueDamage)) : 0;
+    const coreMax = RPG.resourceCoreMax(r, key);
+    const capacityBeforeLoss = RPG.resourceCapacity(r, key);
+    const percent = capacityBeforeLoss > 0 ? Math.max(0, Math.min(100, current / capacityBeforeLoss * 100)) : 0;
     return `
       <article class="resource-card ${combat ? 'combat-resource' : ''}">
         <div class="resource-title-row">
           <span>${esc(r.label)}</span>
-          <strong>${current} <small>/ ${baseMax}${num(r.temporary) ? ` + ${num(r.temporary)} temp` : ''}</small></strong>
+          <strong>${current} <small>máx. atual</small></strong>
+        </div>
+        <div class="resource-breakdown">
+          <span>Base ${baseMax}</span>
+          ${key === 'ps' ? `<span>Núcleo ${coreMax}</span>` : ''}
+          ${temporary ? `<span>Temp +${temporary}</span>` : ''}
+          ${num(r.lost) ? `<span>Perdido −${num(r.lost)}</span>` : ''}
+          ${trueDamage ? `<span>Dano Verdadeiro −${trueDamage}</span>` : ''}
         </div>
         <div class="meter"><span style="width:${percent}%"></span></div>
         ${combat ? `
@@ -105,13 +115,67 @@
             <button data-action="resource-heal" data-resource="${key}" data-delta="5">+5</button>
             <button data-action="resource-heal" data-resource="${key}" data-delta="10">+10</button>
           </div>
+          ${key === 'ps' ? `
+            <div class="true-damage-box">
+              <span>Dano Verdadeiro <strong>${trueDamage}</strong></span>
+              <div class="true-damage-controls">
+                <button data-action="true-damage-change" data-delta="1">DV +1</button>
+                <button data-action="true-damage-change" data-delta="5">DV +5</button>
+                <button data-action="true-damage-change" data-delta="10">DV +10</button>
+                <button data-action="true-damage-change" data-delta="-1">DV −1</button>
+                <button data-action="true-damage-change" data-delta="-5">DV −5</button>
+                <button data-action="true-damage-change" data-delta="-10">DV −10</button>
+              </div>
+            </div>` : ''}
         ` : `
-          <div class="resource-fields">
-            <label>Perdidos<input type="number" data-path="resources.${key}.lost" value="${num(r.lost)}"></label>
-            <label>Máximo<input type="number" data-path="resources.${key}.max" value="${num(r.max)}"></label>
-            <label>Temporário<input type="number" data-path="resources.${key}.temporary" value="${num(r.temporary)}"></label>
+          <div class="resource-fields ${key === 'ps' ? 'four-fields' : ''}">
+            <label>Perdidos<input type="number" min="0" data-path="resources.${key}.lost" value="${num(r.lost)}"></label>
+            <label>Base máxima<input type="number" min="0" data-path="resources.${key}.max" value="${baseMax}"></label>
+            <label>Temporário<input type="number" min="0" data-path="resources.${key}.temporary" value="${temporary}"></label>
+            ${key === 'ps' ? `<label>Dano Verdadeiro<input type="number" min="0" data-path="resources.ps.trueDamage" value="${trueDamage}"></label>` : ''}
           </div>
         `}
+      </article>`;
+  }
+
+  function pvCard(combat = false) {
+    const r = state.data.resources.pv;
+    const split = RPG.splitPv(r.max);
+    const attack = RPG.pvPoolCurrent(r, 'attack');
+    const reaction = RPG.pvPoolCurrent(r, 'reaction');
+    const totalCurrent = attack + reaction;
+    const totalMax = split.attack + split.reaction;
+    const percent = totalMax > 0 ? Math.max(0, Math.min(100, totalCurrent / totalMax * 100)) : 0;
+
+    const pool = (kind, label, current, max, lost) => `
+      <div class="pv-pool">
+        <div><span>${label}</span><strong>${current} / ${max}</strong></div>
+        ${combat ? `
+          <div class="pv-controls">
+            <button data-action="pv-spend" data-pool="${kind}" data-delta="1">−1</button>
+            <button data-action="pv-spend" data-pool="${kind}" data-delta="2">−2</button>
+            <button data-action="pv-heal" data-pool="${kind}" data-delta="1">+1</button>
+            <button data-action="pv-heal" data-pool="${kind}" data-delta="2">+2</button>
+          </div>` : `<small>Gastos: ${lost}</small>`}
+      </div>`;
+
+    return `
+      <article class="resource-card pv-card ${combat ? 'combat-resource' : ''}">
+        <div class="resource-title-row">
+          <span>P.V</span>
+          <strong>${totalCurrent} <small>/ ${totalMax} total</small></strong>
+        </div>
+        <div class="meter"><span style="width:${percent}%"></span></div>
+        <div class="pv-pools">
+          ${pool('attack', 'P.V Ataque', attack, split.attack, num(r.attackLost))}
+          ${pool('reaction', 'P.V Reação', reaction, split.reaction, num(r.reactionLost))}
+        </div>
+        ${combat ? '' : `
+          <div class="resource-fields pv-fields">
+            <label>P.V total<input type="number" min="0" step="1" data-path="resources.pv.max" value="${num(r.max)}"></label>
+            <label>Ataque gastos<input type="number" min="0" data-path="resources.pv.attackLost" value="${num(r.attackLost)}"></label>
+            <label>Reação gastos<input type="number" min="0" data-path="resources.pv.reactionLost" value="${num(r.reactionLost)}"></label>
+          </div>`}
       </article>`;
   }
 
@@ -173,7 +237,7 @@
       </section>
 
       <section class="resources-grid">
-        ${resourceCard('ps')}${resourceCard('pv')}${resourceCard('pf')}
+        ${resourceCard('ps')}${pvCard()}${resourceCard('pf')}
       </section>
 
       <section class="two-column">
@@ -260,7 +324,7 @@
       </section>
 
       <section class="resources-grid combat-grid">
-        ${resourceCard('ps', true)}${resourceCard('pv', true)}${resourceCard('pf', true)}
+        ${resourceCard('ps', true)}${pvCard(true)}${resourceCard('pf', true)}
       </section>
 
       <section class="combat-tools-grid">
@@ -423,6 +487,7 @@
     state.mode = snapshot.mode || 'remote';
     if (!state.character) throw new Error('Nenhuma ficha encontrada.');
     state.data = RPG.clone(state.character.data);
+    const resourceModelUpdated = RPG.normalizeCharacterData(state.data);
     state.combat = RPG.clone(state.character.combat || {});
     state.rules = RPG.clone(state.system.rules || {});
     state.combat.cooldowns ||= {};
@@ -443,6 +508,12 @@
     } else {
       banner.classList.add('hidden');
       setSaveStatus('Conectado ao banco', 'saved');
+    }
+
+    if (resourceModelUpdated) {
+      state.dirty = true;
+      clearTimeout(state.saveTimer);
+      state.saveTimer = setTimeout(saveNow, 100);
     }
   }
 
@@ -467,12 +538,32 @@
 
   function spendResource(key, amount) {
     const resource = state.data.resources[key];
-    resource.lost = Math.max(0, num(resource.lost) + num(amount));
+    const capacity = RPG.resourceCapacity(resource, key);
+    resource.lost = Math.max(0, Math.min(capacity, num(resource.lost) + Math.max(0, num(amount))));
   }
 
   function healResource(key, amount) {
     const resource = state.data.resources[key];
-    resource.lost = Math.max(0, num(resource.lost) - num(amount));
+    resource.lost = Math.max(0, num(resource.lost) - Math.max(0, num(amount)));
+  }
+
+  function changeTrueDamage(amount) {
+    const resource = state.data.resources.ps;
+    resource.trueDamage = Math.max(0, Math.min(num(resource.max), num(resource.trueDamage) + num(amount)));
+  }
+
+  function spendPv(pool, amount) {
+    const resource = state.data.resources.pv;
+    const split = RPG.splitPv(resource.max);
+    const key = pool === 'reaction' ? 'reactionLost' : 'attackLost';
+    const poolMax = pool === 'reaction' ? split.reaction : split.attack;
+    resource[key] = Math.max(0, Math.min(poolMax, num(resource[key]) + Math.max(0, num(amount))));
+  }
+
+  function healPv(pool, amount) {
+    const resource = state.data.resources.pv;
+    const key = pool === 'reaction' ? 'reactionLost' : 'attackLost';
+    resource[key] = Math.max(0, num(resource[key]) - Math.max(0, num(amount)));
   }
 
   function spendAbility(ability, chaosAlternative = false) {
@@ -482,11 +573,30 @@
       notify('Pontos de Caos insuficientes.', 'error');
       return false;
     }
+
+    if (!chaosAlternative) {
+      const pfCost = Math.max(0, num(cost.pf));
+      const pvCost = RPG.abilityPvCosts(cost);
+      if (pfCost > currentResource('pf')) {
+        notify('P.F insuficiente para usar esta habilidade.', 'error');
+        return false;
+      }
+      if (pvCost.attack > RPG.pvPoolCurrent(state.data.resources.pv, 'attack')) {
+        notify('P.V de Ataque insuficiente para usar esta habilidade.', 'error');
+        return false;
+      }
+      if (pvCost.reaction > RPG.pvPoolCurrent(state.data.resources.pv, 'reaction')) {
+        notify('P.V de Reação insuficiente para usar esta habilidade.', 'error');
+        return false;
+      }
+    }
+
     if (chaosCost) state.combat.chaosPoints -= chaosCost;
     if (!chaosAlternative) {
       if (num(cost.pf)) spendResource('pf', cost.pf);
-      const pvTotal = num(cost.pv) + num(cost.pvAttack) + num(cost.pvReaction) + num(cost.pvDefense);
-      if (pvTotal) spendResource('pv', pvTotal);
+      const pvCost = RPG.abilityPvCosts(cost);
+      if (pvCost.attack) spendPv('attack', pvCost.attack);
+      if (pvCost.reaction) spendPv('reaction', pvCost.reaction);
     }
     state.combat.cooldowns[ability.id] = num(ability.cooldown);
     state.combat.uses[ability.id] = usesFor(ability.id) + 1;
@@ -517,7 +627,11 @@
     data.identity.name = name;
     ['age','weight','height','classPoints','professionPoints','focusDice','bloodDice'].forEach(key => data.identity[key] = 0);
     Object.values(data.attributes || {}).forEach(attr => attr.parts = [{ label: 'Base', value: 0, enabled: true }]);
-    Object.values(data.resources || {}).forEach(r => { r.lost = 0; r.max = 0; r.temporary = 0; });
+    Object.entries(data.resources || {}).forEach(([key, r]) => {
+      r.lost = 0; r.max = 0; r.temporary = 0;
+      if (key === 'ps') r.trueDamage = 0;
+      if (key === 'pv') { r.attackLost = 0; r.reactionLost = 0; }
+    });
     (data.skills || []).forEach(skill => { skill.level = 0; skill.points = 0; skill.proficient = false; });
     data.derived = {
       armorClass: { value: 10, parts: [
@@ -578,7 +692,7 @@
   }
 
   function downloadJson() {
-    const payload = { system: state.system, character: { slug: state.character.slug, name: state.character.name, data: state.data, combat: state.combat } };
+    const payload = { exportedAt: new Date().toISOString(), schemaVersion: 2, system: state.system, character: { slug: state.character.slug, name: state.character.name, data: state.data, combat: state.combat } };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -720,6 +834,9 @@
     if (action === 'edit-attribute') return openAttribute(btn.dataset.attribute);
     if (action === 'resource-change') { spendResource(btn.dataset.resource, btn.dataset.delta); markDirty(); return renderCombat(); }
     if (action === 'resource-heal') { healResource(btn.dataset.resource, btn.dataset.delta); markDirty(); return renderCombat(); }
+    if (action === 'true-damage-change') { changeTrueDamage(btn.dataset.delta); markDirty(); return renderCombat(); }
+    if (action === 'pv-spend') { spendPv(btn.dataset.pool, btn.dataset.delta); markDirty(); return renderCombat(); }
+    if (action === 'pv-heal') { healPv(btn.dataset.pool, btn.dataset.delta); markDirty(); return renderCombat(); }
     if (action === 'chaos-change') { state.combat.chaosPoints = Math.max(0, num(state.combat.chaosPoints) + num(btn.dataset.delta)); markDirty(); return renderCombat(); }
     if (action === 'karma-change') { const key = btn.dataset.kind; state.data.karma[key] = Math.max(0, num(state.data.karma[key]) + num(btn.dataset.delta)); markDirty(); return renderKarma(); }
 
