@@ -349,7 +349,7 @@
         </div>
         <div class="resource-breakdown">
           <span>Base: MAX(⅛ FOR, ⅛ DES) + 2</span>
-          ${RPG.essencePvBonus(state.data) ? `<span>Liberação Instintiva +${RPG.essencePvBonus(state.data)} P.V</span>` : ''}
+          ${RPG.essencePvBonus(state.data) ? `<span>Liberação Instintiva: +${RPG.essencePvBonus(state.data)} P.V já incluído no +2 da fórmula</span>` : ''}
           ${maxBonus ? `<span>Bônus total +${maxBonus}</span>` : ''}
         </div>
         <div class="meter"><span style="width:${percent}%"></span></div>
@@ -445,7 +445,7 @@
         <div class="card derived-card">
           <div class="card-title"><h3>Combate e derivados</h3></div>
           <div class="derived-grid">
-            <label>Percepção<input type="number" value="${perception}" readonly title="8 + metade da Destreza, arredondada para baixo"></label>
+            <label>Percepção Passiva<input type="number" value="${perception}" readonly title="Fórmula original da ficha: 8 + metade da Destreza, arredondada para baixo"></label>
             <label>Sorte<input type="number" value="${luck}" readonly title="1/4 da Destreza, arredondado para baixo"></label>
             <label>Movimento<input type="number" data-path="derived.movement" value="${num(d.derived?.movement)}"></label>
             <label>Iniciativa<input type="number" data-path="derived.initiative" value="${num(d.derived?.initiative)}"></label>

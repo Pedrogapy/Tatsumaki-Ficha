@@ -49,7 +49,7 @@
       "path": "Ofensiva",
       "minimumLevel": 2,
       "name": "Liberação Instintiva",
-      "effect": "+1 P.V total"
+      "effect": "+1 P.V total, já incluído no +2 fixo da fórmula original de P.V; não somar novamente"
     },
     {
       "path": "Ofensiva",

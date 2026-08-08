@@ -312,7 +312,6 @@
         0,
         Math.floor(Math.max(eighth(data, rules, 'FOR'), eighth(data, rules, 'DES')))
         + 2
-        + essencePvBonus(data)
         + bonus
       );
     }
