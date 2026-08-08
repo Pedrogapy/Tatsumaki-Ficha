@@ -3,26 +3,27 @@
     "slug": "thaloria",
     "name": "Thaloria RPG",
     "rules": {
-      "schemaVersion": 1,
+      "schemaVersion": 3,
       "attributeQuarterDivisor": 4,
       "attributeEighthDivisor": 8,
       "skill": {
         "baseFraction": "eighth",
         "proficiencyAddsSameFraction": true,
         "includeLevel": true,
-        "includePoints": true
+        "includePoints": false
       },
       "resourceCurrentFormula": "max + temporary - lost",
       "criticalMargin": 19,
       "showAdvancedByDefault": false,
-      "notes": "Regras globais do sistema. Alterações aqui valem para todas as fichas do mesmo sistema."
+      "notes": "Regras globais do sistema. Alterações aqui valem para todas as fichas do mesmo sistema.",
+      "formulaProfile": "tatsumaki-sheet-v1"
     }
   },
   "character": {
     "slug": "tatsumaki-shadowheart-gojo",
     "name": "Tatsumaki ShadowHeart Gojo",
     "data": {
-      "schemaVersion": 1,
+      "schemaVersion": 3,
       "identity": {
         "name": "Tatsumaki ShadowHeart Gojo",
         "race": "Humano110",
@@ -229,19 +230,25 @@
           "label": "P.S",
           "lost": 703,
           "max": 399,
-          "temporary": 910
+          "temporary": 910,
+          "maxBonus": 0,
+          "trueDamage": 0
         },
         "pv": {
           "label": "P.V",
           "lost": 0,
           "max": 9,
-          "temporary": 0
+          "temporary": 0,
+          "maxBonus": 0,
+          "attackLost": 0,
+          "reactionLost": 0
         },
         "pf": {
           "label": "P.F",
           "lost": 10,
           "max": 113,
-          "temporary": 0
+          "temporary": 0,
+          "maxBonus": 0
         }
       },
       "derived": {

@@ -53,6 +53,7 @@
     state.saving = true;
     setSaveStatus('Salvando…', 'saving');
     try {
+      RPG.applySheetFormulas(state.data, state.rules);
       const name = state.data.identity?.name || state.character.name;
       await DB.saveCharacter(state.character.slug, name, state.data, state.combat);
       state.character.name = name;
@@ -76,7 +77,7 @@
   }
 
   function currentResource(key) {
-    return RPG.resourceCurrent(state.data.resources?.[key], key);
+    return RPG.resourceCurrent(state.data, state.rules, key);
   }
 
   function attributeTotal(abbr) {
@@ -85,27 +86,33 @@
 
   function resourceCard(key, combat = false) {
     const r = state.data.resources[key];
-    const current = RPG.resourceCurrent(r, key);
-    const baseMax = num(r.max);
-    const temporary = Math.max(0, num(r.temporary));
+    const formulaBase = RPG.resourceFormulaBase(state.data, state.rules, key);
+    const current = RPG.resourceCurrent(state.data, state.rules, key);
+    const temporary = key === 'pv' ? 0 : Math.max(0, num(r.temporary));
     const trueDamage = key === 'ps' ? Math.max(0, num(r.trueDamage)) : 0;
-    const coreMax = RPG.resourceCoreMax(r, key);
-    const capacityBeforeLoss = RPG.resourceCapacity(r, key);
+    const coreMax = RPG.resourceCoreMax(state.data, state.rules, key);
+    const capacityBeforeLoss = RPG.resourceCapacity(state.data, state.rules, key);
+    const maxBonus = Math.max(0, num(r.maxBonus));
     const percent = capacityBeforeLoss > 0 ? Math.max(0, Math.min(100, current / capacityBeforeLoss * 100)) : 0;
+
     return `
       <article class="resource-card ${combat ? 'combat-resource' : ''}">
         <div class="resource-title-row">
           <span>${esc(r.label)}</span>
           <strong>${current} <small>máx. atual</small></strong>
         </div>
+
         <div class="resource-breakdown">
-          <span>Base ${baseMax}</span>
-          ${key === 'ps' ? `<span>Núcleo ${coreMax}</span>` : ''}
+          <span>Fórmula ${formulaBase}</span>
+          ${maxBonus ? `<span>Bônus máx. +${maxBonus}</span>` : ''}
+          ${key === 'ps' && trueDamage ? `<span>Dano Verdadeiro −${trueDamage}</span>` : ''}
           ${temporary ? `<span>Temp +${temporary}</span>` : ''}
           ${num(r.lost) ? `<span>Perdido −${num(r.lost)}</span>` : ''}
-          ${trueDamage ? `<span>Dano Verdadeiro −${trueDamage}</span>` : ''}
+          ${key === 'ps' ? `<span>Núcleo ${coreMax}</span>` : ''}
         </div>
+
         <div class="meter"><span style="width:${percent}%"></span></div>
+
         ${combat ? `
           <div class="resource-controls">
             <button data-action="resource-change" data-resource="${key}" data-delta="10">−10</button>
@@ -130,22 +137,24 @@
         ` : `
           <div class="resource-fields ${key === 'ps' ? 'four-fields' : ''}">
             <label>Perdidos<input type="number" min="0" data-path="resources.${key}.lost" value="${num(r.lost)}"></label>
-            <label>Base máxima<input type="number" min="0" data-path="resources.${key}.max" value="${baseMax}"></label>
+            <label>Bônus do máximo<input type="number" min="0" data-path="resources.${key}.maxBonus" value="${maxBonus}"></label>
             <label>Temporário<input type="number" min="0" data-path="resources.${key}.temporary" value="${temporary}"></label>
             ${key === 'ps' ? `<label>Dano Verdadeiro<input type="number" min="0" data-path="resources.ps.trueDamage" value="${trueDamage}"></label>` : ''}
           </div>
+          <p class="help-text">O máximo base é calculado automaticamente pela fórmula da ficha.</p>
         `}
       </article>`;
   }
 
   function pvCard(combat = false) {
     const r = state.data.resources.pv;
-    const split = RPG.splitPv(r.max);
-    const attack = RPG.pvPoolCurrent(r, 'attack');
-    const reaction = RPG.pvPoolCurrent(r, 'reaction');
+    const totalMax = RPG.pvTotalMax(state.data, state.rules);
+    const split = RPG.splitPv(totalMax);
+    const attack = RPG.pvPoolCurrent(state.data, state.rules, 'attack');
+    const reaction = RPG.pvPoolCurrent(state.data, state.rules, 'reaction');
     const totalCurrent = attack + reaction;
-    const totalMax = split.attack + split.reaction;
     const percent = totalMax > 0 ? Math.max(0, Math.min(100, totalCurrent / totalMax * 100)) : 0;
+    const maxBonus = Math.max(0, num(r.maxBonus));
 
     const pool = (kind, label, current, max, lost) => `
       <div class="pv-pool">
@@ -163,7 +172,11 @@
       <article class="resource-card pv-card ${combat ? 'combat-resource' : ''}">
         <div class="resource-title-row">
           <span>P.V</span>
-          <strong>${totalCurrent} <small>/ ${totalMax} total</small></strong>
+          <strong>${totalCurrent} <small>/ ${totalMax} pela fórmula</small></strong>
+        </div>
+        <div class="resource-breakdown">
+          <span>Base: MAX(⅛ FOR, ⅛ DES) + 2</span>
+          ${maxBonus ? `<span>Bônus total +${maxBonus}</span>` : ''}
         </div>
         <div class="meter"><span style="width:${percent}%"></span></div>
         <div class="pv-pools">
@@ -172,10 +185,12 @@
         </div>
         ${combat ? '' : `
           <div class="resource-fields pv-fields">
-            <label>P.V total<input type="number" min="0" step="1" data-path="resources.pv.max" value="${num(r.max)}"></label>
+            <label>Bônus no P.V total<input type="number" min="0" step="1" data-path="resources.pv.maxBonus" value="${maxBonus}"></label>
             <label>Ataque gastos<input type="number" min="0" data-path="resources.pv.attackLost" value="${num(r.attackLost)}"></label>
             <label>Reação gastos<input type="number" min="0" data-path="resources.pv.reactionLost" value="${num(r.reactionLost)}"></label>
-          </div>`}
+          </div>
+          <p class="help-text">${totalMax} total → ${split.attack} de Ataque + ${split.reaction} de Reação.</p>
+        `}
       </article>`;
   }
 
@@ -218,7 +233,10 @@
         </div>
       </section>`).join('');
 
-    const ca = RPG.armorClass(d);
+    RPG.applySheetFormulas(d, state.rules);
+    const ca = RPG.armorClass(d, state.rules);
+    const perception = RPG.perception(d);
+    const luck = RPG.luck(d, state.rules);
     const armorParts = d.derived?.armorClass?.parts || [];
 
     appEl.innerHTML = `
@@ -248,15 +266,20 @@
         <div class="card derived-card">
           <div class="card-title"><h3>Combate e derivados</h3></div>
           <div class="derived-grid">
-            <label>Percepção<input type="number" data-path="derived.perception" value="${num(d.derived?.perception)}"></label>
-            <label>Sorte<input type="number" data-path="derived.luck" value="${num(d.derived?.luck)}"></label>
+            <label>Percepção<input type="number" value="${perception}" readonly title="8 + metade da Destreza, arredondada para baixo"></label>
+            <label>Sorte<input type="number" value="${luck}" readonly title="1/4 da Destreza, arredondado para baixo"></label>
             <label>Movimento<input type="number" data-path="derived.movement" value="${num(d.derived?.movement)}"></label>
             <label>Iniciativa<input type="number" data-path="derived.initiative" value="${num(d.derived?.initiative)}"></label>
             <label>Margem crítica<input type="number" data-path="derived.criticalMargin" value="${num(d.derived?.criticalMargin || state.rules.criticalMargin)}"></label>
           </div>
           <div class="armor-breakdown">
             <span>Classe de Armadura <strong>${ca}</strong></span>
-            ${armorParts.map((part, i) => `<label>${esc(part.label)}<input type="number" data-armor-index="${i}" value="${num(part.value)}"></label>`).join('')}
+            ${armorParts.map((part, i) => {
+              const normalized = String(part.label || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+              const isDex = normalized === 'destreza';
+              const value = isDex ? RPG.quarter(d, state.rules, 'DES') : num(part.value);
+              return `<label>${esc(part.label)}<input type="number" ${isDex ? 'readonly title="Calculado como 1/4 da Destreza"' : `data-armor-index="${i}"`} value="${value}"></label>`;
+            }).join('')}
           </div>
         </div>
       </section>
@@ -272,7 +295,7 @@
         </div>
       </section>
 
-      <div class="section-heading"><div><span class="eyebrow">TESTES</span><h2>Perícias</h2></div><small>Total = ⅛ do atributo + nível + pontos; proficiência repete ⅛ conforme a regra atual.</small></div>
+      <div class="section-heading"><div><span class="eyebrow">TESTES</span><h2>Perícias</h2></div><small>Total da ficha = ⅛ do atributo + nível; com proficiência, soma novamente ⅛.</small></div>
       <section class="skills-grid">${skillGroups}</section>
     `;
   }
@@ -490,6 +513,7 @@
     const resourceModelUpdated = RPG.normalizeCharacterData(state.data);
     state.combat = RPG.clone(state.character.combat || {});
     state.rules = RPG.clone(state.system.rules || {});
+    RPG.applySheetFormulas(state.data, state.rules);
     state.combat.cooldowns ||= {};
     state.combat.uses ||= {};
     state.combat.conditions ||= [];
@@ -502,7 +526,7 @@
     if (state.mode === 'local') {
       banner.classList.remove('hidden');
       banner.innerHTML = DB.remoteConfigured
-        ? 'Modo local: o projeto Supabase está configurado, mas este link não contém uma chave de acesso.'
+        ? 'Este navegador ainda não tem a chave de acesso do Supabase. Abra uma vez o link privado completo; depois a chave fica lembrada neste navegador.'
         : 'Modo local de demonstração: os dados estão sendo salvos neste navegador. Configure o Supabase para sincronizar pela internet.';
       setSaveStatus('Modo local', 'local');
     } else {
@@ -538,7 +562,7 @@
 
   function spendResource(key, amount) {
     const resource = state.data.resources[key];
-    const capacity = RPG.resourceCapacity(resource, key);
+    const capacity = RPG.resourceCapacity(state.data, state.rules, key);
     resource.lost = Math.max(0, Math.min(capacity, num(resource.lost) + Math.max(0, num(amount))));
   }
 
@@ -549,14 +573,15 @@
 
   function changeTrueDamage(amount) {
     const resource = state.data.resources.ps;
-    resource.trueDamage = Math.max(0, Math.min(num(resource.max), num(resource.trueDamage) + num(amount)));
+    const permanentMax = RPG.resourceFormulaBase(state.data, state.rules, 'ps');
+    resource.trueDamage = Math.max(0, Math.min(permanentMax, num(resource.trueDamage) + num(amount)));
+    resource.lost = Math.min(num(resource.lost), RPG.resourceCapacity(state.data, state.rules, 'ps'));
   }
 
   function spendPv(pool, amount) {
     const resource = state.data.resources.pv;
-    const split = RPG.splitPv(resource.max);
+    const poolMax = RPG.pvPoolMax(state.data, state.rules, pool);
     const key = pool === 'reaction' ? 'reactionLost' : 'attackLost';
-    const poolMax = pool === 'reaction' ? split.reaction : split.attack;
     resource[key] = Math.max(0, Math.min(poolMax, num(resource[key]) + Math.max(0, num(amount))));
   }
 
@@ -581,11 +606,11 @@
         notify('P.F insuficiente para usar esta habilidade.', 'error');
         return false;
       }
-      if (pvCost.attack > RPG.pvPoolCurrent(state.data.resources.pv, 'attack')) {
+      if (pvCost.attack > RPG.pvPoolCurrent(state.data, state.rules, 'attack')) {
         notify('P.V de Ataque insuficiente para usar esta habilidade.', 'error');
         return false;
       }
-      if (pvCost.reaction > RPG.pvPoolCurrent(state.data.resources.pv, 'reaction')) {
+      if (pvCost.reaction > RPG.pvPoolCurrent(state.data, state.rules, 'reaction')) {
         notify('P.V de Reação insuficiente para usar esta habilidade.', 'error');
         return false;
       }
@@ -628,7 +653,9 @@
     ['age','weight','height','classPoints','professionPoints','focusDice','bloodDice'].forEach(key => data.identity[key] = 0);
     Object.values(data.attributes || {}).forEach(attr => attr.parts = [{ label: 'Base', value: 0, enabled: true }]);
     Object.entries(data.resources || {}).forEach(([key, r]) => {
-      r.lost = 0; r.max = 0; r.temporary = 0;
+      r.lost = 0;
+      r.temporary = 0;
+      r.maxBonus = 0;
       if (key === 'ps') r.trueDamage = 0;
       if (key === 'pv') { r.attackLost = 0; r.reactionLost = 0; }
     });
@@ -648,6 +675,7 @@
     data.library = [];
     data.karma = { positive: 0, negative: 0, die: 'd8', note: '' };
     Object.keys(data.essence?.levels || {}).forEach(key => data.essence.levels[key] = 0);
+    RPG.applySheetFormulas(data, state.rules);
     return data;
   }
 
@@ -762,7 +790,7 @@
     markDirty();
     openAttribute(state.editingAttribute);
   });
-  attributeDialog.addEventListener('close', render);
+  attributeDialog.addEventListener('close', () => { RPG.applySheetFormulas(state.data, state.rules); render(); });
 
   settingsDialog.addEventListener('input', (event) => {
     const input = event.target.closest('[data-rule]');
@@ -823,6 +851,16 @@
     if (input.dataset.combatPath) {
       RPG.setPath(state.combat, input.dataset.combatPath, input.value || null);
       markDirty(); renderCombat();
+      return;
+    }
+
+    if (input.dataset.path && (
+      input.dataset.path === 'identity.focusDice' ||
+      input.dataset.path === 'identity.bloodDice' ||
+      input.dataset.path.startsWith('resources.')
+    )) {
+      RPG.applySheetFormulas(state.data, state.rules);
+      renderSheet();
     }
   });
 

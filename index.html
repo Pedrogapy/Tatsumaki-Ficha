@@ -88,13 +88,13 @@
       <div class="settings-section">
         <h3>Cálculo de perícia</h3>
         <label class="check-row"><input type="checkbox" data-rule="skill.includeLevel" /> Somar nível da perícia</label>
-        <label class="check-row"><input type="checkbox" data-rule="skill.includePoints" /> Somar pontos extras</label>
+        <label class="check-row"><input type="checkbox" data-rule="skill.includePoints" /> Somar pontos extras <small>(não faz parte da fórmula original da planilha)</small></label>
         <label class="check-row"><input type="checkbox" data-rule="skill.proficiencyAddsSameFraction" /> Proficiência soma novamente a fração do atributo</label>
       </div>
 
       <div class="settings-section danger-zone">
         <h3>Manutenção</h3>
-        <p>O acesso ao banco usa a chave presente no link. Não publique essa chave dentro do código do repositório.</p>
+        <p>O acesso ao banco usa a chave do link privado. Depois do primeiro acesso, o navegador lembra essa chave para que a URL base também consiga reconectar.</p>
         <p>Cada salvamento remoto também gera um snapshot JSON independente do cache do navegador. O botão abaixo baixa uma cópia manual adicional.</p>
         <button type="button" id="exportJsonBtn" class="secondary-btn">Exportar ficha em JSON</button>
       </div>

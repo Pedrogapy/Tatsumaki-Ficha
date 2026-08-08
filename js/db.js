@@ -2,7 +2,19 @@
   const config = window.APP_CONFIG || {};
   const params = new URLSearchParams(location.search);
   const systemSlug = params.get('system') || 'thaloria';
-  const accessKey = params.get('key') || '';
+  const keyStorageKey = `rpg-access-key:${systemSlug}`;
+  const urlAccessKey = (params.get('key') || '').trim();
+
+  if (urlAccessKey) {
+    try { localStorage.setItem(keyStorageKey, urlAccessKey); } catch {}
+  }
+
+  const rememberedAccessKey = (() => {
+    try { return (localStorage.getItem(keyStorageKey) || '').trim(); }
+    catch { return ''; }
+  })();
+
+  const accessKey = urlAccessKey || rememberedAccessKey || '';
   const initialCharacterSlug = params.get('character') || 'tatsumaki-shadowheart-gojo';
 
   const remoteConfigured = Boolean(
@@ -69,7 +81,12 @@
       p_access_key: accessKey,
       p_character_slug: characterSlug || null
     });
-    if (error) throw error;
+    if (error) {
+      if (/chave de acesso|access key|invalid/i.test(error.message || '')) {
+        try { localStorage.removeItem(keyStorageKey); } catch {}
+      }
+      throw error;
+    }
     return { ...data, mode: 'remote' };
   }
 
@@ -164,10 +181,15 @@
     history.replaceState({}, '', url);
   }
 
+  function forgetAccessKey() {
+    try { localStorage.removeItem(keyStorageKey); } catch {}
+  }
+
   window.DB = {
     systemSlug, accessKey, initialCharacterSlug,
     remoteConfigured, remoteEnabled,
+    accessKeyRemembered: Boolean(!urlAccessKey && rememberedAccessKey),
     getSnapshot, saveCharacter, saveRules, createCharacter, deleteCharacter,
-    updateUrlCharacter
+    updateUrlCharacter, forgetAccessKey
   };
 })();

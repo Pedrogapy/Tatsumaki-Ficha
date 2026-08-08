@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 3,
+  "profile": "tatsumaki-sheet-v1",
+  "rounding": "floor unless explicitly marked ceil",
+  "attributes": {
+    "total": "sum(enabled modifiers)",
+    "quarter": "floor(attribute / 4)",
+    "eighth": "floor(attribute / 8)"
+  },
+  "skills": {
+    "total": "eighth(attribute) + level + (proficient ? eighth(attribute) : 0)",
+    "pointsColumnAffectsTotalByDefault": false
+  },
+  "resources": {
+    "ps": {
+      "base": "20 + quarter(FORT) + eighth(FORT) + identity.bloodDice + maxBonus",
+      "current": "max(0, base - trueDamage + temporary - lost)",
+      "trueDamage": "reduces permanent PS directly and does not consume temporary PS"
+    },
+    "pf": {
+      "base": "10 + identity.focusDice + max(eighth(SAB), eighth(INT)) + max(quarter(SAB), quarter(INT)) + maxBonus",
+      "current": "max(0, base + temporary - lost)"
+    },
+    "pv": {
+      "total": "floor(max(eighth(FOR), eighth(DES))) + 2 + maxBonus",
+      "attack": "floor(total / 2)",
+      "reaction": "ceil(total / 2)",
+      "unspecifiedAbilityCostPool": "attack",
+      "legacyPvDefensePool": "reaction"
+    }
+  },
+  "derived": {
+    "armorClass": "Padrao + Extras + Escudo + quarter(DES) + Armadura",
+    "perception": "8 + floor(DES / 2)",
+    "luck": "quarter(DES)",
+    "movement": "manual, as in current sheet",
+    "initiative": "manual, as in current sheet"
+  },
+  "verifiedTatsumakiBaseline": {
+    "attributes": {
+      "FOR": 32,
+      "ARC": 32,
+      "DES": 57,
+      "SAB": 24,
+      "FORT": 48,
+      "INT": 16
+    },
+    "psBase": 192,
+    "psCurrentWithTemp910Lost703TrueDamage0": 399,
+    "pfBase": 123,
+    "pfCurrentWithLost10": 113,
+    "pvTotal": 9,
+    "pvAttack": 4,
+    "pvReaction": 5,
+    "armorClass": 26,
+    "perception": 36,
+    "luck": 14
+  }
+}

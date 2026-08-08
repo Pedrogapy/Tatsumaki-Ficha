@@ -16,134 +16,225 @@
     cursor[parts.at(-1)] = value;
   }
 
+  function number(value) {
+    return Number(value) || 0;
+  }
+
   function attributeTotal(attribute) {
     return (attribute?.parts || []).reduce((sum, part) => {
       if (part.enabled === false) return sum;
-      return sum + (Number(part.value) || 0);
+      return sum + number(part.value);
     }, 0);
   }
 
   function fraction(value, divisor) {
-    const safeDivisor = Math.max(1, Number(divisor) || 1);
-    return Math.floor((Number(value) || 0) / safeDivisor);
+    const safeDivisor = Math.max(1, number(divisor) || 1);
+    return Math.floor(number(value) / safeDivisor);
   }
 
   function quarter(data, rules, abbr) {
-    return fraction(attributeTotal(data.attributes?.[abbr]), rules.attributeQuarterDivisor || 4);
+    return fraction(attributeTotal(data.attributes?.[abbr]), rules?.attributeQuarterDivisor || 4);
   }
 
   function eighth(data, rules, abbr) {
-    return fraction(attributeTotal(data.attributes?.[abbr]), rules.attributeEighthDivisor || 8);
+    return fraction(attributeTotal(data.attributes?.[abbr]), rules?.attributeEighthDivisor || 8);
   }
 
+  // Formula original da planilha:
+  // Total = 1/8 do atributo + Nivel + (1/8 novamente quando Pro. = verdadeiro).
+  // A coluna "Pontos" existe na ficha, mas nao entra na formula original do Total.
   function skillTotal(skill, data, rules) {
-    const config = rules.skill || {};
-    const attribute = attributeTotal(data.attributes?.[skill.attribute]);
-    const base = fraction(attribute, rules.attributeEighthDivisor || 8);
+    const config = rules?.skill || {};
+    const base = eighth(data, rules, skill.attribute);
     let total = base;
-    if (config.includeLevel !== false) total += Number(skill.level) || 0;
-    if (config.includePoints !== false) total += Number(skill.points) || 0;
+    if (config.includeLevel !== false) total += number(skill.level);
     if (skill.proficient && config.proficiencyAddsSameFraction !== false) total += base;
+    if (config.includePoints === true) total += number(skill.points);
     return total;
   }
 
-  function resourceTrueDamage(resource, key = '') {
-    return key === 'ps' ? Math.max(0, Number(resource?.trueDamage) || 0) : 0;
+  function resourceFormulaBase(data, rules, key) {
+    const bonus = Math.max(0, number(data.resources?.[key]?.maxBonus));
+
+    if (key === 'ps') {
+      // Excel Y7:
+      // (10 + 1/4 FORT + 1/8 FORT + Dados de Sangue) + Temporario - Perdidos + 10
+      return Math.max(
+        0,
+        20
+        + quarter(data, rules, 'FORT')
+        + eighth(data, rules, 'FORT')
+        + number(data.identity?.bloodDice)
+        + bonus
+      );
+    }
+
+    if (key === 'pf') {
+      // Excel Y17:
+      // 10 + Dados de Foco + MAX(1/8 SAB,1/8 INT) + MAX(1/4 SAB,1/4 INT) - Perdidos
+      // A pedido do usuario, P.F Temporario tambem e somado depois ao valor disponivel.
+      return Math.max(
+        0,
+        10
+        + number(data.identity?.focusDice)
+        + Math.max(eighth(data, rules, 'SAB'), eighth(data, rules, 'INT'))
+        + Math.max(quarter(data, rules, 'SAB'), quarter(data, rules, 'INT'))
+        + bonus
+      );
+    }
+
+    if (key === 'pv') {
+      // Excel Y12:
+      // INT(MAX(1/8 FOR,1/8 DES)) + 1 + 1
+      return Math.max(
+        0,
+        Math.floor(Math.max(eighth(data, rules, 'FOR'), eighth(data, rules, 'DES')))
+        + 2
+        + bonus
+      );
+    }
+
+    return Math.max(0, number(data.resources?.[key]?.max) + bonus);
   }
 
-  function resourceCoreMax(resource, key = '') {
-    const baseMax = Math.max(0, Number(resource?.max) || 0);
-    return Math.max(0, baseMax - resourceTrueDamage(resource, key));
+  function resourceTrueDamage(data, key = '') {
+    return key === 'ps' ? Math.max(0, number(data.resources?.ps?.trueDamage)) : 0;
   }
 
-  function resourceCapacity(resource, key = '') {
-    const temporary = Math.max(0, Number(resource?.temporary) || 0);
-    return resourceCoreMax(resource, key) + temporary;
+  function resourceCoreMax(data, rules, key = '') {
+    return Math.max(0, resourceFormulaBase(data, rules, key) - resourceTrueDamage(data, key));
   }
 
-  function resourceCurrent(resource, key = '') {
-    const lost = Math.max(0, Number(resource?.lost) || 0);
-    return Math.max(0, resourceCapacity(resource, key) - lost);
+  function resourceCapacity(data, rules, key = '') {
+    const temporary = key === 'pv' ? 0 : Math.max(0, number(data.resources?.[key]?.temporary));
+    return Math.max(0, resourceCoreMax(data, rules, key) + temporary);
+  }
+
+  function resourceCurrent(data, rules, key = '') {
+    const lost = Math.max(0, number(data.resources?.[key]?.lost));
+    return Math.max(0, resourceCapacity(data, rules, key) - lost);
   }
 
   function splitPv(total) {
-    const safeTotal = Math.max(0, Math.floor(Number(total) || 0));
+    const safeTotal = Math.max(0, Math.floor(number(total)));
     return {
       attack: Math.floor(safeTotal / 2),
       reaction: Math.ceil(safeTotal / 2)
     };
   }
 
-  function pvPoolCurrent(resource, pool) {
-    const split = splitPv(resource?.max);
-    const max = pool === 'reaction' ? split.reaction : split.attack;
+  function pvTotalMax(data, rules) {
+    return Math.max(0, Math.floor(resourceFormulaBase(data, rules, 'pv')));
+  }
+
+  function pvPoolMax(data, rules, pool) {
+    const split = splitPv(pvTotalMax(data, rules));
+    return pool === 'reaction' ? split.reaction : split.attack;
+  }
+
+  function pvPoolCurrent(data, rules, pool) {
+    const resource = data.resources?.pv || {};
+    const max = pvPoolMax(data, rules, pool);
     const lostKey = pool === 'reaction' ? 'reactionLost' : 'attackLost';
-    return Math.max(0, max - Math.max(0, Number(resource?.[lostKey]) || 0));
+    return Math.max(0, max - Math.max(0, number(resource[lostKey])));
   }
 
   function abilityPvCosts(cost = {}) {
     return {
-      attack: Math.max(0, Number(cost.pvAttack) || 0) + Math.max(0, Number(cost.pv) || 0),
-      reaction: Math.max(0, Number(cost.pvReaction) || 0) + Math.max(0, Number(cost.pvDefense) || 0)
+      attack: Math.max(0, number(cost.pvAttack)) + Math.max(0, number(cost.pv)),
+      reaction: Math.max(0, number(cost.pvReaction)) + Math.max(0, number(cost.pvDefense))
     };
+  }
+
+  function perception(data) {
+    // Excel Z26 = 8 + INT(Destreza / 2)
+    return 8 + Math.floor(attributeTotal(data.attributes?.DES) / 2);
+  }
+
+  function luck(data, rules) {
+    // Excel AD26 = INT(1/4 da Destreza)
+    return quarter(data, rules, 'DES');
+  }
+
+  function armorClass(data, rules) {
+    // Excel Q24 = SOMA(Extras, Padrao, Escudo, Destreza, Armadura)
+    // A parcela Destreza e sempre 1/4 de DES.
+    const parts = data.derived?.armorClass?.parts;
+    if (!Array.isArray(parts)) {
+      return 10 + quarter(data, rules, 'DES');
+    }
+    return parts.reduce((sum, part) => {
+      const label = String(part?.label || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      if (label === 'destreza') return sum + quarter(data, rules, 'DES');
+      return sum + number(part?.value);
+    }, 0);
+  }
+
+  function applySheetFormulas(data, rules) {
+    if (!data || typeof data !== 'object') return data;
+    data.derived ||= {};
+    data.derived.perception = perception(data);
+    data.derived.luck = luck(data, rules);
+    data.derived.armorClass ||= {};
+    data.derived.armorClass.value = armorClass(data, rules);
+
+    const armorParts = data.derived.armorClass.parts;
+    if (Array.isArray(armorParts)) {
+      const dexPart = armorParts.find(part => String(part?.label || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() === 'destreza');
+      if (dexPart) dexPart.value = quarter(data, rules, 'DES');
+    }
+
+    data.resources ||= {};
+    ['ps', 'pf', 'pv'].forEach(key => {
+      data.resources[key] ||= { label: key.toUpperCase() };
+      data.resources[key].formulaBase = resourceFormulaBase(data, rules, key);
+    });
+    data.resources.pv.formulaAttack = pvPoolMax(data, rules, 'attack');
+    data.resources.pv.formulaReaction = pvPoolMax(data, rules, 'reaction');
+    return data;
   }
 
   function normalizeCharacterData(data) {
     let changed = false;
     data.resources ||= {};
 
-    const ps = data.resources.ps ||= { label: 'P.S', max: 0, lost: 0, temporary: 0 };
-    if (!Object.prototype.hasOwnProperty.call(ps, 'trueDamage')) {
-      ps.trueDamage = 0;
-      changed = true;
-    }
+    const ps = data.resources.ps ||= { label: 'P.S', lost: 0, temporary: 0 };
+    if (!Object.prototype.hasOwnProperty.call(ps, 'trueDamage')) { ps.trueDamage = 0; changed = true; }
+    if (!Object.prototype.hasOwnProperty.call(ps, 'maxBonus')) { ps.maxBonus = 0; changed = true; }
 
-    const pf = data.resources.pf ||= { label: 'P.F', max: 0, lost: 0, temporary: 0 };
-    if (!Object.prototype.hasOwnProperty.call(pf, 'temporary')) {
-      pf.temporary = 0;
-      changed = true;
-    }
+    const pf = data.resources.pf ||= { label: 'P.F', lost: 0, temporary: 0 };
+    if (!Object.prototype.hasOwnProperty.call(pf, 'temporary')) { pf.temporary = 0; changed = true; }
+    if (!Object.prototype.hasOwnProperty.call(pf, 'maxBonus')) { pf.maxBonus = 0; changed = true; }
 
-    const pv = data.resources.pv ||= { label: 'P.V', max: 0 };
+    const pv = data.resources.pv ||= { label: 'P.V' };
+    if (!Object.prototype.hasOwnProperty.call(pv, 'maxBonus')) { pv.maxBonus = 0; changed = true; }
     if (!Object.prototype.hasOwnProperty.call(pv, 'attackLost')) {
-      pv.attackLost = Math.max(0, Number(pv.lost) || 0);
+      pv.attackLost = Math.max(0, number(pv.lost));
       changed = true;
     }
-    if (!Object.prototype.hasOwnProperty.call(pv, 'reactionLost')) {
-      pv.reactionLost = 0;
-      changed = true;
-    }
-    if (Number(pv.lost) !== 0) {
-      pv.lost = 0;
-      changed = true;
-    }
+    if (!Object.prototype.hasOwnProperty.call(pv, 'reactionLost')) { pv.reactionLost = 0; changed = true; }
+    if (number(pv.lost) !== 0) { pv.lost = 0; changed = true; }
 
     (data.abilities || []).forEach((ability) => {
-      if (!ability?.cost) return;
+      if (!ability?.cost || typeof ability.cost !== 'object') return;
       const cost = ability.cost;
-      if (Number(cost.pv) > 0) {
-        cost.pvAttack = (Number(cost.pvAttack) || 0) + Number(cost.pv);
+      if (number(cost.pv) > 0) {
+        cost.pvAttack = number(cost.pvAttack) + number(cost.pv);
         delete cost.pv;
         changed = true;
       }
-      if (Number(cost.pvDefense) > 0) {
-        cost.pvReaction = (Number(cost.pvReaction) || 0) + Number(cost.pvDefense);
+      if (number(cost.pvDefense) > 0) {
+        cost.pvReaction = number(cost.pvReaction) + number(cost.pvDefense);
         delete cost.pvDefense;
         changed = true;
       }
     });
 
-    if ((Number(data.schemaVersion) || 1) < 2) {
-      data.schemaVersion = 2;
+    if ((number(data.schemaVersion) || 1) < 3) {
+      data.schemaVersion = 3;
       changed = true;
     }
     return changed;
-  }
-
-  function armorClass(data) {
-    const parts = data.derived?.armorClass?.parts;
-    if (!Array.isArray(parts)) return Number(data.derived?.armorClass?.value) || 0;
-    return parts.reduce((sum, part) => sum + (Number(part.value) || 0), 0);
   }
 
   function slugify(text) {
@@ -163,8 +254,8 @@
 
     const details = [];
     work = work.replace(/(\d*)d(\d+)/g, (_, countText, sidesText) => {
-      const count = Math.min(100, Math.max(1, Number(countText || 1)));
-      const sides = Math.min(100000, Math.max(2, Number(sidesText)));
+      const count = Math.min(100, Math.max(1, number(countText || 1)));
+      const sides = Math.min(100000, Math.max(2, number(sidesText)));
       const rolls = Array.from({ length: count }, () => 1 + Math.floor(Math.random() * sides));
       details.push(`${count}d${sides}: [${rolls.join(', ')}]`);
       return `(${rolls.reduce((a, b) => a + b, 0)})`;
@@ -182,15 +273,17 @@
       pvDefense: 'P.V Reação', chaos: 'Caos', chaosAlternative: 'Caos (alternativo)'
     };
     return Object.entries(cost)
-      .filter(([, value]) => Number(value) > 0)
+      .filter(([, value]) => number(value) > 0)
       .map(([key, value]) => `${value} ${labels[key] || key}`)
       .join(' • ') || 'Sem custo registrado';
   }
 
   window.RPG = {
     clone, getPath, setPath, attributeTotal, fraction, quarter, eighth,
-    skillTotal, resourceTrueDamage, resourceCoreMax, resourceCapacity, resourceCurrent,
-    splitPv, pvPoolCurrent, abilityPvCosts, normalizeCharacterData,
-    armorClass, slugify, rollDiceExpression, formatCost
+    skillTotal, resourceFormulaBase, resourceTrueDamage, resourceCoreMax,
+    resourceCapacity, resourceCurrent, splitPv, pvTotalMax, pvPoolMax,
+    pvPoolCurrent, abilityPvCosts, perception, luck, armorClass,
+    applySheetFormulas, normalizeCharacterData,
+    slugify, rollDiceExpression, formatCost
   };
 })();
