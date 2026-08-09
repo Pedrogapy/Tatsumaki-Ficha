@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0a0b0f" />
   <title>Ficha RPG • Tatsumaki</title>
-  <link rel="stylesheet" href="./css/styles.css?v=transform-v6-20260808-210915" />
+  <link rel="stylesheet" href="./css/styles.css?v=combat-v7" />
 </head>
 <body>
   <div id="connectionBanner" class="connection-banner hidden"></div>
@@ -152,12 +152,71 @@
       </div>
     </form>
   </dialog>
+
+  <dialog id="damageDialog" class="dialog damage-dialog">
+    <form method="dialog" class="dialog-card damage-dialog-card">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">DANO RECEBIDO</span>
+          <h2>Tomar Dano</h2>
+          <p id="damageSource">Dano recebido</p>
+        </div>
+        <button value="cancel" class="icon-btn" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="damage-form-grid">
+        <label>Valor bruto do dano
+          <input id="incomingDamage" type="number" min="0" step="1" value="0" />
+        </label>
+        <label>Tipo de dano
+          <select id="damageType">
+            <option value="physical-cutting">Físico · Cortante</option>
+            <option value="physical-piercing">Físico · Perfurante</option>
+            <option value="physical-impact">Físico · Impacto</option>
+            <option value="physical-other">Físico · Outro</option>
+            <option value="magical">Mágico</option>
+            <option value="essence">Essência / Energia</option>
+            <option value="true">Dano Verdadeiro</option>
+          </select>
+        </label>
+        <label>Ordem das reduções
+          <select id="damageOrder">
+            <option value="resistance-first">Resistência → reduções fixas</option>
+            <option value="flat-first">Reduções fixas → resistência</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="damage-section">
+        <div class="damage-section-title">
+          <strong>Proteções aplicáveis</strong>
+          <small>Resistências nunca acumulam entre si. Se mais de uma estiver marcada, apenas a mais forte é usada.</small>
+        </div>
+        <div id="damageProtections" class="damage-protections"></div>
+      </div>
+
+      <div class="damage-manual-grid">
+        <label class="check-row"><input id="manualResistance" type="checkbox" /> Outra resistência (metade do dano)</label>
+        <label>Outra redução fixa
+          <input id="manualReduction" type="number" min="0" step="1" value="0" />
+        </label>
+      </div>
+
+      <div id="damagePreview" class="damage-preview"></div>
+
+      <div class="dialog-footer">
+        <button value="cancel" class="secondary-btn">Cancelar</button>
+        <button type="button" id="applyDamageBtn" class="danger-btn">Aplicar dano</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="toast" class="toast hidden" role="status"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./js/config.js?v=essencia-v5-2"></script>
-  <script src="./js/rules.js?v=essencia-v5-2"></script>
-  <script src="./js/db.js?v=essencia-v5-2"></script>
-  <script src="./js/app.js?v=transform-v6-20260808-210915"></script>
+  <script src="./js/config.js?v=combat-v7"></script>
+  <script src="./js/rules.js?v=combat-v7"></script>
+  <script src="./js/db.js?v=combat-v7"></script>
+  <script src="./js/app.js?v=combat-v7"></script>
 </body>
 </html>

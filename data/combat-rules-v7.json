@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 7,
+  "parry": {
+    "cost": { "pvReaction": 1 },
+    "coin": { "1": "Cara", "2": "Coroa" },
+    "success": "Anula completamente o dano e concede 1 ação que gastaria P.V de Reação sem gastar P.V.",
+    "failure": "Recebe o dano completo do ataque, passando normalmente pelo sistema de resistências e reduções.",
+    "freeReactionExpires": "No próximo avanço de turno ou nova rodada, se não for usada."
+  },
+  "incomingDamage": {
+    "resistance": {
+      "effect": "metade do dano",
+      "rounding": "para baixo",
+      "stacking": false,
+      "rule": "Se múltiplas resistências se aplicarem, apenas a mais forte é usada uma vez."
+    },
+    "knownProtections": {
+      "guardianAura": "Resistência permanente a Dano Cortante.",
+      "steelAura": "Resistência à maioria dos danos enquanto Aura de Aço estiver ativa, exceto Dano Verdadeiro.",
+      "personification": "Resistência a todo dano físico enquanto Personificação do Caos estiver ativa.",
+      "clothing": "Redução física fixa = 1/4 Fortitude + 1/4 Força.",
+      "chaosNaturalShield": "Máscara do Caos reduz 2d8; Personificação herda o mesmo escudo; não reduz Dano Verdadeiro.",
+      "impenetrablePosture": "+1d8 de defesa contra dano físico somente em bloqueio bem-sucedido.",
+      "magicResistanceNecklace": "Redução rolada fica disponível para o próximo dano mágico compatível."
+    },
+    "trueDamage": "Ignora resistências e reduções normais e reduz diretamente o núcleo máximo de P.S.",
+    "order": {
+      "default": "resistance-first",
+      "options": ["resistance-first", "flat-first"],
+      "note": "A ordem pode ser escolhida no menu Tomar Dano porque a interação entre resistência percentual e redução fixa não foi definida como regra única."
+    }
+  },
+  "transformations": {
+    "mask": {
+      "temporaryPs": 30,
+      "ca": 2,
+      "chaosShield": "2d8",
+      "intimidationAdvantage": true,
+      "damageBonus": "+1d8 Energia do Caos"
+    },
+    "personification": {
+      "inherits": "mask",
+      "effectiveTemporaryPs": 90,
+      "effectiveCa": 4,
+      "physicalResistance": true,
+      "chaosShieldInherited": true,
+      "attributeAdvantages": ["FOR", "DES", "FORT"],
+      "counterAttackBonus": 3,
+      "reflectFinalDamagePercent": 25,
+      "damageBonuses": ["+1d8 Energia do Caos herdado", "+1 dado adicional do ataque"]
+    }
+  },
+  "abilityResolution": {
+    "allAbilitiesAreEssence": true,
+    "damageButtons": true,
+    "automaticCurrentValues": true,
+    "specialRolls": {
+      "parry": "1d2 moeda",
+      "sentenca-rei": "1d10 = porcentagem inicial",
+      "colar-resistencia": ["2d12 + 1/4 Arcano", "2d8 + 1/4 Arcano"],
+      "plasma-melhorado": "1d4+1 duração"
+    },
+    "deferred": {
+      "shikai-azrakiel": "Mantida para implementação dedicada futura, conforme combinado."
+    }
+  }
+}
