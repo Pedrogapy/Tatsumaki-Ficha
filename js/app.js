@@ -106,6 +106,264 @@
     if (showNotice && hadSpent) notify('Todos os P.V foram restaurados.');
   }
 
+  // CHAOS_TRANSFORMATION_HIERARCHY_V6
+  const CHAOS_TRANSFORMATION_RULES = {
+    'mascara-caos': {
+      id: 'mascara-caos',
+      name: 'Máscara do Caos',
+      tier: 'inferior',
+      duration: '1d4+2',
+      activation: {
+        turns: 1,
+        consumeAttack: true,
+        consumeReaction: false,
+        text: 'Ativação de 1 turno: não pode atacar nem contra-atacar; pode apenas defender ou se reposicionar. Consome todos os P.V de Ataque.'
+      },
+      own: {
+        tempPs: 30,
+        caBonus: 2,
+        startingChaosMinimum: 2,
+        advantageAttributes: [],
+        advantageSkills: ['Intimidação'],
+        skillBonuses: {},
+        damage: ['+1d8 de Energia do Caos em todos os ataques.'],
+        defenses: ['Escudo Natural: reduz o dano recebido em 2d8; não reduz Dano Verdadeiro.'],
+        resistances: [],
+        reflections: [],
+        automaticSuccesses: [],
+        restrictions: [],
+        aura: [],
+        manifestedAttackPerTurn: 0,
+        chaosOnAbilityHit: 1
+      }
+    },
+    'personificacao-caos': {
+      id: 'personificacao-caos',
+      name: 'Personificação do Caos',
+      tier: 'superior',
+      inheritsBuffsFrom: 'mascara-caos',
+      duration: '1d4+1',
+      activation: {
+        turns: 1,
+        consumeAttack: true,
+        consumeReaction: true,
+        text: 'Ativação de 1 turno: perde todos os P.V de Ataque e Reação e não pode realizar ações ofensivas nem defensivas. Os efeitos começam no turno seguinte.'
+      },
+      own: {
+        tempPs: 60,
+        caBonus: 2,
+        startingChaosMinimum: 0,
+        advantageAttributes: ['FOR', 'DES', 'FORT'],
+        advantageSkills: [],
+        skillBonuses: { 'Contra-Ataque': 3 },
+        damage: ['+1 dado de dano adicional em todos os ataques.'],
+        defenses: [],
+        resistances: ['Resistência a todo dano físico.'],
+        reflections: ['Reflete 25% do dano recebido de volta ao atacante.'],
+        automaticSuccesses: [
+          'Arrombar portas não mágicas.',
+          'Levantar estruturas não mágicas.',
+          'Quebrar objetos físicos comuns.'
+        ],
+        restrictions: ['Não pode realizar Esquivas.', 'Não pode realizar Bloqueios.', 'Pode realizar Contra-Ataques.'],
+        aura: ['Aura do Caos: inimigos em 18m testam Presença contra Tatsumaki; na falha ficam Amedrontados pelo Caos e sofrem desvantagem contra ele no próximo turno.'],
+        manifestedAttackPerTurn: 1,
+        chaosOnAbilityHit: 0
+      }
+    }
+  };
+
+  function mergeTransformationBuffs(parent = {}, own = {}) {
+    const mapSum = (a = {}, b = {}) => {
+      const result = { ...a };
+      Object.entries(b).forEach(([key, value]) => { result[key] = num(result[key]) + num(value); });
+      return result;
+    };
+    const unique = (...lists) => [...new Set(lists.flat().filter(Boolean))];
+    return {
+      tempPs: num(parent.tempPs) + num(own.tempPs),
+      caBonus: num(parent.caBonus) + num(own.caBonus),
+      startingChaosMinimum: Math.max(num(parent.startingChaosMinimum), num(own.startingChaosMinimum)),
+      advantageAttributes: unique(parent.advantageAttributes || [], own.advantageAttributes || []),
+      advantageSkills: unique(parent.advantageSkills || [], own.advantageSkills || []),
+      skillBonuses: mapSum(parent.skillBonuses, own.skillBonuses),
+      damage: [...(parent.damage || []), ...(own.damage || [])],
+      defenses: [...(parent.defenses || []), ...(own.defenses || [])],
+      resistances: [...(parent.resistances || []), ...(own.resistances || [])],
+      reflections: [...(parent.reflections || []), ...(own.reflections || [])],
+      automaticSuccesses: [...(parent.automaticSuccesses || []), ...(own.automaticSuccesses || [])],
+      restrictions: [...(parent.restrictions || []), ...(own.restrictions || [])],
+      aura: [...(parent.aura || []), ...(own.aura || [])],
+      manifestedAttackPerTurn: num(parent.manifestedAttackPerTurn) + num(own.manifestedAttackPerTurn),
+      chaosOnAbilityHit: num(parent.chaosOnAbilityHit) + num(own.chaosOnAbilityHit)
+    };
+  }
+
+  function chaosTransformationDefinition(id) {
+    const rule = CHAOS_TRANSFORMATION_RULES[id];
+    if (!rule) return null;
+    const parent = rule.inheritsBuffsFrom ? chaosTransformationDefinition(rule.inheritsBuffsFrom) : null;
+    return {
+      ...rule,
+      inheritedFrom: parent?.id || null,
+      buffs: mergeTransformationBuffs(parent?.buffs || {}, rule.own || {})
+    };
+  }
+
+  function activeChaosTransformation() {
+    return chaosTransformationDefinition(state.combat?.activeTransformation);
+  }
+
+  function transformationCaBonus() {
+    return num(activeChaosTransformation()?.buffs?.caBonus);
+  }
+
+  function transformationSkillBonus(skillName) {
+    return num(activeChaosTransformation()?.buffs?.skillBonuses?.[skillName]);
+  }
+
+  function transformationAutomaticAdvantage(source) {
+    const def = activeChaosTransformation();
+    if (!def) return 0;
+    if (String(source).startsWith('attribute:')) {
+      const abbr = String(source).split(':')[1];
+      return def.buffs.advantageAttributes.includes(abbr) ? 1 : 0;
+    }
+    if (String(source).startsWith('skill:')) {
+      const index = Number(String(source).split(':')[1]);
+      const skill = state.data.skills?.[index];
+      return skill && def.buffs.advantageSkills.includes(skill.name) ? 1 : 0;
+    }
+    return 0;
+  }
+
+  function transformationDamageReminderHtml() {
+    const def = activeChaosTransformation();
+    if (!def || !def.buffs.damage.length) return '';
+    return `<div class="transformation-damage-reminder">
+      <strong>${esc(def.name)} ativa</strong>
+      ${def.inheritedFrom ? '<span><b>Herança:</b> inclui todos os bônus da Máscara do Caos.</span>' : ''}
+      ${def.buffs.damage.map(line => `<span>${esc(line)}</span>`).join('')}
+    </div>`;
+  }
+
+  function transformationBuffLines(def) {
+    if (!def) return [];
+    const b = def.buffs;
+    const lines = [];
+    if (b.tempPs) lines.push(def.id === 'personificacao-caos' ? `+${b.tempPs} P.S temporários no total (+30 da Máscara + +60 próprios).` : `+${b.tempPs} P.S temporários.`);
+    if (b.caBonus) lines.push(def.id === 'personificacao-caos' ? `+${b.caBonus} CA no total (+2 da Máscara + +2 próprios).` : `+${b.caBonus} CA.`);
+    (b.advantageSkills || []).forEach(name => lines.push(`Vantagem em ${name}.`));
+    if ((b.advantageAttributes || []).length) lines.push(`Vantagem em testes de ${b.advantageAttributes.map(abbr => state.data.attributes?.[abbr]?.name || abbr).join(', ')}.`);
+    Object.entries(b.skillBonuses || {}).forEach(([name, value]) => lines.push(`+${value} em testes de ${name}.`));
+    lines.push(...(b.damage || []), ...(b.defenses || []), ...(b.resistances || []), ...(b.reflections || []), ...(b.aura || []));
+    if (b.manifestedAttackPerTurn) lines.push(`Ataque Manifestado: ${b.manifestedAttackPerTurn} ataque adicional por turno, controlado pelo Mestre.`);
+    if (b.chaosOnAbilityHit) lines.push(`Ao confirmar que uma habilidade acertou: +${b.chaosOnAbilityHit} Ponto de Caos.`);
+    if (b.startingChaosMinimum) lines.push(`Ao concluir a transformação, Pontos de Caos ficam em pelo menos ${b.startingChaosMinimum}.`);
+    if ((b.automaticSuccesses || []).length) lines.push(`Sucesso automático: ${b.automaticSuccesses.join(' ')}`);
+    lines.push(...(b.restrictions || []));
+    return lines;
+  }
+
+  function transformationPanelHtml() {
+    const pendingId = state.combat.pendingTransformation;
+    if (pendingId) {
+      const pending = chaosTransformationDefinition(pendingId);
+      return `<div class="active-transformation transformation-pending">
+        <span class="tag">ATIVAÇÃO</span>
+        <strong>${esc(pending?.name || pendingId)}</strong>
+        <span>${esc(pending?.activation?.text || '')}</span>
+        <span>Efeitos começam no próximo turno.</span>
+        <button class="ghost-btn small" data-action="cancel-transformation-activation">Cancelar ativação</button>
+      </div>`;
+    }
+
+    const def = activeChaosTransformation();
+    if (def) {
+      const baseCa = RPG.armorClass(state.data, state.rules);
+      return `<div class="active-transformation transformation-active-detail">
+        <div class="transformation-title-row">
+          <div>
+            <span class="tag">${def.tier === 'superior' ? 'FORMA SUPERIOR' : 'FORMA INFERIOR'}</span>
+            <strong>${esc(def.name)}</strong>
+          </div>
+          <span>${num(state.combat.transformationTurns)} turnos restantes</span>
+        </div>
+        ${def.inheritedFrom ? '<div class="transformation-inheritance">Personificação = todos os buffs da Máscara + buffs próprios.</div>' : ''}
+        <div class="transformation-stat-strip">
+          <span>CA <b>${baseCa + num(def.buffs.caBonus)}</b> <small>(base ${baseCa} + ${num(def.buffs.caBonus)})</small></span>
+          <span>P.S Temp <b>+${num(def.buffs.tempPs)}</b></span>
+        </div>
+        <div class="transformation-buff-list">
+          ${transformationBuffLines(def).map(line => `<span>• ${esc(line)}</span>`).join('')}
+        </div>
+        <div class="transformation-actions">
+          ${def.buffs.defenses.some(line => line.includes('2d8')) ? '<button class="secondary-btn small" data-action="roll-transformation-shield">Rolar Escudo 2d8</button>' : ''}
+          ${def.buffs.chaosOnAbilityHit ? '<button class="secondary-btn small" data-action="transformation-hit-chaos">Habilidade acertou: +1 Caos</button>' : ''}
+          ${num(state.combat.manifestedAttackAvailable) > 0 ? '<button class="secondary-btn small" data-action="consume-manifested-attack">Consumir Ataque Manifestado</button>' : ''}
+          <button class="ghost-btn small" data-action="end-transformation">Encerrar</button>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="transformation-choice-list">
+      ${(state.data.transformations || []).map(t => {
+        const rule = chaosTransformationDefinition(t.id);
+        return `<div class="transformation-choice">
+          <button class="secondary-btn" data-action="activate-transformation" data-transformation="${esc(t.id)}">${esc(t.name)}</button>
+          ${rule ? `<small>${rule.inheritedFrom ? 'Forma superior: herda todos os buffs da Máscara.' : 'Forma inferior: pacote-base do Caos.'}</small>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  function beginTransformationActivation(id) {
+    if (!state.combat.active) {
+      notify('Inicie o combate antes de ativar uma transformação.', 'error');
+      return false;
+    }
+    if (state.combat.activeTransformation || state.combat.pendingTransformation) {
+      notify('Já existe uma transformação ativa ou sendo ativada.', 'error');
+      return false;
+    }
+
+    const def = chaosTransformationDefinition(id);
+    if (!def) return false;
+
+    if (def.activation.consumeAttack) spendPv('attack', RPG.pvPoolCurrent(state.data, state.rules, 'attack'));
+    if (def.activation.consumeReaction) spendPv('reaction', RPG.pvPoolCurrent(state.data, state.rules, 'reaction'));
+
+    state.combat.pendingTransformation = id;
+    state.combat.transformationActivationTurns = Math.max(1, num(def.activation.turns) || 1);
+    state.combat.transformationUses ||= {};
+    state.combat.transformationUses[id] = num(state.combat.transformationUses[id]) + 1;
+    notify(`${def.name}: ativação iniciada. Os buffs entram no próximo turno.`);
+    return true;
+  }
+
+  function completeTransformationActivation(id) {
+    const def = chaosTransformationDefinition(id);
+    if (!def) return;
+
+    const sheetTransformation = (state.data.transformations || []).find(item => item.id === id);
+    const durationExpression = sheetTransformation?.duration || def.duration || '1';
+    let turns = 1;
+    try { turns = Math.max(1, RPG.rollDiceExpression(durationExpression).result); } catch {}
+
+    state.combat.pendingTransformation = null;
+    state.combat.transformationActivationTurns = 0;
+    state.combat.activeTransformation = id;
+    state.combat.transformationTurns = turns;
+
+    const tempPs = num(def.buffs.tempPs);
+    if (tempPs) state.data.resources.ps.temporary = num(state.data.resources.ps.temporary) + tempPs;
+    state.combat.transformationTempPs = tempPs;
+
+    if (def.buffs.startingChaosMinimum) state.combat.chaosPoints = Math.max(num(state.combat.chaosPoints), num(def.buffs.startingChaosMinimum));
+
+    state.combat.manifestedAttackAvailable = num(def.buffs.manifestedAttackPerTurn);
+    notify(`${def.name} concluída por ${turns} turno${turns === 1 ? '' : 's'}.`);
+  }
   function ensureEssenceCombatState() {
     state.combat.essenceEffects ||= {};
     state.data.essence ||= { levels: {}, stages: {}, note: '' };
@@ -413,7 +671,8 @@
       </section>`).join('');
 
     RPG.applySheetFormulas(d, state.rules);
-    const ca = RPG.armorClass(d, state.rules);
+    const transformationCa = transformationCaBonus();
+    const ca = RPG.armorClass(d, state.rules) + transformationCa;
     const perception = RPG.perception(d);
     const luck = RPG.luck(d, state.rules);
     const armorParts = d.derived?.armorClass?.parts || [];
@@ -494,6 +753,7 @@
       </div>
       <p>${esc(ability.summary)}</p>
       ${ability.damage ? essenceDamageReminderHtml(ability) : ''}
+      ${ability.damage ? transformationDamageReminderHtml() : ''}
       <div class="ability-meta">
         <span>${esc(effectiveCostLabel(ability))}</span>
         ${ability.damage ? `<span>${esc(ability.damage)}</span>` : ''}
@@ -574,15 +834,9 @@
           ${state.combat.activePosture ? `<p class="help-text">${esc((state.data.postures || []).find(p => p.id === state.combat.activePosture)?.summary || '')}</p>` : ''}
         </article>
 
-        <article class="card">
+        <article class="card transformation-card">
           <div class="card-title"><h3>Transformação</h3></div>
-          ${state.combat.activeTransformation ? `
-            <div class="active-transformation">
-              <strong>${esc((state.data.transformations || []).find(t => t.id === state.combat.activeTransformation)?.name || state.combat.activeTransformation)}</strong>
-              <span>${num(state.combat.transformationTurns)} turnos restantes</span>
-              <button class="secondary-btn small" data-action="end-transformation">Encerrar</button>
-            </div>
-          ` : `<div class="stack-actions">${(state.data.transformations || []).map(t => `<button class="secondary-btn" data-action="activate-transformation" data-transformation="${esc(t.id)}">${esc(t.name)}</button>`).join('')}</div>`}
+          ${transformationPanelHtml()}
         </article>
 
         <article class="card">
@@ -625,6 +879,7 @@
           <div class="ability-top"><div><span class="tag">${esc(a.category)}</span><span class="tag essence-tag">Essência</span><h3>${esc(a.name)}</h3></div><span>${esc(a.type || '')}</span></div>
           <p>${esc(a.summary)}</p>
           ${a.damage ? essenceDamageReminderHtml(a) : ''}
+          ${a.damage ? transformationDamageReminderHtml() : ''}
           <div class="ability-meta"><span>${esc(effectiveCostLabel(a))}</span>${a.cooldown ? `<span>Recarga: ${a.cooldown}</span>` : ''}${a.damage ? `<span>${esc(a.damage)}</span>` : ''}</div>
         </article>`).join('')}
       </section>`;
@@ -816,11 +1071,14 @@
   }
 
   function openCheckDialog(label, modifier, formula, source = '') {
-    pendingTest = { label, modifier: Math.trunc(num(modifier)), formula, source };
+    const autoAdvantage = transformationAutomaticAdvantage(source);
+    pendingTest = { label, modifier: Math.trunc(num(modifier)), formula, source, autoAdvantage };
     testDialogTitle.textContent = label;
-    testDialogFormula.textContent = formula;
+    testDialogFormula.textContent = `${formula}${autoAdvantage ? ' · Transformação concede 1 vantagem automaticamente.' : ''}`;
+    const preferred = testDialog.querySelector(`input[name="testAdvantage"][value="${autoAdvantage}"]`);
     const normal = testDialog.querySelector('input[name="testAdvantage"][value="0"]');
-    if (normal) normal.checked = true;
+    if (preferred) preferred.checked = true;
+    else if (normal) normal.checked = true;
     testResult.classList.add('hidden');
     testResult.innerHTML = '';
     if (!testDialog.open) testDialog.showModal();
@@ -928,10 +1186,20 @@
     Object.keys(state.combat.cooldowns || {}).forEach(id => {
       state.combat.cooldowns[id] = Math.max(0, num(state.combat.cooldowns[id]) - 1);
     });
-    if (state.combat.transformationTurns > 0) {
+
+    if (state.combat.pendingTransformation) {
+      state.combat.transformationActivationTurns = Math.max(0, num(state.combat.transformationActivationTurns) - 1);
+      if (state.combat.transformationActivationTurns <= 0) completeTransformationActivation(state.combat.pendingTransformation);
+    } else if (state.combat.transformationTurns > 0) {
       state.combat.transformationTurns -= 1;
-      if (state.combat.transformationTurns <= 0) endTransformationState();
+      if (state.combat.transformationTurns <= 0) {
+        endTransformationState();
+      } else {
+        const def = activeChaosTransformation();
+        state.combat.manifestedAttackAvailable = num(def?.buffs?.manifestedAttackPerTurn);
+      }
     }
+
     tickEssenceEffects();
   }
 
@@ -939,8 +1207,11 @@
     const temp = num(state.combat.transformationTempPs);
     if (temp > 0) state.data.resources.ps.temporary = Math.max(0, num(state.data.resources.ps.temporary) - temp);
     state.combat.activeTransformation = null;
+    state.combat.pendingTransformation = null;
     state.combat.transformationTurns = 0;
+    state.combat.transformationActivationTurns = 0;
     state.combat.transformationTempPs = 0;
+    state.combat.manifestedAttackAvailable = 0;
   }
 
   function makeBlankCharacter(name) {
@@ -977,7 +1248,7 @@
   }
 
   function freshCombat() {
-    return { active:false, round:1, turn:1, chaosPoints:0, activePosture:null, activeTransformation:null, transformationTurns:0, transformationTempPs:0, essenceEffects:{}, cooldowns:{}, uses:{}, conditions:[], notes:'', rollHistory:[] };
+    return { active:false, round:1, turn:1, chaosPoints:0, activePosture:null, activeTransformation:null, pendingTransformation:null, transformationActivationTurns:0, transformationTurns:0, transformationTempPs:0, transformationUses:{}, manifestedAttackAvailable:0, essenceEffects:{}, cooldowns:{}, uses:{}, conditions:[], notes:'', rollHistory:[] };
   }
 
   function openAttribute(abbr) {
@@ -1181,8 +1452,15 @@
       const index = Number(btn.dataset.skillIndex);
       const skill = state.data.skills?.[index];
       if (!skill) return;
-      const modifier = RPG.skillTotal(skill, state.data, state.rules);
-      openCheckDialog(skill.name, modifier, `1d20 + valor final da perícia = 1d20 + ${modifier}`, `skill:${index}`);
+      const baseModifier = RPG.skillTotal(skill, state.data, state.rules);
+      const transformationBonus = transformationSkillBonus(skill.name);
+      const modifier = baseModifier + transformationBonus;
+      openCheckDialog(
+        skill.name,
+        modifier,
+        `1d20 + valor final da perícia = 1d20 + ${baseModifier}${transformationBonus ? ` + ${transformationBonus} (${activeChaosTransformation()?.name})` : ''}`,
+        `skill:${index}`
+      );
       return;
     }
     if (action === 'resource-change') { spendResource(btn.dataset.resource, btn.dataset.delta); markDirty(); return renderCombat(); }
@@ -1243,16 +1521,32 @@
     if (action === 'clear-cooldown') { state.combat.cooldowns[btn.dataset.ability] = 0; markDirty(); renderCombat(); return; }
 
     if (action === 'activate-transformation') {
-      const t = state.data.transformations.find(item => item.id === btn.dataset.transformation);
-      if (!t) return;
-      let turns = 1;
-      try { turns = RPG.rollDiceExpression(t.duration || '1').result; } catch {}
-      state.combat.activeTransformation = t.id;
-      state.combat.transformationTurns = turns;
-      const tempPs = t.id === 'mascara-caos' ? 30 : (t.id === 'personificacao-caos' ? 60 : 0);
-      if (tempPs) state.data.resources.ps.temporary = num(state.data.resources.ps.temporary) + tempPs;
-      state.combat.transformationTempPs = tempPs;
-      markDirty(); renderCombat(); return;
+      if (beginTransformationActivation(btn.dataset.transformation)) { markDirty(); renderCombat(); }
+      return;
+    }
+    if (action === 'cancel-transformation-activation') {
+      state.combat.pendingTransformation = null;
+      state.combat.transformationActivationTurns = 0;
+      markDirty(); renderCombat(); notify('Ativação da transformação cancelada.');
+      return;
+    }
+    if (action === 'roll-transformation-shield') {
+      const roll = RPG.rollDiceExpression('2d8');
+      state.combat.rollHistory.unshift({ ...roll, label: 'Escudo Natural do Caos', expression: `Escudo Natural: ${roll.expression}`, at: new Date().toISOString() });
+      state.combat.rollHistory = state.combat.rollHistory.slice(0, 30);
+      markDirty(); renderCombat(); notify(`Escudo Natural: reduza ${roll.result} de dano (exceto Dano Verdadeiro).`);
+      return;
+    }
+    if (action === 'transformation-hit-chaos') {
+      const amount = Math.max(1, num(activeChaosTransformation()?.buffs?.chaosOnAbilityHit));
+      state.combat.chaosPoints = Math.max(0, num(state.combat.chaosPoints) + amount);
+      markDirty(); renderCombat(); notify(`Acerto confirmado: +${amount} Ponto de Caos.`);
+      return;
+    }
+    if (action === 'consume-manifested-attack') {
+      state.combat.manifestedAttackAvailable = 0;
+      markDirty(); renderCombat(); notify('Ataque Manifestado consumido neste turno.');
+      return;
     }
     if (action === 'end-transformation') { endTransformationState(); markDirty(); renderCombat(); return; }
 

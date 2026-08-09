@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "inheritance": "buffs-only",
+  "transformations": {
+    "mascara-caos": {
+      "name": "Máscara do Caos",
+      "tier": "inferior",
+      "duration": "1d4+2",
+      "effective": { "temporaryPs": 30, "ca": 2 }
+    },
+    "personificacao-caos": {
+      "name": "Personificação do Caos",
+      "tier": "superior",
+      "inheritsBuffsFrom": "mascara-caos",
+      "duration": "1d4+1",
+      "own": { "temporaryPs": 60, "ca": 2 },
+      "effective": {
+        "temporaryPs": 90,
+        "ca": 4,
+        "description": "Todos os buffs da Máscara do Caos + todos os buffs próprios."
+      }
+    }
+  }
+}

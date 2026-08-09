@@ -407,3 +407,23 @@ textarea { resize: vertical; line-height: 1.55; }
 
 /* Todas as habilidades do Tatsumaki sao habilidades de Essencia. */
 .essence-tag { border-color: rgba(138, 180, 112, .45); background: rgba(95, 135, 73, .12); }
+
+/* CHAOS_TRANSFORMATION_UI_V6 */
+.transformation-card { min-width: 0; }
+.transformation-choice-list { display:grid; gap:.6rem; }
+.transformation-choice { display:grid; gap:.25rem; }
+.transformation-choice small { color:var(--muted); line-height:1.35; }
+.transformation-title-row { display:flex; justify-content:space-between; gap:.75rem; align-items:flex-start; }
+.transformation-title-row > div { display:grid; gap:.35rem; }
+.transformation-inheritance { padding:.55rem .65rem; border:1px solid #645b3d; background:#2a2518; color:#ead9a1; border-radius:9px; font-size:.75rem; line-height:1.4; }
+.transformation-stat-strip { display:grid; grid-template-columns:1fr 1fr; gap:.45rem; }
+.transformation-stat-strip span { padding:.5rem .6rem; background:#0d0f14; border:1px solid var(--line); border-radius:9px; font-size:.72rem; }
+.transformation-stat-strip b { color:var(--text); margin-left:.25rem; }
+.transformation-stat-strip small { color:var(--muted); }
+.transformation-buff-list { display:grid; gap:.28rem; max-height:260px; overflow:auto; padding-right:.2rem; }
+.transformation-buff-list span { color:#c7ccd6; font-size:.74rem; line-height:1.4; }
+.transformation-actions { display:flex; flex-wrap:wrap; gap:.4rem; }
+.transformation-pending { border-left:3px solid var(--warn); padding-left:.65rem; }
+.transformation-damage-reminder { display:grid; gap:.25rem; margin-top:.55rem; padding:.55rem .65rem; border:1px solid #5b4729; background:rgba(230,186,105,.07); border-radius:9px; font-size:.72rem; color:#d8c7a1; }
+.transformation-damage-reminder span { display:block; }
+@media (max-width: 760px) { .transformation-stat-strip { grid-template-columns:1fr; } }
